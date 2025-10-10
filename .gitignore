@@ -2,4 +2,15 @@ bin
 obj
 .vs
 
-!Unity/*/Assets
+# ignore everything under Unity
+Unity/**
+
+# make the specific project directories visible (parent dirs must be unignored)
+!Unity/Archipelago Window/
+!Unity/Archipelago Stall/
+
+# unignore the Assets folders and everything inside them
+!Unity/Archipelago Window/Assets/
+!Unity/Archipelago Window/Assets/**
+!Unity/Archipelago Stall/Assets/
+!Unity/Archipelago Stall/Assets/**
