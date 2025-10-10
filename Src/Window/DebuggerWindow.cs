@@ -1,0 +1,454 @@
+﻿using ArchipelagoMod.Src.Controller;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+namespace ArchipelagoMod.Src.Window
+{
+    class DebuggerWindow : MonoBehaviour
+    {
+        protected int id = 1;
+        protected ParkitectController Controller = null;
+        protected string windowName = "Archipelago Debugger";
+        public Rect WindowRect = new Rect(20, 20, 200, 200);
+        public Rect TitleBarRect = new Rect(0, 0, 200000000, 20);
+        public bool isOpen = false;
+        private KeyCode KeyCode = KeyCode.F12;
+
+        void Awake()
+        {
+            Helper.Debug($"[DebuggerWindow::Awake]");
+            this.Controller = GetComponent<ParkitectController>();
+            WindowRect = new Rect(20, 20, 700, 200);
+            Helper.Debug($"[DebuggerWindow::Awake] -> Booted");
+        }
+
+        void Update()
+        {
+            // Debugger
+            if (Input.GetKeyDown(this.KeyCode))
+            {
+                this.ToggleWindowState();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                this.CloseWindow();
+            }
+        }
+
+        void OnDestroy() { }
+
+        void OnGUI()
+        {
+            if (this.isOpen) {
+                this.DrawWindow();
+            }
+        }
+
+        public void DrawWindow()
+        {
+            WindowRect = GUILayout.Window(this.id, this.WindowRect, DrawMain, windowName);
+        }
+
+        public void ToggleWindowState()
+        {
+            this.isOpen = !this.isOpen;
+        }
+        public void OpenWindow()
+        {
+            this.isOpen = true;
+        }
+        public void CloseWindow()
+        {
+            this.isOpen = false;
+        }
+
+        // Content for this Window
+
+        public void DrawMain(int windowId)
+        {
+            if (GUI.Button(new Rect(WindowRect.width - 21, 6, 15, 15), "x"))
+            {
+                CloseWindow();
+            }
+
+            GUI.BeginGroup(new Rect(0, /*27*/0, WindowRect.width, WindowRect.height/* - 33*/));
+            DrawContent();
+
+            GUI.EndGroup();
+            GUI.DragWindow(TitleBarRect);
+        }
+        public void DrawContent ()
+        {
+            this.DrawPlayerSpeedUpsOptions();
+            this.DrawPlayerMoneyOptions();
+            this.DrawGuestsOptions();
+            this.DrawEmployeeOptions();
+            this.DrawWeatherOptions();
+            this.DrawAttractionOptions();
+            this.DrawStallOptions();
+            this.DrawScenarioOptions();
+            this.DrawTestingOptions();
+        }
+
+        // -----------------------------
+        // Player options
+        // -----------------------------
+        public void DrawPlayerSpeedUpsOptions ()
+        {
+            this.SetLabel("Set Speed:");
+            GUILayout.BeginHorizontal();
+
+            foreach (int speed in Constants.Player.SpeedupOptions)
+            {
+                if (GUILayout.Button(speed + "x"))
+                {
+                    Controller.PlayerRaiseSpeed(speed);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawPlayerMoneyOptions ()
+        {
+            this.SetLabel("Add Money:");
+            GUILayout.BeginHorizontal();
+
+            foreach (int money in Constants.Player.MoneyOptions)
+            {
+                if (GUILayout.Button("$" + money))
+                {
+                    Controller.PlayerAddMoney(money);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        // -----------------------------
+        // Guests options
+        // -----------------------------
+
+        public void DrawGuestsOptions ()
+        {
+            this.SetLabel("Guests:");
+            GUILayout.BeginHorizontal();
+
+            foreach (int guests in Constants.Guest.SpawnOptions)
+            {
+                if (GUILayout.Button("Spawn " + guests))
+                {
+                    Controller.PlayerAddGuests(guests);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            foreach (int money in Constants.Guest.MoneyOptions)
+            {
+                if (GUILayout.Button("Add $" + money))
+                {
+                    Controller.PlayerChangeGuestsMoney(money, 25f);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            foreach (int money in Constants.Guest.MoneyOptions)
+            {
+                if (GUILayout.Button("Remove $" + money))
+                {
+                    Controller.PlayerChangeGuestsMoney(money, 25f, "-");
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            foreach (int kills in Constants.Guest.KillOptions)
+            {
+                if (GUILayout.Button("Kill " + kills))
+                {
+                    Controller.PlayerKillGuests(kills);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Hungry"))
+            {
+                Controller.PlayerSetGuestsHungry();
+            }
+
+            if (GUILayout.Button("Thirsty"))
+            {
+                Controller.PlayerSetGuestsThirsty();
+            }
+
+            if (GUILayout.Button("Bathroom"))
+            {
+                Controller.PlayerSetGuestsToBathroom();
+            }
+
+            if (GUILayout.Button("Vomiting"))
+            {
+                Controller.PlayerSetGuestsToVomit();
+            }
+
+            if (GUILayout.Button("Happiness"))
+            {
+                Controller.PlayerSetGuestsHappy();
+            }
+
+            if (GUILayout.Button("Tiredness"))
+            {
+                Controller.PlayerSetGuestsTired();
+            }
+
+            if (GUILayout.Button("Vandals"))
+            {
+                Controller.PlayerSetGuestsAsVandals(Constants.Guest.VandalsOptions[0]);
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        // -----------------------------
+        // Employee options
+        // -----------------------------
+
+        public void DrawEmployeeOptions ()
+        {
+            this.SetLabel("Staff:");
+            GUILayout.BeginHorizontal();
+
+            foreach (Prefabs employee in Constants.Employee.Options)
+            {
+                if (GUILayout.Button("Hire " + employee.ToString()))
+                {
+                    Controller.PlayerHireEmployees(employee, Constants.Employee.SpawnRanges[0]);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Set staff tired"))
+            {
+                Controller.PlayerSetEmployeesTired(Controller.GetParkEmployees(Constants.Employee.TirednessRanges[0]));
+            }
+
+            if (GUILayout.Button("Set staff training"))
+            {
+                Controller.PlayerSetEmployeesTraining(Controller.GetParkEmployees(Constants.Employee.TrainingRanges[0]));
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        // -----------------------------
+        // Minsc
+        // -----------------------------
+
+        public void DrawWeatherOptions ()
+        {
+            this.SetLabel("Set Weather:");
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Rainy"))
+            {
+                Controller.PlayerChangeWeather(Constants.Weather.Options.RAINY);
+            }
+
+            if (GUILayout.Button("Stormy"))
+            {
+                Controller.PlayerChangeWeather(Constants.Weather.Options.STORMY);
+            }
+
+            if (GUILayout.Button("Cloudy"))
+            {
+                Controller.PlayerChangeWeather(Constants.Weather.Options.CLOUDY);
+            }
+
+            if (GUILayout.Button("Sunny"))
+            {
+                Controller.PlayerChangeWeather(Constants.Weather.Options.SUNNY);
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawAttractionOptions ()
+        {
+            this.SetLabel("Attractions:");
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Break random attraction"))
+            {
+                List<Attraction> attractions = Randomizer.GetRandomAttractionFromPark(20f);
+
+                Controller.PlayerBreakAttractions(attractions);
+            }
+
+            if (GUILayout.Button("Remove all rides"))
+            {
+                Controller.PlayerRemoveAllRides();
+            }
+
+            if (GUILayout.Button("Add all rides"))
+            {
+                Controller.PlayerAddAllRides();
+            }
+
+            if (GUILayout.Button("Add Coaster: AcceleratorCoaster"))
+            {
+                Controller.PlayerAddAttraction(Prefabs.AcceleratorCoaster);
+            }
+
+            if (GUILayout.Button("Add Free-Ride Voucher"))
+            {
+                Attraction attraction = Randomizer.GetRandomAttractionFromPark(0f, 1).First();
+                List<Guest> guests = Randomizer.GetRandomGuests(1f);
+
+                foreach (Guest guest in guests)
+                {
+                    guest.addToInventory(Controller.PlayerCreateAttractionVoucher(attraction));
+                }
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawStallOptions ()
+        {
+            this.SetLabel("Shops:");
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Re-delievery Shops"))
+            {
+                List<ProductShop> productShops = Randomizer.GetRandomProductShopsFromPark(50f);
+
+                Controller.PlayerSetReDeliveryForProductShops(productShops);
+            }
+
+            if (GUILayout.Button("Cleanup shops"))
+            {
+                List<ProductShop> productShops = Randomizer.GetRandomProductShopsFromPark(50f);
+
+                Controller.PlayerSetCleanShopJob(productShops);
+            }
+
+            if (GUILayout.Button("Remove all stalls"))
+            {
+                Controller.PlayerRemoveAllStalls();
+            }
+
+            if (GUILayout.Button("Add all stalls"))
+            {
+                Controller.PlayerAddAllStalls();
+            }
+
+            if (GUILayout.Button("Add Stall: BubbleTeaStall"))
+            {
+                Controller.PlayerAddStall(Prefabs.BubbleTeaStall);
+            }
+
+            if (GUILayout.Button("Add Product Voucher"))
+            {
+                ProductShop shop = Randomizer.GetRandomProductShopsFromPark(0f, 1).First();
+                List<Guest> guests = Randomizer.GetRandomGuests(1f);
+
+                foreach (Guest guest in guests)
+                {
+                    guest.addToInventory(Controller.PlayerCreateShopVoucher(shop));
+                }
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawScenarioOptions ()
+        {
+            this.SetLabel("Scenario:");
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Scenario Goal 1 - 1009 Guests"))
+            {
+                GuestsInParkGoal guestsInParkGoal = new GuestsInParkGoal();
+                guestsInParkGoal.value = 1009;
+
+                //GameController.Instance.park.scenario.goals.addGoal(guestsInParkGoal);
+                Controller.PlayerAddScenarioGoal(guestsInParkGoal);
+            }
+
+            if (GUILayout.Button("Scenario Goal 2 - 1009 Guests -> reward: Experience"))
+            {
+                GuestsInParkGoal guestsInParkGoal = new GuestsInParkGoal();
+                guestsInParkGoal.value = 1009;
+
+                UnlockResearchReward reward = new UnlockResearchReward();
+                string ride = Constants.Attraction.All.Where(r => r == "ExperienceRide").First();
+                reward.optionIndex = Controller.GetResearchItem(ride).Index;
+
+                List<IScenarioGoalReward> rewards = new List<IScenarioGoalReward>();
+                rewards.Add(reward);
+
+                Controller.PlayerAddScenarioGoal(guestsInParkGoal, rewards);
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawTestingOptions ()
+        {
+            this.SetLabel("Testing:");
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Send Random Attraction Message :D"))
+            {
+                string attractionName = Randomizer.GetRandomAttraction(this.Controller);
+
+                Controller.SendMessage("Hehe Its a trap!", attractionName);
+            }
+
+            if (GUILayout.Button("Log all rides and shops"))
+            {
+                List<Attraction> atts = this.Controller.GetAllAttractionsFromAssetManager();
+                List<Shop> shops = this.Controller.GetAllShopsFromAssetManager();
+
+                Helper.Debug("===================================");
+                Helper.Debug("===================================");
+                Helper.Debug("===================================");
+                foreach (Attraction att in atts)
+                {
+                    Helper.Debug($"{{{att.getPrefabType()}}}, {{{att.getName()}}}");
+                }
+                foreach (Shop shop in shops)
+                {
+                    Helper.Debug($"{{{shop.getPrefabType()}}}, {{{shop.getName()}}}");
+                }
+                Helper.Debug("===================================");
+                Helper.Debug("===================================");
+                Helper.Debug("===================================");
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        protected void SetLabel(string label, bool newLineAfter = true)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label);
+
+            if (newLineAfter)
+            {
+                GUILayout.EndHorizontal();
+            }
+        }
+    }
+}
