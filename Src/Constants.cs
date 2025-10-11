@@ -13,6 +13,7 @@ namespace ArchipelagoMod.Src
 		public static string ParkitectAPFolder = "Parkitect_Archipelago";
 
         public static string ModPath = null;
+        public static string ScenarioName = null;
         public static bool Debug = true;
 
         public static Dictionary<Prefabs, string> AllGameItems = new Dictionary<Prefabs, string>

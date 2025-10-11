@@ -19,11 +19,13 @@ namespace ArchipelagoMod
 
         public GameObject GameObject;
 
-        private ParkitectController ParkitectController;
-        private ArchipelagoController ArchipelagoController;
-        
-        private DebuggerWindow DebuggerWindow;
-        private ArchipelagoWindow ArchipelagoWindow;
+        private SaveData SaveData = null;
+
+        private ParkitectController ParkitectController = null;
+        private ArchipelagoController ArchipelagoController = null;
+
+        private DebuggerWindow DebuggerWindow = null;
+        private ArchipelagoWindow ArchipelagoWindow = null;
 
         public override void onEnabled()
         {
@@ -32,6 +34,7 @@ namespace ArchipelagoMod
 
             this.GameObject = new GameObject();
 
+            this.SaveData = this.GameObject.AddComponent<SaveData>();
             this.ParkitectController = this.GameObject.AddComponent<ParkitectController>();
             this.DebuggerWindow = this.GameObject.AddComponent<DebuggerWindow>();
             this.ArchipelagoWindow = this.GameObject.AddComponent<ArchipelagoWindow>();

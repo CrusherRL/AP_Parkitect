@@ -17,6 +17,7 @@ namespace ArchipelagoMod.Src.Controller
         ArchipelagoConnector ArchipelagoConnector = null;
         ArchipelagoWindow ArchipelagoWindow = null;
         ParkitectAPConfig ParkitectAPConfig = null;
+        SaveData SaveData = null;
 
         private Dictionary<string, object> SlotData = null;
         private readonly Queue<AP_Item> PendingAPItems = new Queue<AP_Item>();
@@ -177,7 +178,7 @@ namespace ArchipelagoMod.Src.Controller
 
         public void OnConnecting ()
         {
-            this.ArchipelagoWindow.SetStatus(_Status.States.CONNECTING);
+            //this.ArchipelagoWindow.SetStatus(_Status.States.CONNECTING);
         }
 
         public void OnConnected ()
@@ -202,10 +203,30 @@ namespace ArchipelagoMod.Src.Controller
             this.HandleChallenges();
             this.HandleScenario();
             this.HandleRules();
+            
+            if (this.SaveData == null)
+            {
+                this.SaveData = GetComponent<SaveData>();
+            }
+
+            if (this.SaveData != null)
+            {
+                List<long> locations = this.SaveData.GetLocations();
+                if (locations.Count > 0)
+                {
+                    foreach (long id in locations)
+                    {
+                        this.PendingLocations.Enqueue(id);
+                    }
+                    this.SaveData.DeleteAllLocations();
+                }
+            }
 
             this.IsReady = true;
             this.ProcessPendingItems();
             this.ProcessPendingLocations();
+
+            Helper.UpdateChallengeFile(this.SaveData);
         }
     
         private void HandleScenario ()
@@ -221,8 +242,7 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            this.ParkitectController.PlayerRemoveAllRides();
-            this.ParkitectController.PlayerRemoveAllStalls();
+            Constants.ScenarioName = Scenario.name;
 
             // Player had saved the game?
             if (!this.ParkitectController.PlayerHasSavegame())
@@ -404,16 +424,26 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoWindow.HandOver(this.Challenges);
         }
 
-        public bool CompleteLocation(int location_id)
+        public bool CompleteLocation(int location_id, SaveData SaveData = null)
         {
             long id = (long)(Constants.ArchipelagoBaseId + location_id);
-            return this.CompleteLocation(id);
+
+            return this.CompleteLocation(id, SaveData);
         }
 
-        public bool CompleteLocation(long id)
+        public bool CompleteLocation(long id, SaveData SaveData = null)
         {
+            if (SaveData != null && this.SaveData == null)
+            {
+                this.SaveData = SaveData;
+            }
+
             if (this.IsOffline())
             {
+                if (this.SaveData != null)
+                {
+                    this.SaveData.AddLocation(id);
+                }
                 this.PendingLocations.Enqueue(id);
                 Helper.Debug($"[ArchipelagoController::CompleteLocation] -> no Session found - offline");
                 return true;

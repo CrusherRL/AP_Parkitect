@@ -14,11 +14,14 @@ namespace ArchipelagoMod.Src.Controller
         readonly float OldTimeScale = Time.timeScale;
         private List<_ResearchItem> ResearchItems = new List<_ResearchItem>();
         public AP_Rules AP_Rules = null;
+        public SaveData SaveData = null;
 
         void Start()
         {
             Helper.Debug($"[ParkitectController::Start]");
             this.UpdateResearchItems();
+            Constants.ScenarioName = GameController.Instance.park.parkName;
+            this.SaveData = GetComponent<SaveData>();
             Helper.Debug($"[ParkitectController::Start] -> Booted");
         }
 
@@ -366,6 +369,11 @@ namespace ArchipelagoMod.Src.Controller
 
         public bool PlayerHasUnlockedItem(AP_Item AP_Item)
         {
+            if (this.SaveData.HasUnlocked(AP_Item.PrefabName))
+            {
+                return true;
+            }
+
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
                 return this.GetAllShopsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
@@ -390,7 +398,7 @@ namespace ArchipelagoMod.Src.Controller
 
             foreach (Attraction attraction in attractions)
             {
-                attraction.isAvailableInParks = true;
+                this.PlayerAddAttraction(attraction);
             }
         }
 
@@ -398,10 +406,17 @@ namespace ArchipelagoMod.Src.Controller
         public void PlayerAddAttraction(Prefabs prefab)
         {
             Attraction attraction = this.GetAllAttractionsFromAssetManager(prefab).First();
-            attraction.isAvailableInParks = true;
+            this.PlayerAddAttraction(attraction);
+        }
+        public void PlayerAddAttraction(string prefabName)
+        {
+            Attraction attraction = this.GetAllAttractionsFromAssetManager(prefabName).First();
+            this.PlayerAddAttraction(attraction);
         }
         public void PlayerAddAttraction(Attraction attraction)
         {
+            this.SaveData.AddUnlocked(attraction.getPrefabType());
+            Helper.UpdateChallengeFile(this.SaveData);
             attraction.isAvailableInParks = true;
         }
 
@@ -419,23 +434,33 @@ namespace ArchipelagoMod.Src.Controller
                 shop.isAvailableInParks = false;
             }
         }
+
         public void PlayerAddAllStalls()
         {
             List<Shop> shops = this.GetAllShopsFromAssetManager();
 
             foreach (Shop shop in shops)
             {
-                shop.isAvailableInParks = true;
+                this.PlayerAddStall(shop);
             }
         }
 
         public void PlayerAddStall(Prefabs prefab)
         {
             Shop shop = this.GetAllShopsFromAssetManager(prefab).First();
-            shop.isAvailableInParks = true;
+            this.PlayerAddStall(shop);
         }
+
+        public void PlayerAddStall(string prefabName)
+        {
+            Shop shop = this.GetAllShopsFromAssetManager(prefabName).First();
+            this.PlayerAddStall(shop);
+        }
+
         public void PlayerAddStall(Shop shop)
         {
+            this.SaveData.AddUnlocked(shop.getPrefabType());
+            Helper.UpdateChallengeFile(this.SaveData);
             shop.isAvailableInParks = true;
         }
 
@@ -799,6 +824,10 @@ namespace ArchipelagoMod.Src.Controller
         {
             return this.GetAllAttractionsFromAssetManager().Where(a => a.getPrefabType() == prefab).ToList();
         }
+        public List<Attraction> GetAllAttractionsFromAssetManager(string prefabName)
+        {
+            return this.GetAllAttractionsFromAssetManager().Where(a => a.getPrefabType().ToString() == prefabName).ToList();
+        }
         public Attraction GetAttractionFromAssetManager(string attraction)
         {
             return this.GetAllAttractionsFromAssetManager().Where(a => a.getName() == attraction).First();
@@ -855,13 +884,17 @@ namespace ArchipelagoMod.Src.Controller
         }
 
         // Gets all Stalls
-        public List<Shop> GetAllShopsFromAssetManager ()
+        public List<Shop> GetAllShopsFromAssetManager()
         {
             return ScriptableSingleton<AssetManager>.Instance.getShopObjects().ToList();
         }
         public List<Shop> GetAllShopsFromAssetManager(Prefabs prefab)
         {
             return this.GetAllShopsFromAssetManager().Where(a => a.getPrefabType() == prefab).ToList();
+        }
+        public List<Shop> GetAllShopsFromAssetManager(string prefabName)
+        {
+            return this.GetAllShopsFromAssetManager().Where(a => a.getPrefabType().ToString() == prefabName).ToList();
         }
 
         public List<Shop> GetAllShopsFromPark ()

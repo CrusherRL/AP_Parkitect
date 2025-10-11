@@ -19,6 +19,8 @@ namespace ArchipelagoMod.Src.Connector
         private volatile bool _stopRetries;
 
         public int Retry = 10 * 1000;
+        private int maxRetries = 12;
+
         public ArchipelagoSession Session { get; private set; }
 
         public bool IsConnected
@@ -76,9 +78,11 @@ namespace ArchipelagoMod.Src.Connector
                         await this._sessionLock.WaitAsync();
 
                         if (this._stopRetries)
+                        {
                             break;
+                        }
 
-                        var newSession = ArchipelagoSessionFactory.CreateSession(fullHost, this.ParkitectAPConfig.Port);
+                        ArchipelagoSession newSession = ArchipelagoSessionFactory.CreateSession(fullHost, this.ParkitectAPConfig.Port);
                         this.HookSessionEvents(newSession);
 
                         await newSession.ConnectAsync();
@@ -117,6 +121,11 @@ namespace ArchipelagoMod.Src.Connector
                     {
                         this._sessionLock.Release();
                     }
+                }
+
+                if (attempt >= this.maxRetries)
+                {
+                    this._stopRetries = true;
                 }
 
                 if (!this._stopRetries)

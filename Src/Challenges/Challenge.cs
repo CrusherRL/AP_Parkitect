@@ -254,7 +254,7 @@ namespace ArchipelagoMod.Src.Challenges
             // Error :(
             if (unsolvedList.Count > 0)
             {
-                Helper.Debug($"= Challenge::Check -> Shop -> Unsolved {unsolvedList.Count}");
+                Helper.Debug($"[Challenge::Check] Shop -> Unsolved {unsolvedList.Count}");
                 string list = string.Join("\n", unsolvedList);
                 this.ParkitectController.SendMessage($"{this.SerializedPanelId} has missing requirements:", list);
                 return false;
@@ -410,6 +410,7 @@ namespace ArchipelagoMod.Src.Challenges
 
             return export;
         }
+       
         public static Challenge FromExport(ChallengeExport export, ParkitectController controller)
         {
             Challenge challenge = new Challenge(controller, export.LocationId)
@@ -430,6 +431,25 @@ namespace ArchipelagoMod.Src.Challenges
             if (export.GuestsRating.HasValue) challenge.GuestsRating = new GuestsRating((int)export.GuestsRating.Value);
 
             return challenge;
+        }
+
+        public bool IsEqual (Challenge challenge)
+        {
+            List<bool> results = new List<bool>();
+
+            if (this.ProfitRating != null) results.Add(challenge.ProfitRating.Rating == this.ProfitRating.Rating);
+            if (this.NauseaRating != null) results.Add(challenge.NauseaRating.Rating == this.NauseaRating.Rating);
+            if (this.ExcitementRating != null) results.Add(challenge.ExcitementRating.Rating == this.ExcitementRating.Rating);
+            if (this.IntensityRating != null) results.Add(challenge.IntensityRating.Rating == this.IntensityRating.Rating);
+            if (this.SatisfactionRating != null) results.Add(challenge.SatisfactionRating.Rating == this.SatisfactionRating.Rating);
+            if (this.GuestsRating != null) results.Add(challenge.GuestsRating.Rating == this.GuestsRating.Rating);
+
+            if (this.Attraction != null) results.Add(challenge.Attraction == this.Attraction);
+            if (this.Shop != null) results.Add(challenge.Shop == this.Shop);
+            if (this.Type != null) results.Add(challenge.Type == this.Type);
+            if (this.Count != 0) results.Add(challenge.Count == this.Count);
+
+            return !results.Contains(false);
         }
     }
 }

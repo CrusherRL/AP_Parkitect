@@ -17,6 +17,8 @@ namespace ArchipelagoMod.Src.Window
         private List<Challenge> all_challenges = new List<Challenge>();
         private bool finished = false;
 
+        public SaveData SaveData = null;
+
         public override string BundleFilename { get; set; } = "archipelagowindow";
 
         public override KeyCode KeyCode { get; set; } = KeyCode.Z;
@@ -25,19 +27,33 @@ namespace ArchipelagoMod.Src.Window
         {
             Helper.Debug($"[ArchipelagoWindow::OnAwake]");
             this.ParkitectController = GetComponent<ParkitectController>();
+            this.SaveData = GetComponent<SaveData>();
             this.SetStatus(this.State, true);
             this.SetSpeedupButtons();
             this.ToggleActiveState();
-            
-            List<Challenge> challenges = Helper.GetChallengeJson(this.ParkitectController);
+
+            Helper.Debug($"[ArchipelagoWindow::OnAwake] -> Booted");
+        }
+
+        public void Update ()
+        {
+            if (this.SaveData == null)
+            {
+                this.SaveData = GetComponent<SaveData>();
+            }
+
+            if (Constants.ScenarioName == null || this.all_challenges.Count != 0)
+            {
+                return;
+            }
+
+            List<Challenge> challenges = this.SaveData.GetChallenges();
             if (challenges.Count > 0)
             {
                 Helper.Debug($"[ArchipelagoWindow::OnAwake] -> Challenges found in file. Recovering");
                 this.all_challenges = challenges;
                 this.SetChallenges();
             }
-
-            Helper.Debug($"[ArchipelagoWindow::OnAwake] -> Booted");
         }
 
         // -----------------------------
@@ -161,7 +177,6 @@ namespace ArchipelagoMod.Src.Window
             }
 
             this.SetChallenge(challenge);
-
         }
        
         public void HandOver (List<Challenge> Challenges)
@@ -171,7 +186,22 @@ namespace ArchipelagoMod.Src.Window
             {
                 // rewrite this file based on the earliest state of location
                 this.all_challenges = Challenges;
-                Helper.UpdateChallengeJson(this.all_challenges);
+                this.SaveData.SetChallenges(this.all_challenges);
+                Helper.UpdateChallengeFile(this.SaveData);
+            } else if (Constants.ScenarioName != null)
+            {
+                // here we should check if the challenges json is actually the same as from the Handover!
+                Challenge challenge1 = this.all_challenges.First();
+                Challenge challenge2 = Challenges.Where(c => c.LocationId == challenge1.LocationId).First();
+
+                // something is off!, we would need to start again :(
+                if (!challenge1.IsEqual(challenge2))
+                {
+                    Helper.BackupOldChallengesFile();
+                    this.all_challenges = Challenges;
+                    this.SaveData.SetChallenges(this.all_challenges);
+                    Helper.UpdateChallengeFile(this.SaveData);
+                }
             }
 
             if (this.CurrentChallenges.Count < 3)
@@ -213,10 +243,11 @@ namespace ArchipelagoMod.Src.Window
             }
 
             // Solve this Challenge
-            if (this.ArchipelagoController.CompleteLocation(challenge.LocationId))
+            if (this.ArchipelagoController.CompleteLocation(challenge.LocationId, this.SaveData))
             {
                 this.RemoveChallenge(challenge);
-                Helper.UpdateChallengeJson(this.all_challenges);
+                this.SaveData.SetChallenges(this.all_challenges);
+                Helper.UpdateChallengeFile(this.SaveData);
                 this.NextChallenge(challenge.LocationId);
             }
         }

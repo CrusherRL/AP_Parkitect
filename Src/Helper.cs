@@ -1,6 +1,4 @@
-﻿using ArchipelagoMod.Src.Challenges;
-using ArchipelagoMod.Src.Controller;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -67,26 +65,32 @@ namespace ArchipelagoMod.Src
             return result;
         }
 
-        public static void UpdateChallengeJson(List<Challenge> challenges)
+        public static void UpdateChallengeFile(SaveData SaveData)
         {
             Helper.Debug("[Helper::UpdateChallengeJson] Storing Challenges");
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
-            List<Challenge.ChallengeExport> exportList = challenges.Select(c => c.GetExport()).ToList();
-            string json = JsonConvert.SerializeObject(exportList, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            string filePath = Constants.ModPath + "challenges.json";
+            string json = JsonConvert.SerializeObject(SaveData.GetExport(), Formatting.None, jsonSettings);
+            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
 
             File.WriteAllText(filePath, json);
         }
-        public static List<Challenge> GetChallengeJson(ParkitectController controller)
+
+        public static void BackupOldChallengesFile()
         {
-            string json = File.ReadAllText(Constants.ModPath + "challenges.json");
+            Helper.Debug("[Helper::UpdateChallengeJson] Storing Challenges");
+            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
+            string json = File.ReadAllText(filePath);
 
-            // Deserialize into the export DTOs
-            List<Challenge.ChallengeExport> exportList = JsonConvert.DeserializeObject<List<Challenge.ChallengeExport>>(json);
+            File.WriteAllText(Constants.ModPath + Constants.ScenarioName + ".data.old", json);
+        }
 
-            return exportList
-                .Select(e => Challenge.FromExport(e, controller))
-                .ToList();
+        public static SaveDataExport GetChallengeFile()
+        {
+            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
+            string json = File.ReadAllText(filePath);
+
+            return JsonConvert.DeserializeObject<SaveDataExport>(json);
         }
     }
 }
