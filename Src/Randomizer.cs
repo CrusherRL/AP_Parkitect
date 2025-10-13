@@ -152,7 +152,11 @@ namespace ArchipelagoMod.Src
         // Random Float between min and max
         public static float GetRandomFloat(int min = 0, int max = 100)
         {
-            return Randomizer.GetRandomInt(min, max) / 100f;
+            return Randomizer.GetRandomInt(min, max) / 1f; // checks if ok
+        }
+        public static float GetRandomFloat((int Start, int End) range)
+        {
+            return Randomizer.GetRandomInt(range) / 1f; // checks if ok
         }
     }
 }

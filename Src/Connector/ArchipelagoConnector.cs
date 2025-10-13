@@ -33,7 +33,7 @@ namespace ArchipelagoMod.Src.Connector
         }
 
         // Events
-        public event Action<string, int> OnItemReceived;
+        public event Action<string, long, long> OnItemReceived;
         public event Action OnDisconnected;
         public event Action OnReconnected;
         public event Action<LoginSuccessful> OnConnected;
@@ -204,7 +204,7 @@ namespace ArchipelagoMod.Src.Connector
             long locationId = item.LocationId;
             string locationName = this.Session?.Locations?.GetLocationNameFromId(locationId);
             Helper.Debug($"[ArchipelagoConnector::OnReceivingItem] -> Got item '{itemName}' (ID {item.ItemId}) from location '{locationName}' (ID {locationId})");
-            this.OnItemReceived?.Invoke(itemName, (int)locationId - Constants.ArchipelagoBaseId);
+            this.OnItemReceived?.Invoke(itemName, item.ItemId, locationId);
         }
     }
 }

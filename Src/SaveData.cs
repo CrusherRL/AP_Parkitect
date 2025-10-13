@@ -1,26 +1,29 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
+using MiniJSON;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
-using static ArchipelagoMod.Src.Challenges.Challenge;
 
 namespace ArchipelagoMod.Src
 {
     class SaveDataExport
     {
-        public List<string> unlocked { get; set; } = new List<string>();
-    
-        public List<Challenge.ChallengeExport> challenges { get; set; } = null;
-     
-        public List<long> PendingLocations = new List<long>();
+        public List<int> current_challenges = new List<int>(); // our 3 current challenges
+       
+        public List<string> unlocked_items { get; set; } = new List<string>(); // Prefab name of the Attraction/Shop we received
+        
+        public List<long> unlocked_ap_items = new List<long>(); // AP Item that we already received
+        
+        public List<long> pending_locations = new List<long>(); // Challenge Locations that we were not able to send it to the server
     }
 
     class SaveData : MonoBehaviour
     {
-        [JsonIgnore] public GameObject gameObject;
-        [JsonIgnore] public MonoBehaviour component;
+        public GameObject gameObject;
+        public MonoBehaviour component;
 
         private SaveDataExport SaveDataExport = null;
         private ParkitectController ParkitectController = null;
@@ -42,101 +45,150 @@ namespace ArchipelagoMod.Src
                 this.ParkitectController = GetComponent<ParkitectController>();
             }
 
-            Helper.Debug($"[SaveData::Update] set new SaveDataExport");
-            this.SaveDataExport = new SaveDataExport();
-
-            this.SaveDataExport= Helper.GetChallengeFile();
-            Helper.Debug($"[SaveData::Update] - " + this.SaveDataExport.ToString());
-
             this.ParkitectController.PlayerRemoveAllRides();
             this.ParkitectController.PlayerRemoveAllStalls();
 
+            Helper.Debug($"[SaveData::Update] set new SaveDataExport");
+            this.SaveDataExport = new SaveDataExport();
+
+            this.SaveDataExport = SaveData.Load();
+            Helper.Debug($"[SaveData::Update] - " + this.SaveDataExport.ToString());
+
             if (this.SaveDataExport != null)
             {
-                foreach (string p in this.SaveDataExport.unlocked)
+                foreach (string thing in this.SaveDataExport.unlocked_items)
                 {
-                    if (Constants.Attraction.All.Contains(p))
+                    if (Constants.Attraction.All.Contains(thing))
                     {
-                        this.ParkitectController.PlayerAddAttraction(p);
+                        this.ParkitectController.PlayerAddAttraction(thing);
                     }
-                    else if (Constants.Stall.All.Contains(p))
+                    else if (Constants.Stall.All.Contains(thing))
                     {
-                        this.ParkitectController.PlayerAddStall(p);
+                        this.ParkitectController.PlayerAddStall(thing);
                     }
                 }
             }
         }
-
-        public List<Challenge> GetChallenges()
+        
+        public SaveDataExport GetExport()
         {
-            return (this.SaveDataExport.challenges ?? new List<ChallengeExport>()).Select(e => Challenge.FromExport(e, this.ParkitectController)).ToList();
+            return this.SaveDataExport;
+        }
+
+        public List<int> GetChallenges()
+        {
+            if (this.SaveDataExport == null)
+            {
+                return new List<int>();
+            }
+            return this.SaveDataExport.current_challenges;
         }
 
         public void SetChallenges(List<Challenge> challenges)
+        {
+            this.SetChallenges(challenges.Select(c => c.LocationId).ToList());
+        }
+
+        public void SetChallenges(List<int> challenges)
         {
             if (this.SaveDataExport == null)
             {
                 this.SaveDataExport = new SaveDataExport();
             }
 
-            this.SaveDataExport.challenges = challenges.Select(c => c.GetExport()).ToList();
+            this.SaveDataExport.current_challenges = challenges;
+            this.Save();
         }
 
-        public SaveDataExport GetExport()
+        public bool HasUnlockedItem(Prefabs PrefabName)
         {
-            return this.SaveDataExport;
+            return this.HasUnlockedItem(PrefabName.ToString());
         }
 
-        public void SetExport(SaveDataExport SaveDataExport)
-        {
-            this.SaveDataExport = SaveDataExport;
-        }
-
-        public bool HasUnlocked(Prefabs name)
-        {
-            return this.HasUnlocked(name.ToString());
-        }
-
-        public bool HasUnlocked(string name)
+        public bool HasUnlockedItem(string PrefabName)
         {
             if (this.SaveDataExport == null)
             {
                 return false;
             }
-            return this.SaveDataExport.unlocked.Contains(name);
+            return this.SaveDataExport.unlocked_items.Contains(PrefabName);
         }
 
-        public void AddUnlocked(Prefabs name)
+        public void AddUnlockedItem(Prefabs name)
         {
-            this.AddUnlocked(name.ToString());
+            this.AddUnlockedItem(name.ToString());
         }
 
-        public void AddUnlocked(string name)
+        public void AddUnlockedItem(string name)
         {
-            if (this.SaveDataExport.unlocked.Contains(name))
+            if (this.SaveDataExport.unlocked_items.Contains(name))
             {
                 return;
             }
-            this.SaveDataExport.unlocked.Add(name);
+            this.SaveDataExport.unlocked_items.Add(name);
+            this.Save();
         }
-
-        public void AddLocation(long id)
+        
+        public bool HasUnlockedAPItem(long id)
         {
-            this.SaveDataExport.PendingLocations.Add(id);
+            if (this.SaveDataExport == null)
+            {
+                return false;
+            }
+            return this.SaveDataExport.unlocked_ap_items.Contains(id);
         }
 
-        public List<long> GetLocations()
+        public void SetUnlockedAPItem(long id)
+        {
+            this.SaveDataExport.unlocked_ap_items.Add(id);
+            this.Save();
+        }
+
+        public void AddPendingLocation(long id)
+        {
+            this.SaveDataExport.pending_locations.Add(id);
+            this.Save();
+        }
+
+        public List<long> GetPendingLocations()
         {
             if (this.SaveDataExport == null)
             {
                 return new List<long>();
             }
-            return this.SaveDataExport.PendingLocations;
+            return this.SaveDataExport.pending_locations;
         }
 
-        public void DeleteAllLocations()
+        public void DeleteAllPendingLocations()
         {
-            this.SaveDataExport.PendingLocations = new List<long>();
+            this.SaveDataExport.pending_locations = new List<long>();
+        }
+
+        public void Save()
+        {
+            Helper.Debug("[SaveData::Save]");
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+
+            string json = JsonConvert.SerializeObject(SaveDataExport, Formatting.None, jsonSettings);
+            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
+
+            File.WriteAllText(filePath, json);
+            this.Backup(filePath, json);
+        }
+
+        public void Backup(string filePath, string json)
+        {
+            Helper.Debug("[SaveData::Backup]");
+            File.WriteAllText(filePath + ".backup", json);
+        }
+
+        public static SaveDataExport Load()
+        {
+            Helper.Debug("[SaveData::Load]");
+            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
+            string json = File.ReadAllText(filePath);
+
+            return JsonConvert.DeserializeObject<SaveDataExport>(json);
         }
     }
 }

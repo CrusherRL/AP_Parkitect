@@ -15,7 +15,7 @@ namespace ArchipelagoMod.Src.Challenges
         public string SerializedPanelId = null;
 
         [JsonProperty]
-        protected ProfitRating ProfitRating = null;
+        protected RevenueRating RevenueRating = null;
         [JsonProperty]
         protected NauseaRating NauseaRating = null;
         [JsonProperty]
@@ -40,7 +40,7 @@ namespace ArchipelagoMod.Src.Challenges
         public int LocationId;
         [JsonProperty]
         public string PanelId = null;
-        public float nextCheckTime = Time.time;
+        public int Index;
 
         public Challenge (ParkitectController ParkitectController, int locationId)
         {
@@ -60,6 +60,7 @@ namespace ArchipelagoMod.Src.Challenges
                 index = (int)Math.Floor(i);
             }
 
+            this.Index = index;
             this.SerializedPanelId = $"Challenge {id}";
             this.PanelId = $"Challenge_{id}_{index}";
         }
@@ -98,9 +99,9 @@ namespace ArchipelagoMod.Src.Challenges
                 ratings.Add(this.GuestsRating.Text());
             }
 
-            if (this.ProfitRating != null)
+            if (this.RevenueRating != null)
             {
-                ratings.Add(this.ProfitRating.Text());
+                ratings.Add(this.RevenueRating.Text());
             }
 
             return string.Join(" ", ratings);
@@ -116,38 +117,38 @@ namespace ArchipelagoMod.Src.Challenges
                 thing = this.Type;
             }
 
-            else if (this.Count > 1)
+            string name = this.ParkitectController.GetSerializedFromPrefabs(thing);
+
+            if (this.Count > 1)
             {
-                thing += "'s";
+                name += "'s";
             }
 
-            return this.ParkitectController.GetSerializedFromPrefabs(thing);
-            ;
+            return name;
         }
        
         public bool Check ()
         {
             Helper.Debug("[Challenge::Check]");
+            Helper.Debug($"[Challenge::Check] -> {this.PanelId}");
             int lowestCount = this.Count;
             List<string> unsolvedList = new List<string>();
 
             // Must be the Type
             if (this.Type != null)
             {
-                int count = 0;
-
                 if (Constants.Attraction.Types.Contains(this.Type))
                 {
-                    count = this.ParkitectController.GetAllCountableAttractionsTypeFromPark(this.Type).Count();
+                    lowestCount = this.ParkitectController.GetAllCountableAttractionsTypeFromPark(this.Type).Count();
                 }
                 else if (Constants.Stall.Types.Contains(this.Type))
                 {
-                    count = this.ParkitectController.GetAllCountableShopsTypeFromPark(this.Type).Count();
+                    lowestCount = this.ParkitectController.GetAllCountableShopsTypeFromPark(this.Type).Count();
                 }
 
-                if (count < this.Count)
+                if (lowestCount < this.Count)
                 {
-                    unsolvedList.Add($"Missing {this.Count - count} { this.GetShopOrAttractionName() }");
+                    unsolvedList.Add($"Missing {this.Count - lowestCount}x { this.GetShopOrAttractionName() }");
                 }
             }
             else if (this.Attraction != null)
@@ -205,19 +206,20 @@ namespace ArchipelagoMod.Src.Challenges
                     }
                 }
                 
-                if (this.ProfitRating != null)
+                if (this.RevenueRating != null)
                 {
-                    int profit = attractions.Where(s => this.ProfitRating.Check(s.getTotalProfit())).Count();
-                    if (lowestCount == 0 || profit < this.Count)
+                    int revenue = attractions.Where(s => this.RevenueRating.Check(s.getTotalRevenue())).Count();
+                    if (lowestCount == 0 || revenue < this.Count)
                     {
-                        lowestCount = lowestCount > profit ? profit : lowestCount;
-                        unsolvedList.Add(this.ProfitRating.Text());
+                        lowestCount = lowestCount > revenue ? revenue : lowestCount;
+                        unsolvedList.Add(this.RevenueRating.Text());
                     }
                 }
 
-                if (attractions == null || attractions.Count < this.Count)
+                if (attractions == null || lowestCount < this.Count)
                 {
-                    unsolvedList.Insert(0, $"- { lowestCount } { this.Attraction }");
+                    Helper.Debug(this.ParkitectController.GetSerializedFromPrefabs(this.Attraction));
+                    unsolvedList.Insert(0, $"- {this.Count - lowestCount}x {this.ParkitectController.GetSerializedFromPrefabs(this.Attraction)}");
                 }
             }
             else if (this.Shop != null)
@@ -235,19 +237,19 @@ namespace ArchipelagoMod.Src.Challenges
                     }
                 }
 
-                if (this.ProfitRating != null)
+                if (this.RevenueRating != null)
                 {
-                    int profit = shops.Where(s => this.ProfitRating.Check(s.getProfitLastMonth())).Count();
-                    if (lowestCount == 0 || profit < this.Count)
+                    int revenue = shops.Where(s => this.RevenueRating.Check(s.getTotalRevenue())).Count();
+                    if (lowestCount == 0 || revenue < this.Count)
                     {
-                        lowestCount = lowestCount > profit ? profit : lowestCount;
-                        unsolvedList.Add(this.ProfitRating.Text());
+                        lowestCount = lowestCount > revenue ? revenue : lowestCount;
+                        unsolvedList.Add(this.RevenueRating.Text());
                     }
                 }
 
-                if (shops == null || shops.Count < this.Count)
+                if (shops == null || lowestCount < this.Count)
                 {
-                    unsolvedList.Insert(0, $"- {lowestCount} {this.Shop}");
+                    unsolvedList.Insert(0, $"- {this.Count - lowestCount}x {this.ParkitectController.GetSerializedFromPrefabs(this.Shop)}");
                 }
             }
 
@@ -359,21 +361,21 @@ namespace ArchipelagoMod.Src.Challenges
             this.GuestsRating = new GuestsRating(amount);
         }
      
-        public void AddProfitRating(int amount)
+        public void AddRevenueRating(int amount)
         {
             if (amount <= 0)
             {
                 return;
             }
 
-            this.ProfitRating = new ProfitRating(amount);
+            this.RevenueRating = new RevenueRating(amount);
         }
 
         // Typed DTO for export
         public class ChallengeExport
         {
             public string SerializedPanelId { get; set; }
-            public float? ProfitRating { get; set; }
+            public float? RevenueRating { get; set; }
             public float? NauseaRating { get; set; }
             public float? ExcitementRating { get; set; }
             public float? IntensityRating { get; set; }
@@ -396,7 +398,7 @@ namespace ArchipelagoMod.Src.Challenges
                 PanelId = this.PanelId
             };
 
-            if (this.ProfitRating != null) export.ProfitRating = this.ProfitRating.Rating;
+            if (this.RevenueRating != null) export.RevenueRating = this.RevenueRating.Rating;
             if (this.NauseaRating != null) export.NauseaRating = this.NauseaRating.Rating;
             if (this.ExcitementRating != null) export.ExcitementRating = this.ExcitementRating.Rating;
             if (this.IntensityRating != null) export.IntensityRating = this.IntensityRating.Rating;
@@ -423,7 +425,7 @@ namespace ArchipelagoMod.Src.Challenges
                 Count = export.Count ?? 1
             };
 
-            if (export.ProfitRating.HasValue) challenge.ProfitRating = new ProfitRating(export.ProfitRating.Value);
+            if (export.RevenueRating.HasValue) challenge.RevenueRating = new RevenueRating(export.RevenueRating.Value);
             if (export.NauseaRating.HasValue) challenge.NauseaRating = new NauseaRating(export.NauseaRating.Value);
             if (export.ExcitementRating.HasValue) challenge.ExcitementRating = new ExcitementRating(export.ExcitementRating.Value);
             if (export.IntensityRating.HasValue) challenge.IntensityRating = new IntensityRating(export.IntensityRating.Value);
@@ -437,7 +439,7 @@ namespace ArchipelagoMod.Src.Challenges
         {
             List<bool> results = new List<bool>();
 
-            if (this.ProfitRating != null) results.Add(challenge.ProfitRating.Rating == this.ProfitRating.Rating);
+            if (this.RevenueRating != null) results.Add(challenge.RevenueRating.Rating == this.RevenueRating.Rating);
             if (this.NauseaRating != null) results.Add(challenge.NauseaRating.Rating == this.NauseaRating.Rating);
             if (this.ExcitementRating != null) results.Add(challenge.ExcitementRating.Rating == this.ExcitementRating.Rating);
             if (this.IntensityRating != null) results.Add(challenge.IntensityRating.Rating == this.IntensityRating.Rating);

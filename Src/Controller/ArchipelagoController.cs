@@ -27,6 +27,7 @@ namespace ArchipelagoMod.Src.Controller
         protected string Game = "Parkitect";
 
         public List<Challenge> Challenges = new List<Challenge>();
+        public bool IsProcessingPendingItems = false;
 
         void Start ()
         {
@@ -59,6 +60,11 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             //this.ParkitectController.PlayerCheckHasWon();
+        }
+
+        void OnDestroy ()
+        {
+            _ = this.ArchipelagoConnector.DisconnectAsync();
         }
 
         private void ConnectWithArchipelago ()
@@ -112,12 +118,12 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
         }
 
-        private void OnReceivedItem (string prefabItem, int finishedLocationId)
+        private void OnReceivedItem (string prefabItem, long itemId, long locationId)
         {
             string serializedName = this.ParkitectController.GetSerializedFromPrefabs(prefabItem);
-            AP_Item AP_Item = AP_Item.Init(prefabItem, finishedLocationId, serializedName);
+            AP_Item AP_Item = AP_Item.Init(prefabItem, itemId, locationId, serializedName);
 
-            if (!this.IsReady)
+            if (!this.IsReady || this.IsProcessingPendingItems || this.PendingAPItems.Count > 0)
             {
                 Helper.Debug($"[ArchipelagoController::OnReceivedItem] -> Queue Item");
                 this.PendingAPItems.Enqueue(AP_Item);
@@ -129,11 +135,28 @@ namespace ArchipelagoMod.Src.Controller
 
         public void ProcessPendingItems()
         {
-            Helper.Debug($"[ArchipelagoController::ProcessPendingItems]");
-            while (this.IsReady && this.PendingAPItems.Count > 0)
+            if (this.IsProcessingPendingItems)
             {
-                this.HandleItem(this.PendingAPItems.Dequeue());
+                return; // prevent re-entry
             }
+
+            this.IsProcessingPendingItems = true;
+
+            Helper.Debug($"[ArchipelagoController::ProcessPendingItems]");
+
+            if (this.IsOffline() || !this.IsReady)
+            {
+                this.IsProcessingPendingItems = false;
+                return;
+            }
+
+            while (this.PendingAPItems.Count > 0)
+            {
+                AP_Item item = this.PendingAPItems.Dequeue();
+                this.HandleItem(item);
+            }
+
+            this.IsProcessingPendingItems = false;
         }
      
         public void ProcessPendingLocations()
@@ -147,12 +170,19 @@ namespace ArchipelagoMod.Src.Controller
             {
                 this.CompleteLocation(this.PendingLocations.Dequeue());
             }
+            this.SaveData.DeleteAllPendingLocations();
         }
 
         private void HandleItem(AP_Item AP_Item)
         {
-            Helper.Debug($"[ArchipelagoController::HandleItem] -> Handling Item - {AP_Item.Name}");
+            if (this.SaveData.HasUnlockedAPItem(AP_Item.ItemId))
+            {
+                return;
+            }
 
+            Helper.Debug($"[ArchipelagoController::HandleItem] -> Handling Item - {AP_Item.Name}");
+            this.SaveData.SetUnlockedAPItem(AP_Item.ItemId);
+            
             if (AP_Item.IsTrap)
             {
                 this.ParkitectController.PlayerRedeemTrap(AP_Item);
@@ -198,7 +228,7 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), "slot_data.json");
+            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
 
             this.HandleChallenges();
             this.HandleScenario();
@@ -211,22 +241,19 @@ namespace ArchipelagoMod.Src.Controller
 
             if (this.SaveData != null)
             {
-                List<long> locations = this.SaveData.GetLocations();
+                List<long> locations = this.SaveData.GetPendingLocations();
                 if (locations.Count > 0)
                 {
                     foreach (long id in locations)
                     {
                         this.PendingLocations.Enqueue(id);
                     }
-                    this.SaveData.DeleteAllLocations();
                 }
             }
 
             this.IsReady = true;
             this.ProcessPendingItems();
             this.ProcessPendingLocations();
-
-            Helper.UpdateChallengeFile(this.SaveData);
         }
     
         private void HandleScenario ()
@@ -302,6 +329,7 @@ namespace ArchipelagoMod.Src.Controller
                     CoastersGoal coastersGoal = new CoastersGoal();
                     coastersGoal.coasterCount = Goals.coaster_rides.value;
                     coastersGoal.optionIndex = 1;
+                    coastersGoal.minimumRatingValue = Goals.coaster_rides.values.intensity / 100f;
 
                     if (!this.ParkitectController.PlayerHasScenarioGoal(coastersGoal))
                     {
@@ -313,6 +341,7 @@ namespace ArchipelagoMod.Src.Controller
                     CoastersGoal coastersGoal = new CoastersGoal();
                     coastersGoal.coasterCount = Goals.coaster_rides.value;
                     coastersGoal.optionIndex = 0;
+                    coastersGoal.minimumRatingValue = Goals.coaster_rides.values.excitement / 100f;
 
                     if (!this.ParkitectController.PlayerHasScenarioGoal(coastersGoal))
                     {
@@ -389,7 +418,7 @@ namespace ArchipelagoMod.Src.Controller
                 {
                     challenge.SetShop(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
+                    challenge.AddRevenueRating(ap_challenge.item.revenue);
                 }
 
                 // Challenge is to have a just an attraction
@@ -403,7 +432,7 @@ namespace ArchipelagoMod.Src.Controller
                 {
                     challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
+                    challenge.AddRevenueRating(ap_challenge.item.revenue);
                 }
 
                 // Challenge is to have a specific coaster
@@ -411,7 +440,7 @@ namespace ArchipelagoMod.Src.Controller
                 {
                     challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
+                    challenge.AddRevenueRating(ap_challenge.item.revenue);
                     challenge.AddExcitement(Helper.SafeFloat(ap_challenge.item.excitement));
                     challenge.AddIntensity(Helper.SafeFloat(ap_challenge.item.intensity));
                     challenge.AddNausea(Helper.SafeFloat(ap_challenge.item.nausea));
@@ -442,7 +471,7 @@ namespace ArchipelagoMod.Src.Controller
             {
                 if (this.SaveData != null)
                 {
-                    this.SaveData.AddLocation(id);
+                    this.SaveData.AddPendingLocation(id);
                 }
                 this.PendingLocations.Enqueue(id);
                 Helper.Debug($"[ArchipelagoController::CompleteLocation] -> no Session found - offline");

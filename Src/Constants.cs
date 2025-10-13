@@ -480,9 +480,10 @@ namespace ArchipelagoMod.Src
 
             // "|" for secondary message
             public static char[] TextDivider = new char[] { '|' };
+   
             public static string GetRandomText(string[] texts)
 			{
-                return texts[Randomizer.GetRandomInt(0, texts.Length)];
+                return texts[Randomizer.GetRandomInt(0, texts.Length - 1)];
             }
 
             // -----------------------------
@@ -766,7 +767,7 @@ namespace ArchipelagoMod.Src
                     textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestMoneyLoseTexts);
                 }
 
-                return textBlock.Replace("{{AMOUNT}}", tokenAmount).Replace("{{PERCENTAGE_VALUE}}", percentage.ToString()).Split(Constants.Trap.TextDivider);
+                return textBlock.Replace("{{AMOUNT}}", tokenAmount).Replace("{{PERCENTAGE_GUESTS}}", percentage.ToString()).Split(Constants.Trap.TextDivider);
             }
 
             public static string[] GuestHungerTexts =
@@ -897,7 +898,8 @@ namespace ArchipelagoMod.Src
 		{
 			public static Dictionary<int, string> Maps = new Dictionary<int, string>
 			{
-                { 0, "Archipelago - Welcome to the Woods" }
+                { 0, "Archipelago - Lakeside Gardens" },
+                { 1, "Archipelago - Dusty Ridge Ranch" }
             };
 		}
     }

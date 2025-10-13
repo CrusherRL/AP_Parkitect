@@ -40,7 +40,7 @@ namespace ArchipelagoMod.Src.SlotData
     {
         public string name { get; set; }
         public int amount { get; set; }
-        public int profit { get; set; }
+        public int revenue { get; set; }
         public int customers { get; set; }
         public string type { get; set; }
 

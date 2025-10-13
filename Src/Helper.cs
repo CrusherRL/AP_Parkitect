@@ -18,7 +18,7 @@ namespace ArchipelagoMod.Src
             return (Prefabs)System.Enum.Parse(typeof(Prefabs), prefab);
         }
 
-        public static void Debug(string content, string filename = "debug.log.txt")
+        public static void Debug(string content, string filename = "debug.log.txt", bool append = true)
         {
             if (!Constants.Debug) {
                 return;
@@ -26,7 +26,13 @@ namespace ArchipelagoMod.Src
 
             string filePath = Constants.ModPath + filename;
 
-            File.AppendAllText(filePath, content + "\n");
+            if (append)
+            {
+                File.AppendAllText(filePath, content + "\n");
+                return;
+            }
+
+            File.WriteAllText(filePath, content + "\n");
         }
 
         public static Color ConvertFromHex(string hex)
@@ -63,34 +69,6 @@ namespace ArchipelagoMod.Src
             }
 
             return result;
-        }
-
-        public static void UpdateChallengeFile(SaveData SaveData)
-        {
-            Helper.Debug("[Helper::UpdateChallengeJson] Storing Challenges");
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-
-            string json = JsonConvert.SerializeObject(SaveData.GetExport(), Formatting.None, jsonSettings);
-            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
-
-            File.WriteAllText(filePath, json);
-        }
-
-        public static void BackupOldChallengesFile()
-        {
-            Helper.Debug("[Helper::UpdateChallengeJson] Storing Challenges");
-            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
-            string json = File.ReadAllText(filePath);
-
-            File.WriteAllText(Constants.ModPath + Constants.ScenarioName + ".data.old", json);
-        }
-
-        public static SaveDataExport GetChallengeFile()
-        {
-            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
-            string json = File.ReadAllText(filePath);
-
-            return JsonConvert.DeserializeObject<SaveDataExport>(json);
         }
     }
 }

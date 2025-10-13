@@ -1,4 +1,5 @@
 ﻿using ArchipelagoMod.Src.Controller;
+using ArchipelagoMod.Src.SlotData;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -55,10 +56,12 @@ namespace ArchipelagoMod.Src.Window
         {
             this.isOpen = !this.isOpen;
         }
+      
         public void OpenWindow()
         {
             this.isOpen = true;
         }
+      
         public void CloseWindow()
         {
             this.isOpen = false;
@@ -79,6 +82,7 @@ namespace ArchipelagoMod.Src.Window
             GUI.EndGroup();
             GUI.DragWindow(TitleBarRect);
         }
+     
         public void DrawContent ()
         {
             this.DrawPlayerSpeedUpsOptions();
@@ -89,6 +93,7 @@ namespace ArchipelagoMod.Src.Window
             this.DrawAttractionOptions();
             this.DrawStallOptions();
             this.DrawScenarioOptions();
+            this.DrawTraps();
             this.DrawTestingOptions();
         }
 
@@ -404,18 +409,37 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
         }
 
+        public void DrawTraps()
+        {
+            this.SetLabel("Traps");
+            GUILayout.BeginHorizontal();
+            int i = 0;
+
+            foreach (string trap in Constants.Trap.All)
+            {
+                if (i % 5 == 0)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+
+                if (GUILayout.Button(trap))
+                {
+                    Helper.Debug($"executing {trap}");
+                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
+                    this.Controller.PlayerRedeemTrap(AP_Item);
+                }
+
+                i++;
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
         public void DrawTestingOptions ()
         {
             this.SetLabel("Testing:");
             GUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("Send Random Attraction Message :D"))
-            {
-                string attractionName = Randomizer.GetRandomAttraction(this.Controller);
-
-                Controller.SendMessage("Hehe Its a trap!", attractionName);
-            }
-
             if (GUILayout.Button("Log all rides and shops"))
             {
                 List<Attraction> atts = this.Controller.GetAllAttractionsFromAssetManager();

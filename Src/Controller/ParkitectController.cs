@@ -1,10 +1,14 @@
 ﻿using ArchipelagoMod.Src.Dispatcher;
 using ArchipelagoMod.Src.SlotData;
 using Parkitect.UI;
+using Photon.Realtime;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
+using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Controller
 {
@@ -62,12 +66,14 @@ namespace ArchipelagoMod.Src.Controller
         // Receive a small amount of money
         public void PlayerAddMoney (float money = 500)
         {
-            if (!Constants.Player.MoneyOptions.Contains(money))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                return;
-            }
-
-            GameController.Instance.park.parkInfo.moneyTransaction(money, MonthlyTransactions.Transaction.REWARD);
+                if (!Constants.Player.MoneyOptions.Contains(money))
+                {
+                    return;
+                }
+                GameController.Instance.park.parkInfo.moneyTransaction(money, MonthlyTransactions.Transaction.REWARD);
+            });
         }
 
         // Player has savegame?
@@ -98,10 +104,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            for (int i = 0; i < guests; i += 1)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                GameController.Instance.park.spawnGuest();
-            }
+                for (int i = 0; i < guests; i += 1)
+                {
+                    GameController.Instance.park.spawnGuest();
+                }
+            });
         }
 
         // Adds/Substracts Guests money
@@ -112,16 +121,20 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                if (sign == "+")
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
                 {
-                    guest.Money += money;
-                } else
-                {
-                    guest.Money -= money;
+                    if (sign == "+")
+                    {
+                        guest.Money += money;
+                    }
+                    else
+                    {
+                        guest.Money -= money;
+                    }
                 }
-            }
+            });
         }
 
         // Kills specific guests
@@ -132,10 +145,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(0, guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.Kill();
-            }
+                foreach (Guest guest in Randomizer.GetRandomGuests(0, guests))
+                {
+                    guest.Kill();
+                }
+            });
         }
 
         // Set amount of guests hungry
@@ -146,10 +162,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.Hunger = hunger;
-            }
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                {
+                    guest.Hunger = hunger;
+                }
+            });
         }
 
         // Set amount of guests thirsty
@@ -160,10 +179,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.Thirst = thirst;
-            }
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                {
+                    guest.Thirst = thirst;
+                }
+            });
         }
 
         // set amount of guests to the bathroom
@@ -174,11 +196,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.ToiletUrgency = bathroom;
-            }
-            
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                {
+                    guest.ToiletUrgency = bathroom;
+                }
+            });
         }
 
         // Set amount of guests to vomit
@@ -189,14 +213,17 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                if (!guest.isBusy())
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
                 {
-                    guest.standUp();
+                    if (!guest.isBusy())
+                    {
+                        guest.standUp();
+                    }
+                    guest.Nausea = vomit;
                 }
-                guest.Nausea = vomit;
-            }
+            });
         }
 
         // Set amount of guests happy
@@ -207,10 +234,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.Happiness = happiness;
-            }
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                {
+                    guest.Happiness = happiness;
+                }
+            });
         }
 
         // Set amount of guests tired
@@ -221,10 +251,13 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.Tiredness = tiredness;
-            }
+                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                {
+                    guest.Tiredness = tiredness;
+                }
+            });
         }
 
         // Set amount of guests tired
@@ -239,12 +272,15 @@ namespace ArchipelagoMod.Src.Controller
         }
         public void PlayerSetGuestsAsVandals(int amount)
         {
-            List<Guest> guests = Randomizer.GetRandomGuests(0f, amount);
-
-            foreach (Guest guest in guests)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                guest.setIsVandal(true);
-            }
+                List<Guest> guests = Randomizer.GetRandomGuests(0f, amount);
+
+                foreach (Guest guest in guests)
+                {
+                    guest.setIsVandal(true);
+                }
+            });
         }
 
         // Create a Attraction Voucher and assigning the attraction to it
@@ -282,34 +318,53 @@ namespace ArchipelagoMod.Src.Controller
         }
         public void PlayerHireEmployees(Prefabs employee, int amount, int customeIndex = 0) // Note: the last Hired Employeee will be picked up always
         {
-            for (int i = 0; i < amount; i += 1)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                EmployeeHireCommand hireCommand = new EmployeeHireCommand(employee, customeIndex);
-                hireCommand.isOwnCommand = true;
-                hireCommand.run();
-            }
+                for (int i = 0; i < amount; i += 1)
+                {
+                    EmployeeHireCommand hireCommand = new EmployeeHireCommand(employee, customeIndex);
+                    hireCommand.isOwnCommand = true;
+                    hireCommand.run();
+                }
+            });
         }
 
         // Set Employees Tired
+        public void PlayerSetEmployeesTired(List<Employee> employees, float number)
+        {
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                foreach (Employee employee in employees)
+                {
+                    employee.Tiredness = number;
+                }
+            });
+        }
         public void PlayerSetEmployeesTired(List<Employee> employees)
         {
-            foreach (Employee employee in employees)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                (int Start, int End) range = Constants.Employee.TirednessRanges[0];
-                employee.Tiredness = Randomizer.GetRandomFloat(range.Start, range.End);
-            }
+                foreach (Employee employee in employees)
+                {
+                    (int Start, int End) range = Constants.Employee.TirednessRanges[0];
+                    employee.Tiredness = Randomizer.GetRandomFloat(range.Start, range.End);
+                }
+            });
         }
 
         // Send Employee to Trainingsroom
         public void PlayerSetEmployeesTraining(List<Employee> employees)
         {
-            foreach (Employee employee in employees)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                if (!employee.isTraining && employee.getPrefabType() != Prefabs.Shopkeeper)
+                foreach (Employee employee in employees)
                 {
-                    employee.setIsTraining(true);
+                    if (!employee.isTraining && employee.getPrefabType() != Prefabs.Shopkeeper && employee.getPrefabType() != Prefabs.RideOperator)
+                    {
+                        employee.setIsTraining(true);
+                    }
                 }
-            }
+            });
         }
 
         // -----------------------------
@@ -347,17 +402,23 @@ namespace ArchipelagoMod.Src.Controller
         // Break down attraction with random reason
         public void PlayerBreakAttractions (List<Attraction> attractions)
         {
-            if (attractions.Count > 0)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                foreach (Attraction attraction in attractions)
+                if (attractions.Count > 0)
                 {
-                    attraction.setBroken(Randomizer.GetRandomBreakReason());
+                    foreach (Attraction attraction in attractions)
+                    {
+                    
+                            attraction.setBroken(Randomizer.GetRandomBreakReason());
+                    }
                 }
-            }
+            });
         }
 
         public void PlayerUnlockItem(AP_Item AP_Item)
         {
+            this.SaveData.AddUnlockedItem(AP_Item.PrefabName);
+
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
                 this.PlayerAddStall(AP_Item.PrefabName);
@@ -369,7 +430,7 @@ namespace ArchipelagoMod.Src.Controller
 
         public bool PlayerHasUnlockedItem(AP_Item AP_Item)
         {
-            if (this.SaveData.HasUnlocked(AP_Item.PrefabName))
+            if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName))
             {
                 return true;
             }
@@ -415,9 +476,10 @@ namespace ArchipelagoMod.Src.Controller
         }
         public void PlayerAddAttraction(Attraction attraction)
         {
-            this.SaveData.AddUnlocked(attraction.getPrefabType());
-            Helper.UpdateChallengeFile(this.SaveData);
-            attraction.isAvailableInParks = true;
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                attraction.isAvailableInParks = true;
+            });
         }
 
         // -----------------------------
@@ -459,9 +521,10 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerAddStall(Shop shop)
         {
-            this.SaveData.AddUnlocked(shop.getPrefabType());
-            Helper.UpdateChallengeFile(this.SaveData);
-            shop.isAvailableInParks = true;
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                shop.isAvailableInParks = true;
+            });
         }
 
         // -----------------------------
@@ -471,29 +534,35 @@ namespace ArchipelagoMod.Src.Controller
         // Re-deliver Ingredients for a shop
         public void PlayerSetReDeliveryForProductShops (List<ProductShop> productShops)
         {
-            foreach (ProductShop productShop in productShops)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                GameController.Instance.park.resetDeliveriesFor(productShop);
-                foreach (Product product in productShop.selectedProducts)
+                foreach (ProductShop productShop in productShops)
                 {
-                    foreach (Ingredient ingredient in product.ingredients)
+                    GameController.Instance.park.resetDeliveriesFor(productShop);
+                    foreach (Product product in productShop.selectedProducts)
                     {
-                        GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
+                        foreach (Ingredient ingredient in product.ingredients)
+                        {
+                            GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
+                        }
                     }
                 }
-            }
+            });
         }
 
         // Clean up product shops
         public void PlayerSetCleanShopJob(List<ProductShop> productShops)
         {
-            if (productShops.Count > 0)
+            MainThreadDispatcher.Enqueue(() =>
             {
-                foreach (ProductShop productShop in productShops)
+                if (productShops.Count > 0)
                 {
-                    productShop.triggerClean();
+                    foreach (ProductShop productShop in productShops)
+                    {
+                        productShop.triggerClean();
+                    }
                 }
-            }
+            });
         }
 
         // -----------------------------
@@ -513,7 +582,10 @@ namespace ArchipelagoMod.Src.Controller
 
             goal.isOptional = optional;
 
-            GameController.Instance.park.scenario.goals.addGoal(goal);
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                GameController.Instance.park.scenario.goals.addGoal(goal);
+            });
         }
 
         public bool PlayerHasScenarioGoal (IScenarioGoal goal)
@@ -550,7 +622,10 @@ namespace ArchipelagoMod.Src.Controller
 
                 foreach (Guest guest in guests)
                 {
-                    guest.addToInventory(this.PlayerCreateAttractionVoucher(attraction));
+                    MainThreadDispatcher.Enqueue(() =>
+                    {
+                        guest.addToInventory(this.PlayerCreateAttractionVoucher(attraction));
+                    });
                 }
 
                 string[] messages = Constants.Trap.GetAttractionVoucherText(attraction.getName(), number);
@@ -584,7 +659,10 @@ namespace ArchipelagoMod.Src.Controller
 
                 foreach (Guest guest in guests)
                 {
-                    guest.addToInventory(this.PlayerCreateShopVoucher(shop));
+                    MainThreadDispatcher.Enqueue(() =>
+                    {
+                        guest.addToInventory(this.PlayerCreateShopVoucher(shop));
+                    });
                 }
 
                 string[] messages = Constants.Trap.GetShopVoucherText(shop.getName(), number);
@@ -615,8 +693,8 @@ namespace ArchipelagoMod.Src.Controller
             if (AP_Item.Name == "Employee Tiredness Trap")
             {
                 (int Start, int End) range = Constants.Employee.TirednessRanges[this.AP_Rules.difficulty];
-                int number = Randomizer.GetRandomInt(range);
-                this.PlayerSetEmployeesTired(this.GetParkEmployees().Take(number).ToList());
+                float number = Randomizer.GetRandomFloat(range);
+                this.PlayerSetEmployeesTired(this.GetParkEmployees().Take((int)number).ToList(), number);
 
                 string[] messages = Constants.Trap.GetEmployeeTirednessText(number.ToString());
                 this.SendMessage(messages);
