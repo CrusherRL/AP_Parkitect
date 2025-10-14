@@ -28,7 +28,7 @@ namespace ArchipelagoMod.Src.Window
 
             if (AssetBundle == null)
             {
-                Helper.Debug($"[AbstractWindow::Awake] -> Assetbundle not found - {this.BundleFilename}");
+                Helper.Debug($"[AbstractWindow::Awake] Assetbundle not found - {this.BundleFilename}");
                 return;
             }
 
@@ -62,7 +62,7 @@ namespace ArchipelagoMod.Src.Window
 
             if (ButtonClose == null)
             {
-                Helper.Debug($"[AbstractWindow::SetCloseButtonListener] -> No Close Button found");
+                Helper.Debug($"[AbstractWindow::SetCloseButtonListener] No Close Button found");
             }
 
             ButtonClose.onClick.AddListener(this.OnCloseButton);
@@ -83,7 +83,7 @@ namespace ArchipelagoMod.Src.Window
                 this.AssetBundle.Unload(false);
             } catch (Exception e)
             {
-                Helper.Debug($"[AbstractWindow::SetCloseButtonListener] -> Unloading Assetbundle failed - {e.Message}");
+                Helper.Debug($"[AbstractWindow::SetCloseButtonListener] Unloading Assetbundle failed - {e.Message}");
             }
         }
 

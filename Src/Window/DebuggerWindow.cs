@@ -1,4 +1,5 @@
-﻿using ArchipelagoMod.Src.Controller;
+﻿using ArchipelagoMod.Src.Challenges;
+using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.SlotData;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace ArchipelagoMod.Src.Window
             Helper.Debug($"[DebuggerWindow::Awake]");
             this.Controller = GetComponent<ParkitectController>();
             WindowRect = new Rect(20, 20, 700, 200);
-            Helper.Debug($"[DebuggerWindow::Awake] -> Booted");
+            Helper.Debug($"[DebuggerWindow::Awake] Booted");
         }
 
         void Update()
@@ -440,6 +441,7 @@ namespace ArchipelagoMod.Src.Window
         {
             this.SetLabel("Testing:");
             GUILayout.BeginHorizontal();
+
             if (GUILayout.Button("Log all rides and shops"))
             {
                 List<Attraction> atts = this.Controller.GetAllAttractionsFromAssetManager();
@@ -459,6 +461,26 @@ namespace ArchipelagoMod.Src.Window
                 Helper.Debug("===================================");
                 Helper.Debug("===================================");
                 Helper.Debug("===================================");
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            string[] challenges = new string[3] { "Challenge 1", "Challenge 2", "Challenge 3" };
+            foreach (string challenge in challenges)
+            {
+                ArchipelagoWindow archipelagoWindow = GetComponent<ArchipelagoWindow>();
+                if (GUILayout.Button($"Skip {challenge}"))
+                {
+                    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Skip {challenge}");
+                    archipelagoWindow.SkipChallenge(challenge);
+                }
+            }
+
+            if (GUILayout.Button("Complete all Locations"))
+            {
+                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Completion");
+                GetComponent<ArchipelagoController>().GoalAchieved();
             }
 
             GUILayout.EndHorizontal();

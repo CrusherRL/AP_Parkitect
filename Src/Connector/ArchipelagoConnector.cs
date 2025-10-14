@@ -2,6 +2,7 @@
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
+using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Config;
 using System;
 using System.Threading;
@@ -71,7 +72,7 @@ namespace ArchipelagoMod.Src.Connector
                         ? this.ParkitectAPConfig.Address
                         : protocol + this.ParkitectAPConfig.Address;
 
-                    Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] -> fullHost {fullHost}");
+                    Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] fullHost {fullHost}");
 
                     try
                     {
@@ -87,7 +88,7 @@ namespace ArchipelagoMod.Src.Connector
 
                         await newSession.ConnectAsync();
                         var result = await newSession.LoginAsync(this.Game, this.ParkitectAPConfig.Playername, ItemsHandlingFlags.AllItems, password: this.ParkitectAPConfig.Password);
-                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] -> LoginResult - {result.Successful}");
+                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] LoginResult - {result.Successful}");
 
                         if (!result.Successful)
                         {
@@ -97,7 +98,7 @@ namespace ArchipelagoMod.Src.Connector
 
                         if (result is LoginSuccessful success)
                         {
-                            Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] -> LoginSuccessful");
+                            Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] LoginSuccessful");
                             this.Session = newSession;
                             this._stopRetries = true;
                             this.OnConnected?.Invoke(success);
@@ -106,7 +107,7 @@ namespace ArchipelagoMod.Src.Connector
                     }
                     catch (Exception e)
                     {
-                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] -> OnConnectionFailed - (attempt {attempt}): {e.Message}");
+                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] OnConnectionFailed - (attempt {attempt}): {e.Message}");
                         Helper.Debug(e.StackTrace);
                         try
                         {
@@ -114,7 +115,7 @@ namespace ArchipelagoMod.Src.Connector
                         }
                         catch (Exception eventEx)
                         {
-                            Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] -> OnConnectionFailed - {eventEx.Source}");
+                            Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] OnConnectionFailed - {eventEx.Source}");
                         }
                     }
                     finally
@@ -203,8 +204,15 @@ namespace ArchipelagoMod.Src.Connector
 
             long locationId = item.LocationId;
             string locationName = this.Session?.Locations?.GetLocationNameFromId(locationId);
-            Helper.Debug($"[ArchipelagoConnector::OnReceivingItem] -> Got item '{itemName}' (ID {item.ItemId}) from location '{locationName}' (ID {locationId})");
+            Helper.Debug($"[ArchipelagoConnector::OnReceivingItem] Got item -> '{itemName}' (ID {item.ItemId}) from location '{locationName}' (ID {locationId})");
             this.OnItemReceived?.Invoke(itemName, item.ItemId, locationId);
+        }
+
+        public void GoalComplete()
+        {
+            StatusUpdatePacket statusUpdate = new StatusUpdatePacket();
+            statusUpdate.Status = ArchipelagoClientState.ClientGoal;
+            this.Session.Socket.SendPacket(statusUpdate);
         }
     }
 }

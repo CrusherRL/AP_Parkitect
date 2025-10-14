@@ -67,7 +67,7 @@ namespace ArchipelagoMod.Src.Challenges
 
         public string Text()
         {
-            return $"Have {this.Count} {this.GetShopOrAttractionName()} in your Park";
+            return $"Have {this.Count} '{this.GetShopOrAttractionName()}' in your Park";
         }
 
         public string SubText()
@@ -117,20 +117,13 @@ namespace ArchipelagoMod.Src.Challenges
                 thing = this.Type;
             }
 
-            string name = this.ParkitectController.GetSerializedFromPrefabs(thing);
-
-            if (this.Count > 1)
-            {
-                name += "'s";
-            }
-
-            return name;
+           return this.ParkitectController.GetSerializedFromPrefabs(thing);
         }
        
         public bool Check ()
         {
             Helper.Debug("[Challenge::Check]");
-            Helper.Debug($"[Challenge::Check] -> {this.PanelId}");
+            Helper.Debug($"[Challenge::Check] - {this.PanelId}");
             int lowestCount = this.Count;
             List<string> unsolvedList = new List<string>();
 
@@ -148,7 +141,7 @@ namespace ArchipelagoMod.Src.Challenges
 
                 if (lowestCount < this.Count)
                 {
-                    unsolvedList.Add($"Missing {this.Count - lowestCount}x { this.GetShopOrAttractionName() }");
+                    unsolvedList.Add($"Missing {this.Count - lowestCount}x '{ this.GetShopOrAttractionName() }'");
                 }
             }
             else if (this.Attraction != null)

@@ -1,4 +1,5 @@
 ﻿using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
@@ -64,6 +65,7 @@ namespace ArchipelagoMod.Src.Controller
 
         void OnDestroy ()
         {
+            this.ArchipelagoConnector.OnItemReceived -= this.OnReceivedItem;
             _ = this.ArchipelagoConnector.DisconnectAsync();
         }
 
@@ -109,7 +111,7 @@ namespace ArchipelagoMod.Src.Controller
 
             this.ArchipelagoConnector.OnReconnected += () => {
                 this.OnConnecting();
-                Helper.Debug($"[ArchipelagoController::Listen] -> OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000} seconds");
+                Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000} seconds");
             };
 
             // Won the Scenario :)
@@ -125,7 +127,7 @@ namespace ArchipelagoMod.Src.Controller
 
             if (!this.IsReady || this.IsProcessingPendingItems || this.PendingAPItems.Count > 0)
             {
-                Helper.Debug($"[ArchipelagoController::OnReceivedItem] -> Queue Item");
+                Helper.Debug($"[ArchipelagoController::OnReceivedItem] Queue Item");
                 this.PendingAPItems.Enqueue(AP_Item);
                 return;
             }
@@ -180,7 +182,7 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            Helper.Debug($"[ArchipelagoController::HandleItem] -> Handling Item - {AP_Item.Name}");
+            Helper.Debug($"[ArchipelagoController::HandleItem] Handling Item - {AP_Item.Name}");
             this.SaveData.SetUnlockedAPItem(AP_Item.ItemId);
             
             if (AP_Item.IsTrap)
@@ -228,16 +230,25 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            if (this.SaveData == null)
+            {
+                this.SaveData = GetComponent<SaveData>();
+            }
+
+            if (this.SaveData.HasFinished())
+            {
+                this.IsReady = true;
+                this.ProcessPendingLocations();
+                this.ProcessPendingItems();
+                this.GoalAchieved();
+                return;
+            }
+
             Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
 
             this.HandleChallenges();
             this.HandleScenario();
             this.HandleRules();
-            
-            if (this.SaveData == null)
-            {
-                this.SaveData = GetComponent<SaveData>();
-            }
 
             if (this.SaveData != null)
             {
@@ -474,13 +485,13 @@ namespace ArchipelagoMod.Src.Controller
                     this.SaveData.AddPendingLocation(id);
                 }
                 this.PendingLocations.Enqueue(id);
-                Helper.Debug($"[ArchipelagoController::CompleteLocation] -> no Session found - offline");
+                Helper.Debug($"[ArchipelagoController::CompleteLocation] no Session found - offline");
                 return true;
             }
 
             _ = this.ArchipelagoConnector.Session.Locations.CompleteLocationChecksAsync(id);
 
-            Helper.Debug($"[ArchipelagoController::CompleteLocation] -> CompleteLocation {id}");
+            Helper.Debug($"[ArchipelagoController::CompleteLocation] CompleteLocation {id}");
             return true;
         }
 
@@ -489,7 +500,8 @@ namespace ArchipelagoMod.Src.Controller
             Helper.Debug($"[ArchipelagoController::GoalAchieved]");
             this.ParkitectController.SendMessage($"Congratulations! You've won this Scenario. I hope you enjoyed the Game :)");
             this.ArchipelagoWindow.Finish();
-            this.ArchipelagoConnector.Session.SetGoalAchieved();
+
+            this.ArchipelagoConnector.GoalComplete();
         }
     }
 }

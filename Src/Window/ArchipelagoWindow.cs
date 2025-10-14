@@ -15,7 +15,6 @@ namespace ArchipelagoMod.Src.Window
         protected ArchipelagoController ArchipelagoController = null;
         protected List<Challenge> CurrentChallenges = new List<Challenge>();
         private List<Challenge> all_challenges = new List<Challenge>();
-        private bool finished = false;
 
         public float nextCheckTime = Time.time;
         public SaveData SaveData = null;
@@ -32,7 +31,7 @@ namespace ArchipelagoMod.Src.Window
             this.SetSpeedupButtons();
             this.ToggleActiveState();
 
-            Helper.Debug($"[ArchipelagoWindow::OnAwake] -> Booted");
+            Helper.Debug($"[ArchipelagoWindow::OnAwake] Booted");
         }
 
         // -----------------------------
@@ -58,19 +57,19 @@ namespace ArchipelagoMod.Src.Window
 
         public void SetChallenge(Challenge challenge)
         {
-            if (this.finished)
+            if (this.SaveData.HasFinished())
             {
                 return;
             }
 
-            Helper.Debug($"[ArchipelagoWindow::SetChallenge] -> {challenge.SerializedPanelId} - {challenge.PanelId}");
+            Helper.Debug($"[ArchipelagoWindow::SetChallenge] {challenge.SerializedPanelId} - {challenge.PanelId}");
             if (this.CurrentChallenges.Count >= 3)
             {
-                Helper.Debug($"[ArchipelagoWindow::SetChallenge] -> Can not add more Challenges!");
+                Helper.Debug($"[ArchipelagoWindow::SetChallenge] Can not add more Challenges!");
                 return;
             }
 
-            Helper.Debug($"[ArchipelagoWindow::SetChallenge] -> {challenge.SerializedPanelId} - {challenge.PanelId}");
+            Helper.Debug($"[ArchipelagoWindow::SetChallenge] {challenge.SerializedPanelId} - {challenge.PanelId}");
 
             this.CurrentChallenges.Add(challenge);
             this.SetChallengeListener(challenge);
@@ -83,7 +82,7 @@ namespace ArchipelagoMod.Src.Window
         {
             if (challenges.Count > 3)
             {
-                Helper.Debug($"[ArchipelagoWindow::SetChallenges] -> Can not add more then 3 Challenges!");
+                Helper.Debug($"[ArchipelagoWindow::SetChallenges] Can not add more then 3 Challenges!");
                 return;
             }
 
@@ -97,7 +96,7 @@ namespace ArchipelagoMod.Src.Window
         {
             if (!this.CurrentChallenges.Contains(challenge))
             {
-                Helper.Debug($"[ArchipelagoWindow::RemoveChallenge] -> Challenge can not be deleted - not found");
+                Helper.Debug($"[ArchipelagoWindow::RemoveChallenge] Challenge can not be deleted - not found");
                 return;
             }
 
@@ -120,19 +119,35 @@ namespace ArchipelagoMod.Src.Window
       
         public void RemoveChallenges(List<Challenge> challenges)
         {
-            foreach (Challenge challenge in challenges)
+            foreach (Challenge challenge in challenges.ToList())
             {
+                Helper.Debug($"[ArchipelagoWindow::RemoveChallenges] {challenge.PanelId}");
                 this.RemoveChallenge(challenge);
             }
         }
 
         public void Finish ()
         {
-            this.RemoveChallenges(this.CurrentChallenges);
+            Helper.Debug($"[ArchipelagoWindow::Finish]");
+
+            if (this.CurrentChallenges.Count > 0)
+            {
+                this.RemoveChallenges(this.CurrentChallenges);
+            }
+
+            if (this.SaveData != null)
+            {
+                this.SaveData.Finish();
+            }
         }
 
         public void NextChallenge (int finishedLocationId)
         {
+            if (this.SaveData.HasFinished())
+            {
+                return;
+            }
+
             Challenge challenge = this.all_challenges.Where(c => c.LocationId == finishedLocationId + 3).FirstOrDefault();
 
             if (challenge == null)
@@ -147,8 +162,6 @@ namespace ArchipelagoMod.Src.Window
         public void HandOver (List<Challenge> Challenges)
         {
             Helper.Debug($"[ArchipelagoWindow::HandOver]");
-            this.all_challenges = Challenges;
-
             this.SaveData = GetComponent<SaveData>();
 
             if (this.SaveData == null)
@@ -156,6 +169,13 @@ namespace ArchipelagoMod.Src.Window
                 this.ParkitectController.SendMessage("Something failed on the Handover from Archipelago");
                 return;
             }
+
+            if (this.SaveData.HasFinished())
+            {
+                return;
+            }
+
+            this.all_challenges = Challenges;
 
             List<int> locationIds = this.SaveData.GetChallenges();
             
@@ -171,7 +191,7 @@ namespace ArchipelagoMod.Src.Window
             List<int> deletable_location_ids = new List<int>();
             foreach (int locationId in locationIds)
             {
-                Helper.Debug($"[ArchipelagoWindow::HandOver] -> {locationId}");
+                Helper.Debug($"[ArchipelagoWindow::HandOver] {locationId}");
                 if (locationId >= 3)
                 {
                     int rest = locationId % 3;
@@ -218,6 +238,12 @@ namespace ArchipelagoMod.Src.Window
             this.NextChallenge(challenge.LocationId);
             this.SaveData.SetChallenges(this.CurrentChallenges);
             this.ArchipelagoController.CompleteLocation(challenge.LocationId, this.SaveData);
+        }
+
+        public void SkipChallenge (string challenge)
+        {
+            Challenge Challenge = this.CurrentChallenges.Where(c => c.SerializedPanelId == challenge).FirstOrDefault();
+            this.FinishChallenge(Challenge);
         }
 
         public Transform GetPanelChild(string serializedPanelId, string hierarchy = null)

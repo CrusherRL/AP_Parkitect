@@ -52,17 +52,17 @@ namespace ArchipelagoMod.Src.Config
 
                 if (string.IsNullOrWhiteSpace(self.Address))
                 {
-                    Helper.Debug("[ParkitectAPConfig::ParkitectAPConfig] -> Invalid address given.");
+                    Helper.Debug("[ParkitectAPConfig::ParkitectAPConfig] Invalid address given.");
                     return null;
                 }
 
-                Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] -> Using server={self.Address}:{self.Port} player={self.Playername}");
+                Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] Using server={self.Address}:{self.Port} player={self.Playername}");
                 return self;
             }
             catch (Exception ex)
             {
-                Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] -> Manual parse failed: {ex.Message}");
-                Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] -> JSON: {jsonData}");
+                Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] Manual parse failed: {ex.Message}");
+                Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] JSON: {jsonData}");
                 return null;
             }
         }

@@ -26,7 +26,7 @@ namespace ArchipelagoMod.Src.Controller
             this.UpdateResearchItems();
             Constants.ScenarioName = GameController.Instance.park.parkName;
             this.SaveData = GetComponent<SaveData>();
-            Helper.Debug($"[ParkitectController::Start] -> Booted");
+            Helper.Debug($"[ParkitectController::Start] Booted");
         }
 
         public void UpdateResearchItems ()
@@ -852,7 +852,7 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            Helper.Debug($"[ParkitectController::PlayerRedeemTrap] -> No Trap Handler found!");
+            Helper.Debug($"[ParkitectController::PlayerRedeemTrap] No Trap Handler found!");
         }
 
         public void SendMessage(string message, string secondaryMessage = "", bool silent = false, Notification.Type type = Notification.Type.DEFAULT)

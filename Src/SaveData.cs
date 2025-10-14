@@ -11,6 +11,8 @@ namespace ArchipelagoMod.Src
 {
     class SaveDataExport
     {
+        public bool finished = false;
+
         public List<int> current_challenges = new List<int>(); // our 3 current challenges
        
         public List<string> unlocked_items { get; set; } = new List<string>(); // Prefab name of the Attraction/Shop we received
@@ -48,11 +50,10 @@ namespace ArchipelagoMod.Src
             this.ParkitectController.PlayerRemoveAllRides();
             this.ParkitectController.PlayerRemoveAllStalls();
 
-            Helper.Debug($"[SaveData::Update] set new SaveDataExport");
+            Helper.Debug($"[SaveData::Update]");
             this.SaveDataExport = new SaveDataExport();
 
             this.SaveDataExport = SaveData.Load();
-            Helper.Debug($"[SaveData::Update] - " + this.SaveDataExport.ToString());
 
             if (this.SaveDataExport != null)
             {
@@ -189,6 +190,20 @@ namespace ArchipelagoMod.Src
             string json = File.ReadAllText(filePath);
 
             return JsonConvert.DeserializeObject<SaveDataExport>(json);
+        }
+
+        public bool HasFinished ()
+        {
+            if (this.SaveDataExport == null)
+            {
+                return false;
+            }
+            return this.SaveDataExport.finished;
+        }
+        public void Finish()
+        {
+            this.SaveDataExport.finished = true;
+            this.Save();
         }
     }
 }
