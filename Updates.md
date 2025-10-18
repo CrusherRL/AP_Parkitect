@@ -16,7 +16,7 @@
 - Show result as Notification
 
 ## Debugger Window
-- Minimize it
+- Minimize it - Done
 
 ## Archipelago Window
 - Fadings for Challenges

@@ -1,11 +1,11 @@
 ﻿using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
 using ArchipelagoMod.Src.SlotData;
 using ArchipelagoMod.Src.Window;
 using Newtonsoft.Json;
+using Parkitect.UI;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -99,6 +99,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.OnConnected();
                 this.SlotData = success.SlotData;
                 this.Handle();
+                this.MakeChat();
             };
 
             this.ArchipelagoConnector.OnConnectionFailed += () => {
@@ -111,13 +112,18 @@ namespace ArchipelagoMod.Src.Controller
 
             this.ArchipelagoConnector.OnReconnected += () => {
                 this.OnConnecting();
-                Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000} seconds");
+                Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000 } seconds");
             };
 
             // Won the Scenario :)
             EventManager.Instance.OnScenarioWon += this.GoalAchieved;
 
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
+        }
+
+        private void MakeChat ()
+        {
+            //GameController.Instance.
         }
 
         private void OnReceivedItem (string prefabItem, long itemId, long locationId)
@@ -188,19 +194,14 @@ namespace ArchipelagoMod.Src.Controller
             if (AP_Item.IsTrap)
             {
                 this.ParkitectController.PlayerRedeemTrap(AP_Item);
+                return;
             }
-            else if (!this.ParkitectController.PlayerHasUnlockedItem(AP_Item))
+            
+            if (!this.ParkitectController.PlayerHasUnlockedItem(AP_Item))
             {
                 this.ParkitectController.PlayerUnlockItem(AP_Item);
                 this.ParkitectController.SendMessage($"You Received: \"{AP_Item.SerializedName}\"");
             }
-
-            if (AP_Item.LocationId < 0)
-            {
-                return;
-            }
-
-            this.ArchipelagoWindow.NextChallenge(AP_Item.LocationId);
         }
 
         public void OnDisconnect ()

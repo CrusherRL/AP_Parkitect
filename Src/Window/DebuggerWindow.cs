@@ -93,9 +93,8 @@ namespace ArchipelagoMod.Src.Window
             this.DrawWeatherOptions();
             this.DrawAttractionOptions();
             this.DrawStallOptions();
-            this.DrawScenarioOptions();
             this.DrawTraps();
-            this.DrawTestingOptions();
+            this.DrawChallengeOptions();
         }
 
         // -----------------------------
@@ -153,9 +152,20 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
 
+            foreach (int kills in Constants.Guest.KillOptions)
+            {
+                if (GUILayout.Button("Kill " + kills))
+                {
+                    Controller.PlayerKillGuests(kills);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
             foreach (int money in Constants.Guest.MoneyOptions)
             {
-                if (GUILayout.Button("Add $" + money))
+                if (GUILayout.Button("+ $" + money))
                 {
                     Controller.PlayerChangeGuestsMoney(money, 25f);
                 }
@@ -166,20 +176,9 @@ namespace ArchipelagoMod.Src.Window
 
             foreach (int money in Constants.Guest.MoneyOptions)
             {
-                if (GUILayout.Button("Remove $" + money))
+                if (GUILayout.Button("- $" + money))
                 {
                     Controller.PlayerChangeGuestsMoney(money, 25f, "-");
-                }
-            }
-
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-
-            foreach (int kills in Constants.Guest.KillOptions)
-            {
-                if (GUILayout.Button("Kill " + kills))
-                {
-                    Controller.PlayerKillGuests(kills);
                 }
             }
 
@@ -244,12 +243,12 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Set staff tired"))
+            if (GUILayout.Button("Tired"))
             {
                 Controller.PlayerSetEmployeesTired(Controller.GetParkEmployees(Constants.Employee.TirednessRanges[0]));
             }
 
-            if (GUILayout.Button("Set staff training"))
+            if (GUILayout.Button("Training"))
             {
                 Controller.PlayerSetEmployeesTraining(Controller.GetParkEmployees(Constants.Employee.TrainingRanges[0]));
             }
@@ -294,26 +293,21 @@ namespace ArchipelagoMod.Src.Window
             this.SetLabel("Attractions:");
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Break random attraction"))
+            if (GUILayout.Button("Break random"))
             {
                 List<Attraction> attractions = Randomizer.GetRandomAttractionFromPark(20f);
 
                 Controller.PlayerBreakAttractions(attractions);
             }
 
-            if (GUILayout.Button("Remove all rides"))
+            if (GUILayout.Button("Remove all Rides"))
             {
                 Controller.PlayerRemoveAllRides();
             }
 
-            if (GUILayout.Button("Add all rides"))
+            if (GUILayout.Button("Add all Rides"))
             {
                 Controller.PlayerAddAllRides();
-            }
-
-            if (GUILayout.Button("Add Coaster: AcceleratorCoaster"))
-            {
-                Controller.PlayerAddAttraction(Prefabs.AcceleratorCoaster);
             }
 
             if (GUILayout.Button("Add Free-Ride Voucher"))
@@ -335,33 +329,28 @@ namespace ArchipelagoMod.Src.Window
             this.SetLabel("Shops:");
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Re-delievery Shops"))
+            if (GUILayout.Button("Re-deliver Shops"))
             {
                 List<ProductShop> productShops = Randomizer.GetRandomProductShopsFromPark(50f);
 
                 Controller.PlayerSetReDeliveryForProductShops(productShops);
             }
 
-            if (GUILayout.Button("Cleanup shops"))
+            if (GUILayout.Button("Cleanup Shops"))
             {
                 List<ProductShop> productShops = Randomizer.GetRandomProductShopsFromPark(50f);
 
                 Controller.PlayerSetCleanShopJob(productShops);
             }
 
-            if (GUILayout.Button("Remove all stalls"))
+            if (GUILayout.Button("Remove all Shops"))
             {
                 Controller.PlayerRemoveAllStalls();
             }
 
-            if (GUILayout.Button("Add all stalls"))
+            if (GUILayout.Button("Add all Shops"))
             {
                 Controller.PlayerAddAllStalls();
-            }
-
-            if (GUILayout.Button("Add Stall: BubbleTeaStall"))
-            {
-                Controller.PlayerAddStall(Prefabs.BubbleTeaStall);
             }
 
             if (GUILayout.Button("Add Product Voucher"))
@@ -378,45 +367,61 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
         }
 
-        public void DrawScenarioOptions ()
+        public void DrawTraps()
         {
-            this.SetLabel("Scenario:");
+            this.SetLabel("Attraction and Shop Traps:");
             GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Scenario Goal 1 - 1009 Guests"))
+            foreach (string trap in Constants.Trap.Attraction)
             {
-                GuestsInParkGoal guestsInParkGoal = new GuestsInParkGoal();
-                guestsInParkGoal.value = 1009;
-
-                //GameController.Instance.park.scenario.goals.addGoal(guestsInParkGoal);
-                Controller.PlayerAddScenarioGoal(guestsInParkGoal);
+                if (GUILayout.Button(trap))
+                {
+                    Helper.Debug($"executing {trap}");
+                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
+                    this.Controller.PlayerRedeemTrap(AP_Item);
+                }
             }
 
-            if (GUILayout.Button("Scenario Goal 2 - 1009 Guests -> reward: Experience"))
+            foreach (string trap in Constants.Trap.Shop)
             {
-                GuestsInParkGoal guestsInParkGoal = new GuestsInParkGoal();
-                guestsInParkGoal.value = 1009;
-
-                UnlockResearchReward reward = new UnlockResearchReward();
-                string ride = Constants.Attraction.All.Where(r => r == "ExperienceRide").First();
-                reward.optionIndex = Controller.GetResearchItem(ride).Index;
-
-                List<IScenarioGoalReward> rewards = new List<IScenarioGoalReward>();
-                rewards.Add(reward);
-
-                Controller.PlayerAddScenarioGoal(guestsInParkGoal, rewards);
+                if (GUILayout.Button(trap))
+                {
+                    Helper.Debug($"executing {trap}");
+                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
+                    this.Controller.PlayerRedeemTrap(AP_Item);
+                }
             }
 
             GUILayout.EndHorizontal();
-        }
+            this.SetLabel("Player and Employee Traps:");
+            GUILayout.BeginHorizontal();
 
-        public void DrawTraps()
-        {
-            this.SetLabel("Traps");
+            foreach (string trap in Constants.Trap.Player)
+            {
+                if (GUILayout.Button(trap))
+                {
+                    Helper.Debug($"executing {trap}");
+                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
+                    this.Controller.PlayerRedeemTrap(AP_Item);
+                }
+            }
+
+            foreach (string trap in Constants.Trap.Employee)
+            {
+                if (GUILayout.Button(trap))
+                {
+                    Helper.Debug($"executing {trap}");
+                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
+                    this.Controller.PlayerRedeemTrap(AP_Item);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            this.SetLabel("Guest Traps:");
             GUILayout.BeginHorizontal();
             int i = 0;
 
-            foreach (string trap in Constants.Trap.All)
+            foreach (string trap in Constants.Trap.Guest)
             {
                 if (i % 5 == 0)
                 {
@@ -431,13 +436,38 @@ namespace ArchipelagoMod.Src.Window
                     this.Controller.PlayerRedeemTrap(AP_Item);
                 }
 
-                i++;
+                i += 1;
             }
 
             GUILayout.EndHorizontal();
         }
 
-        public void DrawTestingOptions ()
+        public void DrawChallengeOptions()
+        {
+            this.SetLabel("Challenges:");
+            GUILayout.BeginHorizontal();
+
+            string[] challenges = new string[3] { "Challenge 1", "Challenge 2", "Challenge 3" };
+            foreach (string challenge in challenges)
+            {
+                ArchipelagoWindow archipelagoWindow = GetComponent<ArchipelagoWindow>();
+                if (GUILayout.Button($"Skip {challenge}"))
+                {
+                    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Skip {challenge}");
+                    archipelagoWindow.SkipChallenge(challenge);
+                }
+            }
+
+            if (GUILayout.Button("Complete all Locations"))
+            {
+                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Completion");
+                GetComponent<ArchipelagoController>().GoalAchieved();
+            }
+
+            GUILayout.EndHorizontal();
+        }
+     
+        public void DrawTestingOptions()
         {
             this.SetLabel("Testing:");
             GUILayout.BeginHorizontal();
@@ -461,26 +491,6 @@ namespace ArchipelagoMod.Src.Window
                 Helper.Debug("===================================");
                 Helper.Debug("===================================");
                 Helper.Debug("===================================");
-            }
-
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-
-            string[] challenges = new string[3] { "Challenge 1", "Challenge 2", "Challenge 3" };
-            foreach (string challenge in challenges)
-            {
-                ArchipelagoWindow archipelagoWindow = GetComponent<ArchipelagoWindow>();
-                if (GUILayout.Button($"Skip {challenge}"))
-                {
-                    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Skip {challenge}");
-                    archipelagoWindow.SkipChallenge(challenge);
-                }
-            }
-
-            if (GUILayout.Button("Complete all Locations"))
-            {
-                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Completion");
-                GetComponent<ArchipelagoController>().GoalAchieved();
             }
 
             GUILayout.EndHorizontal();
