@@ -130,7 +130,7 @@ To complete:
 | **Other Mods** | ⚙️ Tested with **Perspective Camera** | No major conflicts observed |
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |
-| **Archipelago Multigame** | ⚠️ Not Tested | will Test is, should work xD |
+| **Archipelago Multigame** | ✅ Stable |  |
 
 > 💡 If you test the mod on other systems or with different mods, please share your results via GitHub or Discord to help expand this table!
 

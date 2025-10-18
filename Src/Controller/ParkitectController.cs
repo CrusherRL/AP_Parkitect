@@ -538,14 +538,17 @@ namespace ArchipelagoMod.Src.Controller
             {
                 foreach (ProductShop productShop in productShops)
                 {
-                    GameController.Instance.park.resetDeliveriesFor(productShop);
                     foreach (Product product in productShop.selectedProducts)
                     {
                         foreach (Ingredient ingredient in product.ingredients)
                         {
-                            GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
+                            productShop.stock.modify(ingredient.resource, productShop.stock.getAmount(ingredient.resource) * -1);
+                            //productShop.stock.resourceNameContentAssoc =
+                            //GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
                         }
                     }
+
+                    productShop.checkOrderIngredients();
                 }
             });
         }
