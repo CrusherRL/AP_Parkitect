@@ -4,6 +4,7 @@ using ArchipelagoMod.Src.SlotData;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Window
 {
@@ -376,9 +377,7 @@ namespace ArchipelagoMod.Src.Window
             {
                 if (GUILayout.Button(trap))
                 {
-                    Helper.Debug($"executing {trap}");
-                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
-                    this.Controller.PlayerRedeemTrap(AP_Item);
+                    this.FakeRedeemTrap(trap);
                 }
             }
 
@@ -386,9 +385,7 @@ namespace ArchipelagoMod.Src.Window
             {
                 if (GUILayout.Button(trap))
                 {
-                    Helper.Debug($"executing {trap}");
-                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
-                    this.Controller.PlayerRedeemTrap(AP_Item);
+                    this.FakeRedeemTrap(trap);
                 }
             }
 
@@ -400,9 +397,7 @@ namespace ArchipelagoMod.Src.Window
             {
                 if (GUILayout.Button(trap))
                 {
-                    Helper.Debug($"executing {trap}");
-                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
-                    this.Controller.PlayerRedeemTrap(AP_Item);
+                    this.FakeRedeemTrap(trap);
                 }
             }
 
@@ -410,9 +405,7 @@ namespace ArchipelagoMod.Src.Window
             {
                 if (GUILayout.Button(trap))
                 {
-                    Helper.Debug($"executing {trap}");
-                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
-                    this.Controller.PlayerRedeemTrap(AP_Item);
+                    this.FakeRedeemTrap(trap);
                 }
             }
 
@@ -431,9 +424,7 @@ namespace ArchipelagoMod.Src.Window
 
                 if (GUILayout.Button(trap))
                 {
-                    Helper.Debug($"executing {trap}");
-                    AP_Item AP_Item = AP_Item.Init(trap, -1, -1);
-                    this.Controller.PlayerRedeemTrap(AP_Item);
+                    this.FakeRedeemTrap(trap);
                 }
 
                 i += 1;
@@ -454,7 +445,7 @@ namespace ArchipelagoMod.Src.Window
                 if (GUILayout.Button($"Skip {challenge}"))
                 {
                     Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Skip {challenge}");
-                    archipelagoWindow.SkipChallenge(challenge);
+                    archipelagoWindow.SkipChallenge(challenge, true);
                 }
             }
 
@@ -494,6 +485,13 @@ namespace ArchipelagoMod.Src.Window
             }
 
             GUILayout.EndHorizontal();
+        }
+
+        private void FakeRedeemTrap(string trap)
+        {
+            Helper.Debug($"executing {trap}");
+            AP_Item AP_Item = AP_Item.Init(trap, Constants.Playername, -1);
+            this.Controller.PlayerRedeemTrap(AP_Item);
         }
 
         protected void SetLabel(string label, bool newLineAfter = true)

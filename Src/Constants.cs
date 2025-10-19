@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace ArchipelagoMod.Src
 {
@@ -8,6 +9,7 @@ namespace ArchipelagoMod.Src
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
+        public static string Playername = null;
         public static int ArchipelagoBaseId = 3000000;
 		public static string ParkitectAPFilename = "config_parkitect.json";
 		public static string ParkitectAPFolder = "Parkitect_Archipelago";
@@ -145,6 +147,7 @@ namespace ArchipelagoMod.Src
             Constants.Trap.All,
             Constants.Attraction.Types,
             Constants.Stall.Types,
+            Constants.Skips.Types
         })
             .SelectMany(a => a).ToArray();
 
@@ -902,5 +905,10 @@ namespace ArchipelagoMod.Src
                 { 1, "Archipelago - Dusty Ridge Ranch" }
             };
 		}
+
+        public static class Skips
+        {
+            public static string[] Types = { "Skip" };
+        }
     }
 }

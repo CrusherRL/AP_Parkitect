@@ -43,6 +43,7 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            Constants.Playername = this.ParkitectAPConfig.Playername;
             this.ArchipelagoWindow = GetComponent<ArchipelagoWindow>();
 
             if (!this.ParkitectController.PlayerIsInCorrectMode())
@@ -126,10 +127,16 @@ namespace ArchipelagoMod.Src.Controller
             //GameController.Instance.
         }
 
-        private void OnReceivedItem (string prefabItem, long itemId, long locationId)
+        private void OnReceivedItem (string itemName, string player, long locationId)
         {
-            string serializedName = this.ParkitectController.GetSerializedFromPrefabs(prefabItem);
-            AP_Item AP_Item = AP_Item.Init(prefabItem, itemId, locationId, serializedName);
+            if (this.SaveData != null && this.SaveData.HasUnlockedAPLocation(locationId))
+            {
+                Helper.Debug($"[SaveData::HasUnlockedAPItem] true");
+                return;
+            }
+
+            string serializedName = this.ParkitectController.GetSerializedFromPrefabs(itemName);
+            AP_Item AP_Item = AP_Item.Init(itemName, player, locationId, serializedName);
 
             if (!this.IsReady || this.IsProcessingPendingItems || this.PendingAPItems.Count > 0)
             {
@@ -183,24 +190,32 @@ namespace ArchipelagoMod.Src.Controller
 
         private void HandleItem(AP_Item AP_Item)
         {
-            if (this.SaveData.HasUnlockedAPItem(AP_Item.ItemId))
+            if (this.SaveData.HasUnlockedAPLocation(AP_Item.LocationId))
             {
                 return;
             }
 
             Helper.Debug($"[ArchipelagoController::HandleItem] Handling Item - {AP_Item.Name}");
-            this.SaveData.SetUnlockedAPItem(AP_Item.ItemId);
-            
+            this.SaveData.SetUnlockedAPLocation(AP_Item.LocationId);
+
+            if (AP_Item.IsSkip)
+            {
+                this.ParkitectController.SendMessage(AP_Item.Message());
+                this.SaveData.IncreaseSkip();
+                this.ArchipelagoWindow.UpdateSkipText();
+                return;
+            }
+
             if (AP_Item.IsTrap)
             {
                 this.ParkitectController.PlayerRedeemTrap(AP_Item);
                 return;
             }
-            
+
             if (!this.ParkitectController.PlayerHasUnlockedItem(AP_Item))
             {
                 this.ParkitectController.PlayerUnlockItem(AP_Item);
-                this.ParkitectController.SendMessage($"You Received: \"{AP_Item.SerializedName}\"");
+                this.ParkitectController.SendMessage(AP_Item.Message());
             }
         }
 

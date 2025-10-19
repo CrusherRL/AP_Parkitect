@@ -7,9 +7,11 @@
 - Fix issue with closing socket
 - Fix error with newtonsoft
 
-## Skips
+## Speedup Options
 - Add as items (5x, 7x ,9x)
-- Show skips in Archipelago Window
+
+## Skips
+- Show skips in Archipelago Window - Done
 
 ## Text Input
 - Make Archipelago commands available
@@ -24,3 +26,6 @@
 
 ## Constants Trap Texts
 - Improve texts by it truth
+
+## Pending items
+- fix queue that file violation wont appear
