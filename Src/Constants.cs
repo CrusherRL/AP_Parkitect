@@ -153,7 +153,7 @@ namespace ArchipelagoMod.Src
 
         public static class Player
         {
-			public static int[] SpeedupOptions = { 5, 7, 9 };
+			public static int[] SpeedupOptions = { 4, 5, 6, 7, 8, 9 };
 			public static float[] MoneyOptions = { 1000f, 2000f, 3000f, 4000f, 5000f, 10000f };
 		}
 	

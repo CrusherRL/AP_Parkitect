@@ -14,6 +14,8 @@ namespace ArchipelagoMod.Src.SlotData
 
         public bool IsSkip = false;
 
+        public bool IsSpeedup = false;
+
         public static AP_Item Init (string name, string Playername, long locationId, string serializedName = "")
         {
             AP_Item self = new AP_Item ();
@@ -24,8 +26,9 @@ namespace ArchipelagoMod.Src.SlotData
             self.LocationId = (int)locationId - Constants.ArchipelagoBaseId;
             self.IsTrap = Constants.Trap.All.Contains(self.Name);
             self.IsSkip = name == "Skip";
+            self.IsSpeedup = name == "Progressive Speed";
 
-            if (!self.IsTrap && !self.IsSkip)
+            if (!self.IsTrap && !self.IsSkip && !self.IsSpeedup)
             {
                 self.PrefabName = Helper.GetPrefabsFromString(self.Name);
             }
@@ -43,6 +46,11 @@ namespace ArchipelagoMod.Src.SlotData
             if (this.IsSkip)
             {
                 return $"You Received a Skip{this.FromPlayerMessage()}. Use it wisely!";
+            }
+
+            if (this.IsSpeedup)
+            {
+                return $"Your Speedup increased{this.FromPlayerMessage()}";
             }
 
             return $"You Received \"{this.SerializedName}\"{this.FromPlayerMessage()}";

@@ -28,3 +28,6 @@
 
 ## Pending items
 - fix queue that file violation wont appear -> Done
+
+## Excluded Items and all the stuff
+- needs to be handled

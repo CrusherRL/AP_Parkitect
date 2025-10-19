@@ -1,11 +1,13 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static MoneyLabelMerger.MoneyLabel;
 using static UnityEngine.UIElements.VisualElement;
 
 namespace ArchipelagoMod.Src.Window
@@ -261,6 +263,28 @@ namespace ArchipelagoMod.Src.Window
             this.GetChild("Frame/Body/Footer/Skip List/Count").GetComponent<TextMeshProUGUI>().text = this.SaveData.GetSkipCount().ToString();
         }
 
+        public void UpdateSpeedups()
+        {
+            int maxSpeed = this.SaveData.GetMaxSpeedup();
+
+            if (maxSpeed == -1)
+            {
+                foreach (int speed in Constants.Player.SpeedupOptions)
+                {
+                    this.EnableSpeedupButton(speed);
+                }
+                return;
+            }
+      
+            this.EnableSpeedupButton(maxSpeed);
+        }
+
+        public void EnableSpeedupButton(int id)
+        {
+            string buttonList = "Frame/Body/Footer/Speedup List/Button List";
+            this.GetChild($"{buttonList}/Speed {id}").GetComponent<Button>().interactable = true;
+        }
+
         private void OnChallengeSkip(Challenge challenge)
         {
             this.SkipChallenge(challenge);
@@ -318,12 +342,16 @@ namespace ArchipelagoMod.Src.Window
             return this.GetChild($"Frame/Body/List/{serializedPanelId}{hierarchy}");
         }
 
-        private void SetSpeedupButtons ()
+        private void SetSpeedupButtons()
         {
             string buttonList = "Frame/Body/Footer/Speedup List/Button List";
-            this.GetChild($"{ buttonList }/Speed 5").GetComponent<Button>().onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(5); });
-            this.GetChild($"{ buttonList }/Speed 7").GetComponent<Button>().onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(7); });
-            this.GetChild($"{ buttonList }/Speed 9").GetComponent<Button>().onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(9); });
+
+            foreach(int speed in Constants.Player.SpeedupOptions)
+            {
+                Button btn = this.GetChild($"{buttonList}/Speed {speed}").GetComponent<Button>();
+                btn.interactable = false;
+                btn.onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(speed); });
+            }
         }
     }
 }

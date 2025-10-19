@@ -206,6 +206,14 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            if (AP_Item.IsSpeedup)
+            {
+                this.ParkitectController.SendMessage(AP_Item.Message());
+                this.SaveData.IncreaseMaxSpeedup();
+                this.ArchipelagoWindow.UpdateSpeedups();
+                return;
+            }
+
             if (AP_Item.IsTrap)
             {
                 this.ParkitectController.PlayerRedeemTrap(AP_Item);
@@ -425,6 +433,14 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             this.ParkitectController.AP_Rules = AP_Rules.Init(goalData);
+
+            if (this.ParkitectController.AP_Rules.progressive_speedups == 1)
+            {
+                this.SaveData.InitMaxSpeedup();
+                return;
+            }
+
+            this.ArchipelagoWindow.UpdateSpeedups();
         }
     
         private void HandleChallenges ()

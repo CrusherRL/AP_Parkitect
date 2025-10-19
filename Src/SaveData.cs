@@ -15,6 +15,8 @@ namespace ArchipelagoMod.Src
 
         public int available_skips = 5;
 
+        public int max_speedup = -1; // -1 is always false -> no progressive speedup. 3 or more meant to be max speedup with progressive speedup
+
         public List<int> current_challenges = new List<int>(); // our 3 current challenges
        
         public List<string> unlocked_items { get; set; } = new List<string>(); // Prefab name of the Attraction/Shop we received
@@ -81,10 +83,7 @@ namespace ArchipelagoMod.Src
 
         public List<int> GetChallenges()
         {
-            if (this.SaveDataExport == null)
-            {
-                this.SaveDataExport = new SaveDataExport();
-            }
+            this._help();
             return this.SaveDataExport.current_challenges;
         }
 
@@ -95,10 +94,7 @@ namespace ArchipelagoMod.Src
 
         public void SetChallenges(List<int> challenges)
         {
-            if (this.SaveDataExport == null)
-            {
-                this.SaveDataExport = new SaveDataExport();
-            }
+            this._help();
             this.SaveDataExport.current_challenges = challenges;
             this.Save();
         }
@@ -110,10 +106,7 @@ namespace ArchipelagoMod.Src
 
         public bool HasUnlockedItem(string PrefabName)
         {
-            if (this.SaveDataExport == null)
-            {
-                this.SaveDataExport = new SaveDataExport();
-            }
+            this._help();
             return this.SaveDataExport.unlocked_items.Contains(PrefabName);
         }
 
@@ -124,20 +117,14 @@ namespace ArchipelagoMod.Src
 
         public void AddUnlockedItem(string name)
         {
-            if (this.SaveDataExport.unlocked_items.Contains(name))
-            {
-                return;
-            }
+            this._help();
             this.SaveDataExport.unlocked_items.Add(name);
             this.Save();
         }
         
         public bool HasUnlockedAPLocation(long id)
         {
-            if (this.SaveDataExport == null)
-            {
-                this.SaveDataExport = new SaveDataExport();
-            }
+            this._help();
             return this.SaveDataExport.unlocked_locations.Contains(id);
         }
 
@@ -155,10 +142,7 @@ namespace ArchipelagoMod.Src
 
         public List<long> GetPendingLocations()
         {
-            if (this.SaveDataExport == null)
-            {
-                this.SaveDataExport = new SaveDataExport();
-            }
+            this._help();
             return this.SaveDataExport.pending_locations;
         }
 
@@ -169,27 +153,58 @@ namespace ArchipelagoMod.Src
 
         public void IncreaseSkip()
         {
+            this._help();
             this.SaveDataExport.available_skips += 1;
             this.Save();
         }
+      
         public bool HasSkipsLeft()
         {
             return this.GetSkipCount() > 0;
         }
+       
         public void DecreaseSkip()
         {
-            Helper.Debug("DecreaseSkip");
             this.SaveDataExport.available_skips -= 1;
             this.Save();
         }
 
         public int GetSkipCount()
         {
+            this._help();
+            return this.SaveDataExport.available_skips;
+        }
+
+        public void IncreaseMaxSpeedup()
+        {
+            this._help();
+            this.SaveDataExport.max_speedup += 1;
+            this.Save();
+        }
+        public int GetMaxSpeedup()
+        {
+            this._help();
+            return this.SaveDataExport.max_speedup;
+        }
+
+        public void InitMaxSpeedup()
+        {
+            // this method only gets called when progressive speedup option is used
+            // -1 is means no progressive speedup
+            if (this.GetMaxSpeedup() >= 3)
+            {
+                return;
+            }
+
+            this.SaveDataExport.max_speedup = 3;
+        }
+
+        private void _help()
+        {
             if (this.SaveDataExport == null)
             {
                 this.SaveDataExport = new SaveDataExport();
             }
-            return this.SaveDataExport.available_skips;
         }
 
         public void Save()

@@ -10,6 +10,10 @@ namespace ArchipelagoMod.Src.SlotData
         // option_mixed = 2
         public int guests_money_flux { get; set; } = 2;
 
+        // option_no= 0
+        // option_yes = 1
+        public int progressive_speedups { get; set; } = 0;
+
         // easy = 0
         // medium = 1
         // hard = 2
