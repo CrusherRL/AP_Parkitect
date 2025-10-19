@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -8,6 +7,8 @@ namespace ArchipelagoMod.Src
 {
     class Helper
     {
+        private static readonly object fileLock = new object();
+    
         public static bool IsRange(List<(int Start, int End)> ranges, (int Start, int End) range)
         {
             return ranges.Any(v => v.Start == range.Start && v.End == range.End);
@@ -28,11 +29,17 @@ namespace ArchipelagoMod.Src
 
             if (append)
             {
-                File.AppendAllText(filePath, content + "\n");
+                lock (fileLock)
+                {
+                    File.AppendAllText(filePath, content + "\n");
+                }
                 return;
             }
 
-            File.WriteAllText(filePath, content + "\n");
+            lock (fileLock)
+            {
+                File.WriteAllText(filePath, content + "\n");
+            }
         }
 
         public static Color ConvertFromHex(string hex)

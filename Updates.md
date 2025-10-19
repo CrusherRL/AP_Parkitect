@@ -27,4 +27,4 @@
 - Improve texts by it truth -> Done
 
 ## Pending items
-- fix queue that file violation wont appear
+- fix queue that file violation wont appear -> Done

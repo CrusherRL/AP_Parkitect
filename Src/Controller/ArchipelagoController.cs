@@ -251,6 +251,8 @@ namespace ArchipelagoMod.Src.Controller
                 this.SaveData = GetComponent<SaveData>();
             }
 
+            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
+        
             if (this.SaveData.HasFinished())
             {
                 this.IsReady = true;
@@ -260,10 +262,12 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
+            if (!this.HandleScenario())
+            {
+                return;
+            }
 
             this.HandleChallenges();
-            this.HandleScenario();
             this.HandleRules();
 
             if (this.SaveData != null)
@@ -283,7 +287,7 @@ namespace ArchipelagoMod.Src.Controller
             this.ProcessPendingLocations();
         }
     
-        private void HandleScenario ()
+        private bool HandleScenario ()
         {
             this.SlotData.TryGetValue("scenario", out object scenarioData);
             AP_Scenario Scenario = AP_Scenario.Init(scenarioData);
@@ -291,9 +295,9 @@ namespace ArchipelagoMod.Src.Controller
             if (!this.ParkitectController.PlayerIsInPark(Scenario.name))
             {
                 this.ParkitectController.SendMessage($"Park not recognized. Please load '{ Scenario.name }'");
-                _ = this.ArchipelagoConnector.DisconnectAsync();
                 this.OnDisconnect();
-                return;
+                this.OnDestroy();
+                return false;
             }
 
             Constants.ScenarioName = Scenario.name;
@@ -304,6 +308,8 @@ namespace ArchipelagoMod.Src.Controller
                 this.HandleGoals();
                 this.ParkitectController.SendMessage("Park is freshly started! All Shops and Attractions are removed for the Challenge", "Please save the game immediately to avoid data loss :)");
             }
+
+            return true;
         }
     
         private void HandleGoals ()
