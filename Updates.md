@@ -22,10 +22,9 @@
 
 ## Archipelago Window
 - Fadings for Challenges
-- Hotkey change through mod menu
 
 ## Constants Trap Texts
-- Improve texts by it truth
+- Improve texts by it truth -> Done
 
 ## Pending items
 - fix queue that file violation wont appear
