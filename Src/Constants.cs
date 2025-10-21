@@ -147,7 +147,8 @@ namespace ArchipelagoMod.Src
             Constants.Trap.All,
             Constants.Attraction.Types,
             Constants.Stall.Types,
-            Constants.Skips.Types
+            Constants.Skips.Types,
+            Constants.ProgressiveSpeed.Types,
         })
             .SelectMany(a => a).ToArray();
 
@@ -881,6 +882,11 @@ namespace ArchipelagoMod.Src
         public static class Skips
         {
             public static string[] Types = { "Skip" };
+        }
+
+        public static class ProgressiveSpeed
+        {
+            public static string[] Types = { "Progressive Speed" };
         }
     }
 }

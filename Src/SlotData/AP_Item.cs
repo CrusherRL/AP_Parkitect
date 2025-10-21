@@ -25,8 +25,12 @@ namespace ArchipelagoMod.Src.SlotData
             self.Playername = Playername;
             self.LocationId = (int)locationId - Constants.ArchipelagoBaseId;
             self.IsTrap = Constants.Trap.All.Contains(self.Name);
-            self.IsSkip = name == "Skip";
-            self.IsSpeedup = name == "Progressive Speed";
+            self.IsSkip = Constants.Skips.Types.Contains(self.Name);
+            self.IsSpeedup = Constants.ProgressiveSpeed.Types.Contains(self.Name);
+
+            Helper.Debug($"[AP_Item::Init] IsTrap - " + self.IsTrap);
+            Helper.Debug($"[AP_Item::Init] IsSkip - " + self.IsSkip);
+            Helper.Debug($"[AP_Item::Init] IsSpeedup - " + self.IsSpeedup);
 
             if (!self.IsTrap && !self.IsSkip && !self.IsSpeedup)
             {

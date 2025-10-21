@@ -120,6 +120,12 @@ namespace ArchipelagoMod.Src.Controller
                 Helper.Debug($"[ArchipelagoController::Listen] PacketReceived - {message}");
             };
 
+            this.ArchipelagoConnector.OnDisconnected += () =>
+            {
+                this.OnDisconnect();
+                this.ParkitectController.SendMessage("Lost Connection to Archipelago");
+            };
+
             // Won the Scenario :)
             EventManager.Instance.OnScenarioWon += this.GoalAchieved;
 

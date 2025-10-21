@@ -167,6 +167,14 @@ namespace ArchipelagoMod.Src.Connector
             session.Socket.PacketReceived += this.OnPacketReceived;
             session.Items.ItemReceived += this.OnReceivingItem;
         }
+        private void UnhookSessionEvents()
+        {
+            this.Session.Socket.SocketClosed -= this.OnSocketClosed;
+            this.Session.Socket.ErrorReceived -= this.OnErrorReceived;
+            this.Session.Socket.PacketReceived -= this.OnPacketReceived;
+            this.Session.Items.ItemReceived -= this.OnReceivingItem;
+            this.Session = null;
+        }
 
         private void OnSocketClosed(string reason)
         {
@@ -191,11 +199,15 @@ namespace ArchipelagoMod.Src.Connector
 
         private void OnErrorReceived(Exception e, string message)
         {
-            //this.OnDisconnected?.Invoke();
-            //Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.Message);
+            Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.Message);
 
-            //this.Session.Socket.ErrorReceived -= this.OnErrorReceived;
-            //this.Session = null;
+            if (e.Message.Contains("closed the WebSocket connection"))
+            {
+                this.UnhookSessionEvents();
+                _ = this.DisconnectAsync();
+                this.OnDisconnected?.Invoke();
+                _ = this.TryConnectWithRetries();
+            }
         }
 
         private void OnReceivingItem(IReceivedItemsHelper helper)
@@ -213,7 +225,6 @@ namespace ArchipelagoMod.Src.Connector
 
         private void OnPacketReceived(ArchipelagoPacketBase packet)
         {
-            Helper.Debug($"[ArchipelagoConnector::OnPacketReceived]");
             Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] " + packet.GetType().Name);
             if (packet is ChatPrintJsonPacket chatPrint)
             {
