@@ -5,7 +5,6 @@ using ArchipelagoMod.Src.Connector;
 using ArchipelagoMod.Src.SlotData;
 using ArchipelagoMod.Src.Window;
 using Newtonsoft.Json;
-using Parkitect.UI;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -100,7 +99,6 @@ namespace ArchipelagoMod.Src.Controller
                 this.OnConnected();
                 this.SlotData = success.SlotData;
                 this.Handle();
-                this.MakeChat();
             };
 
             this.ArchipelagoConnector.OnConnectionFailed += () => {
@@ -116,15 +114,16 @@ namespace ArchipelagoMod.Src.Controller
                 Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000 } seconds");
             };
 
+            this.ArchipelagoConnector.OnReceivedPacket += (string message) =>
+            {
+                this.ParkitectController.SendMessage("Archipelago Server", message);
+                Helper.Debug($"[ArchipelagoController::Listen] PacketReceived - {message}");
+            };
+
             // Won the Scenario :)
             EventManager.Instance.OnScenarioWon += this.GoalAchieved;
 
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
-        }
-
-        private void MakeChat ()
-        {
-            //GameController.Instance.
         }
 
         private void OnReceivedItem (string itemName, string player, long locationId)
@@ -531,6 +530,11 @@ namespace ArchipelagoMod.Src.Controller
 
             Helper.Debug($"[ArchipelagoController::CompleteLocation] CompleteLocation {id}");
             return true;
+        }
+
+        public void Speak (string message)
+        {
+            this.ArchipelagoConnector.ForwardSayPacket(message);
         }
 
         public void GoalAchieved ()

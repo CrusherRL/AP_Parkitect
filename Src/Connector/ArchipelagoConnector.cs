@@ -5,6 +5,7 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Config;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,6 +35,7 @@ namespace ArchipelagoMod.Src.Connector
         }
 
         // Events
+        public event Action<string> OnReceivedPacket;
         public event Action<string, string, long> OnItemReceived;
         public event Action OnDisconnected;
         public event Action OnReconnected;
@@ -162,6 +164,7 @@ namespace ArchipelagoMod.Src.Connector
         {
             session.Socket.SocketClosed += this.OnSocketClosed;
             session.Socket.ErrorReceived += this.OnErrorReceived;
+            session.Socket.PacketReceived += this.OnPacketReceived;
             session.Items.ItemReceived += this.OnReceivingItem;
         }
 
@@ -206,6 +209,37 @@ namespace ArchipelagoMod.Src.Connector
             string locationName = this.Session?.Locations?.GetLocationNameFromId(locationId);
             Helper.Debug($"[ArchipelagoConnector::OnReceivingItem] Got item -> '{itemName}' (ID {item.ItemId}) from location '{locationName}' (ID {locationId})");
             this.OnItemReceived?.Invoke(itemName, item.Player.Name, locationId);
+        }
+
+        private void OnPacketReceived(ArchipelagoPacketBase packet)
+        {
+            Helper.Debug($"[ArchipelagoConnector::OnPacketReceived]");
+            Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] " + packet.GetType().Name);
+            if (packet is ChatPrintJsonPacket chatPrint)
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is ChatPrintJsonPacket");
+                OnReceivedPacket?.Invoke(string.Join("", chatPrint.Data.Select(p => p.Text)));
+            }
+            else if (packet is PrintJsonPacket print)
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is PrintJsonPacket");
+                OnReceivedPacket?.Invoke(string.Join("", print.Data.Select(p => p.Text)));
+            }
+        }
+
+        public void ForwardSayPacket(string message)
+        {
+            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket]");
+            if (!this.IsConnected)
+            {
+                return;
+            }
+
+            SayPacket packet = new SayPacket();
+            packet.Text = message;
+
+            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket] SendPacket");
+            this.Session.Socket.SendPacket(packet);
         }
 
         public void GoalComplete()

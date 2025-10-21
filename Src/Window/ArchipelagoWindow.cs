@@ -1,14 +1,11 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static MoneyLabelMerger.MoneyLabel;
-using static UnityEngine.UIElements.VisualElement;
 
 namespace ArchipelagoMod.Src.Window
 {
@@ -33,6 +30,7 @@ namespace ArchipelagoMod.Src.Window
             this.ParkitectController = GetComponent<ParkitectController>();
             this.SetStatus(this.State, true);
             this.SetSpeedupButtons();
+            this.SetCLI();
             this.ToggleActiveState();
 
             Helper.Debug($"[ArchipelagoWindow::OnAwake] Booted");
@@ -352,6 +350,31 @@ namespace ArchipelagoMod.Src.Window
                 btn.interactable = false;
                 btn.onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(speed); });
             }
+        }
+
+        private void SetCLI()
+        {
+            TMP_InputField input = this.GetChild($"Frame/Body/CLI").GetComponent<TMP_InputField>();
+
+            if (input == null)
+            {
+                Helper.Debug("[ArchipelagoWindow::SetCLI] no input field");
+                return;
+            }
+
+            input.onSubmit.AddListener((string text) =>
+            {
+                if (this.ArchipelagoController == null)
+                {
+                    this.ArchipelagoController = GetComponent<ArchipelagoController>();
+                }
+
+                if (text.Length > 0)
+                {
+                    this.ArchipelagoController.Speak(text);
+                    input.text = string.Empty; // clear input field
+                }
+            });
         }
     }
 }
