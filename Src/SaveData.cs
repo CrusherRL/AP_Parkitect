@@ -225,14 +225,18 @@ namespace ArchipelagoMod.Src
         public static SaveDataExport Load()
         {
             Helper.Debug("[SaveData::Load]");
-            string json = File.ReadAllText(SaveData.GetFilePath()); 
-
-            if (string.IsNullOrEmpty(json))
+            try
             {
+                string json = File.ReadAllText(SaveData.GetFilePath());
+                if (string.IsNullOrEmpty(json))
+                {
+                    return new SaveDataExport();
+                }
+
+                return JsonConvert.DeserializeObject<SaveDataExport>(json);
+            } catch {
                 return new SaveDataExport();
             }
-
-            return JsonConvert.DeserializeObject<SaveDataExport>(json);
         }
 
         public bool HasFinished ()
