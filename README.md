@@ -114,8 +114,7 @@ To complete:
 
 | Issue | Description | Workaround |
 |--------|--------------|-------------|
-| Goal Achievement | Sometimes Archipelago or the mod might fail to send all items. | Open the Debugger Window and trigger the completion manually. |
-| Manual Goal Completion | Manually finishing the park or editing the data file won’t trigger goal completion. | Use the Debugger workaround above. |
+| Manual Goal Completion | Manually finishing the park or editing the data file won’t trigger goal completion. | Use the Debugger workaround. |
 | Possible Game Crashes | In rare cases, the game may crash. | Please report this on GitHub and attach both `debug.log` and `Player.log` (found in `...\AppData\LocalLow\Texel Raptor\Parkitect\`). |
 
 ---

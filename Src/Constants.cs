@@ -869,16 +869,6 @@ namespace ArchipelagoMod.Src
                 return textBlock.Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
             }
         }
-
-        public static class Scenario
-		{
-			public static Dictionary<int, string> Maps = new Dictionary<int, string>
-			{
-                { 0, "Archipelago - Lakeside Gardens" },
-                { 1, "Archipelago - Dusty Ridge Ranch" }
-            };
-		}
-
         public static class Skips
         {
             public static string[] Types = { "Skip" };
@@ -888,5 +878,17 @@ namespace ArchipelagoMod.Src
         {
             public static string[] Types = { "Progressive Speed" };
         }
+
+        public static class Scenario
+        {
+            public static Dictionary<int, string> Maps = new Dictionary<int, string>
+            {
+                { 0, "Archipelago - Lakeside Gardens" },
+                { 1, "Archipelago - Dusty Ridge Ranch" },
+                { 2, "Archipelago - The Broken Atoll" },
+                { 3, "Archipelago - Magma Falls" },
+            };
+        }
+
     }
 }
