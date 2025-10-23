@@ -114,8 +114,7 @@ To complete:
 
 | Issue | Description | Workaround |
 |--------|--------------|-------------|
-| Goal Achievement | Sometimes Archipelago or the mod might fail to send all items. | Open the Debugger Window and trigger the completion manually. |
-| Manual Goal Completion | Manually finishing the park or editing the data file won’t trigger goal completion. | Use the Debugger workaround above. |
+| Manual Goal Completion | Manually finishing the park or editing the data file won’t trigger goal completion. | Use the Debugger workaround. |
 | Possible Game Crashes | In rare cases, the game may crash. | Please report this on GitHub and attach both `debug.log` and `Player.log` (found in `...\AppData\LocalLow\Texel Raptor\Parkitect\`). |
 
 ---
@@ -130,7 +129,7 @@ To complete:
 | **Other Mods** | ⚙️ Tested with **Perspective Camera** | No major conflicts observed |
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |
-| **Archipelago Multigame** | ⚠️ Not Tested | will Test is, should work xD |
+| **Archipelago Multigame** | ✅ Stable |  |
 
 > 💡 If you test the mod on other systems or with different mods, please share your results via GitHub or Discord to help expand this table!
 

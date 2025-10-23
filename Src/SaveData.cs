@@ -13,11 +13,15 @@ namespace ArchipelagoMod.Src
     {
         public bool finished = false;
 
+        public int available_skips = 5;
+
+        public int max_speedup = -1; // -1 is always false -> no progressive speedup. 3 or more meant to be max speedup with progressive speedup
+
         public List<int> current_challenges = new List<int>(); // our 3 current challenges
        
         public List<string> unlocked_items { get; set; } = new List<string>(); // Prefab name of the Attraction/Shop we received
         
-        public List<long> unlocked_ap_items = new List<long>(); // AP Item that we already received
+        public List<long> unlocked_locations = new List<long>(); // Location Id's we received from the server
         
         public List<long> pending_locations = new List<long>(); // Challenge Locations that we were not able to send it to the server
     }
@@ -30,14 +34,11 @@ namespace ArchipelagoMod.Src
         private SaveDataExport SaveDataExport = null;
         private ParkitectController ParkitectController = null;
 
+        private bool Loaded = false;
+
         public void Update ()
         {
-            if (this.SaveDataExport != null)
-            {
-                return;
-            }
-
-            if (Constants.ScenarioName == null)
+            if (this.Loaded || Constants.ScenarioName == null)
             {
                 return;
             }
@@ -47,26 +48,30 @@ namespace ArchipelagoMod.Src
                 this.ParkitectController = GetComponent<ParkitectController>();
             }
 
+            this.Loaded = true;
+
             this.ParkitectController.PlayerRemoveAllRides();
             this.ParkitectController.PlayerRemoveAllStalls();
 
             Helper.Debug($"[SaveData::Update]");
-            this.SaveDataExport = new SaveDataExport();
-
             this.SaveDataExport = SaveData.Load();
 
-            if (this.SaveDataExport != null)
+            if (this.SaveDataExport == null)
             {
-                foreach (string thing in this.SaveDataExport.unlocked_items)
+                this.SaveDataExport = new SaveDataExport();
+                this.Save();
+                return;
+            }
+
+            foreach (string thing in this.SaveDataExport.unlocked_items)
+            {
+                if (Constants.Attraction.All.Contains(thing))
                 {
-                    if (Constants.Attraction.All.Contains(thing))
-                    {
-                        this.ParkitectController.PlayerAddAttraction(thing);
-                    }
-                    else if (Constants.Stall.All.Contains(thing))
-                    {
-                        this.ParkitectController.PlayerAddStall(thing);
-                    }
+                    this.ParkitectController.PlayerAddAttraction(thing);
+                }
+                else if (Constants.Stall.All.Contains(thing))
+                {
+                    this.ParkitectController.PlayerAddStall(thing);
                 }
             }
         }
@@ -78,10 +83,7 @@ namespace ArchipelagoMod.Src
 
         public List<int> GetChallenges()
         {
-            if (this.SaveDataExport == null)
-            {
-                return new List<int>();
-            }
+            this._help();
             return this.SaveDataExport.current_challenges;
         }
 
@@ -92,11 +94,7 @@ namespace ArchipelagoMod.Src
 
         public void SetChallenges(List<int> challenges)
         {
-            if (this.SaveDataExport == null)
-            {
-                this.SaveDataExport = new SaveDataExport();
-            }
-
+            this._help();
             this.SaveDataExport.current_challenges = challenges;
             this.Save();
         }
@@ -108,10 +106,7 @@ namespace ArchipelagoMod.Src
 
         public bool HasUnlockedItem(string PrefabName)
         {
-            if (this.SaveDataExport == null)
-            {
-                return false;
-            }
+            this._help();
             return this.SaveDataExport.unlocked_items.Contains(PrefabName);
         }
 
@@ -122,26 +117,20 @@ namespace ArchipelagoMod.Src
 
         public void AddUnlockedItem(string name)
         {
-            if (this.SaveDataExport.unlocked_items.Contains(name))
-            {
-                return;
-            }
+            this._help();
             this.SaveDataExport.unlocked_items.Add(name);
             this.Save();
         }
         
-        public bool HasUnlockedAPItem(long id)
+        public bool HasUnlockedAPLocation(long id)
         {
-            if (this.SaveDataExport == null)
-            {
-                return false;
-            }
-            return this.SaveDataExport.unlocked_ap_items.Contains(id);
+            this._help();
+            return this.SaveDataExport.unlocked_locations.Contains(id);
         }
 
-        public void SetUnlockedAPItem(long id)
+        public void SetUnlockedAPLocation(long id)
         {
-            this.SaveDataExport.unlocked_ap_items.Add(id);
+            this.SaveDataExport.unlocked_locations.Add(id);
             this.Save();
         }
 
@@ -153,10 +142,7 @@ namespace ArchipelagoMod.Src
 
         public List<long> GetPendingLocations()
         {
-            if (this.SaveDataExport == null)
-            {
-                return new List<long>();
-            }
+            this._help();
             return this.SaveDataExport.pending_locations;
         }
 
@@ -165,31 +151,92 @@ namespace ArchipelagoMod.Src
             this.SaveDataExport.pending_locations = new List<long>();
         }
 
+        public void IncreaseSkip()
+        {
+            this._help();
+            this.SaveDataExport.available_skips += 1;
+            this.Save();
+        }
+      
+        public bool HasSkipsLeft()
+        {
+            return this.GetSkipCount() > 0;
+        }
+       
+        public void DecreaseSkip()
+        {
+            this.SaveDataExport.available_skips -= 1;
+            this.Save();
+        }
+
+        public int GetSkipCount()
+        {
+            this._help();
+            return this.SaveDataExport.available_skips;
+        }
+
+        public void IncreaseMaxSpeedup()
+        {
+            this._help();
+            this.SaveDataExport.max_speedup += 1;
+            this.Save();
+        }
+        public int GetMaxSpeedup()
+        {
+            this._help();
+            return this.SaveDataExport.max_speedup;
+        }
+
+        public void InitMaxSpeedup()
+        {
+            // this method only gets called when progressive speedup option is used
+            // -1 is means no progressive speedup
+            if (this.GetMaxSpeedup() >= 3)
+            {
+                return;
+            }
+
+            this.SaveDataExport.max_speedup = 3;
+        }
+
+        private void _help()
+        {
+            if (this.SaveDataExport == null)
+            {
+                this.SaveDataExport = new SaveDataExport();
+            }
+        }
+
         public void Save()
         {
             Helper.Debug("[SaveData::Save]");
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-
-            string json = JsonConvert.SerializeObject(SaveDataExport, Formatting.None, jsonSettings);
-            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
-
-            File.WriteAllText(filePath, json);
-            this.Backup(filePath, json);
+            File.WriteAllText(SaveData.GetFilePath(), this.MakeJsonData());
         }
 
-        public void Backup(string filePath, string json)
+        public void Backup()
         {
+            if (this.SaveDataExport == null) {
+                return;
+            }
             Helper.Debug("[SaveData::Backup]");
-            File.WriteAllText(filePath + ".backup", json);
+            File.WriteAllText(SaveData.GetFilePath() + ".backup", this.MakeJsonData());
         }
 
         public static SaveDataExport Load()
         {
             Helper.Debug("[SaveData::Load]");
-            string filePath = Constants.ModPath + Constants.ScenarioName + ".data";
-            string json = File.ReadAllText(filePath);
+            try
+            {
+                string json = File.ReadAllText(SaveData.GetFilePath());
+                if (string.IsNullOrEmpty(json))
+                {
+                    return new SaveDataExport();
+                }
 
-            return JsonConvert.DeserializeObject<SaveDataExport>(json);
+                return JsonConvert.DeserializeObject<SaveDataExport>(json);
+            } catch {
+                return new SaveDataExport();
+            }
         }
 
         public bool HasFinished ()
@@ -200,10 +247,22 @@ namespace ArchipelagoMod.Src
             }
             return this.SaveDataExport.finished;
         }
+ 
         public void Finish()
         {
             this.SaveDataExport.finished = true;
             this.Save();
+        }
+
+        public static string GetFilePath()
+        {
+            return Constants.ModPath + Constants.ScenarioName + ".data";
+        }
+
+        private string MakeJsonData()
+        {
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+            return JsonConvert.SerializeObject(this.SaveDataExport, Formatting.None, jsonSettings);
         }
     }
 }

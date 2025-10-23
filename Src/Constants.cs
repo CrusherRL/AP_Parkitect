@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace ArchipelagoMod.Src
 {
@@ -8,6 +9,7 @@ namespace ArchipelagoMod.Src
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
+        public static string Playername = null;
         public static int ArchipelagoBaseId = 3000000;
 		public static string ParkitectAPFilename = "config_parkitect.json";
 		public static string ParkitectAPFolder = "Parkitect_Archipelago";
@@ -145,12 +147,14 @@ namespace ArchipelagoMod.Src
             Constants.Trap.All,
             Constants.Attraction.Types,
             Constants.Stall.Types,
+            Constants.Skips.Types,
+            Constants.ProgressiveSpeed.Types,
         })
             .SelectMany(a => a).ToArray();
 
         public static class Player
         {
-			public static int[] SpeedupOptions = { 0, 1, 2, 3, 5, 7, 9 };
+			public static int[] SpeedupOptions = { 4, 5, 6, 7, 8, 9 };
 			public static float[] MoneyOptions = { 1000f, 2000f, 3000f, 4000f, 5000f, 10000f };
 		}
 	
@@ -488,35 +492,15 @@ namespace ArchipelagoMod.Src
 
             // -----------------------------
             // Attraction Traps
-            // -----------------------------
-            public static string[] AttractionBreakdownTexts =
-            {
-				"Your Park Guests found some metal pieces|Following rides broke down: {{NAMES}}",
-				"Some of your Attractions are very rusty|Get your mechanics over to {{NAMES}}",
-				"Guests sabotaged your Attractions and they broke down|{{NAMES}} needs to be repaired",
-				"A sudden storm hit your Park|Attractions damaged: {{NAMES}}",
-				"The gears of progress stopped turning|Check on these Attractions: {{NAMES}}",
-				"Maintenance neglected too long|These Attractions are out of order: {{NAMES}}",
-				"Guests were not gentle with your rides|Repair needed for: {{NAMES}}",
-				"Mechanical failure!|The following Attractions are temporarily closed: {{NAMES}}"
-			};
-            public static string[] GetAttractionBreakdownText(string[] attractions)
-            {
-                string textBlock = Constants.Trap.GetRandomText(Constants.Trap.AttractionBreakdownTexts);
-                string tokenNames = Helper.SerializeText(attractions);
-
-                return textBlock.Replace("{{NAMES}}", tokenNames).Split(Constants.Trap.TextDivider);
-            }
-   
+            // -----------------------------   
 			public static string[] AttractionVoucherTexts =
             {
 				"You decided to make a giveaway for Attraction Vouchers",
-                "Someone gave {{PERCENTAGE}}% of Guests a free Vouchers for Attractions...",
+                "Someone gave {{PERCENTAGE}}% of Guests a free Vouchers for a Attraction...",
 				"A Box full of old Attraction Vouchers appeared out of nowhere",
 				"It's a special day! Guests can enjoy free Attraction Vouchers",
 				"You rewarded your Guests with complimentary Vouchers for {{NAME}}",
 				"Vouchers are raining down in your Park|A chance to enjoy attractions for free!",
-				"Guests rejoice!|Some received {{PERCENTAGE}}% off on Attraction Vouchers",
                 "An unexpected gift for Park Guests|Vouchers for {{NAME}} are available now"
             };
             public static string[] GetAttractionVoucherText(string attractions, float percentage)
@@ -535,10 +519,9 @@ namespace ArchipelagoMod.Src
 				"Guests refuse to buy from {{SHOPS}} due to spoiled Ingredients|Order replacements immediately",
 				"The smell of bad Ingredients is spreading from {{SHOPS}}|Replace them before guests start leaving!",
 				"{{SHOPS}} have low-quality Ingredients in stock|Your guests deserve better food",
-				"Rotten Ingredients detected in {{SHOPS}}|Your reputation is at risk — fix it fast!",
+				"Rotten Ingredients detected in {{SHOPS}}|Your reputation is at risk",
 				"Guests are complaining about strange tastes from {{SHOPS}}|Check your Ingredients quality",
 				"The latest delivery for {{SHOPS}} contained bad Ingredients|Inspect your stock carefully",
-				"{{SHOPS}} received expired Ingredients batches|Get replacements before guests notice",
 				"Suppliers reported an issue with Ingredients|Fresh ones are on their way"
 			};
 			public static string[] GetShopIngredientsText(string[] shops)
@@ -575,11 +558,9 @@ namespace ArchipelagoMod.Src
                 "You decided to give out vouchers for your shops|Guests can enjoy them at: {{SHOP}}",
                 "{{PERCENTAGE}}% of your Guests received free vouchers at {{SHOP}}",
                 "A mysterious benefactor handed out vouchers|Redeemable at: {{SHOP}}",
-                "Today only!|Visitors get {{PERCENTAGE}}% off at {{SHOP}}",
-                "A surprise giveaway for hungry Guests|Vouchers available at: {{SHOP}}",
+                "A surprise giveaway for hungry/thirsty Guests|Vouchers available at: {{SHOP}}",
                 "Someone donated vouchers|{{PERCENTAGE}}% of Guests can spend them at {{SHOP}}",
                 "Vouchers for {{SHOP}} appeared in the Park gift shop|Everyone is excited",
-                "Guests rejoice!|They received {{PERCENTAGE}}% worth of vouchers for {{SHOP}}",
                 "Your Park is feeling generous|Visitors can grab vouchers at {{SHOP}} today",
                 "An unexpected windfall|{{PERCENTAGE}}% of Guests can use vouchers at {{SHOP}}"
             };
@@ -594,21 +575,21 @@ namespace ArchipelagoMod.Src
             // -----------------------------
             public static string[] EmployeeHiringTexts =
             {
-                "New staff join your Park!|Hired {{AMOUNT}} {{EMPLOYEES}} employees",
-                "Your team just got bigger|{{AMOUNT}} New hires: {{EMPLOYEES}}",
-                "Talent arrives at the Park|Employees added: {{AMOUNT}} {{EMPLOYEES}}",
+                "New staff joined your Park!|Hired {{AMOUNT}} {{EMPLOYEE}} employees",
+                "Your team just got bigger|{{AMOUNT}} New hires: {{EMPLOYEE}}",
+                "Talent arrives at the Park|Employees added: {{AMOUNT}} {{EMPLOYEE}}",
             };
             public static string[] GetEmployeeHiringText(string employeeType, int amount)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.EmployeeHiringTexts);
-                return textBlock.Replace("{{EMPLOYEES}}", employeeType).Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
+                return textBlock.Replace("{{EMPLOYEE}}", employeeType).Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
             }
       
 			public static string[] EmployeeTrainingTexts =
             {
-				"Employees are improving their skills|{{PERCENTAGE}}% of staff completed training",
-                "Training day!|{{PERCENTAGE}}% of your employees leveled up",
-                "Staff development in progress|{{PERCENTAGE}}% of employees trained successfully",
+                "Employees will attend training|{{PERCENTAGE}}% of staff scheduled for training",
+                "Training day ahead!|{{PERCENTAGE}}% of your employees will go for training",
+                "Staff training upcoming|{{PERCENTAGE}}% of employees will attend sessions",
             };
             public static string[] GetEmployeeTrainingText(string percentage)
             {
@@ -637,7 +618,6 @@ namespace ArchipelagoMod.Src
 				"Money comes and goes|Player balance changed by {{AMOUNT}}",
 				"A sudden financial surprise|You made {{AMOUNT}}",
 				"Cash flow alert!|Your money raised by {{AMOUNT}}",
-				"Your bank account reacts|Change: +{{AMOUNT}}",
 				"Coins appear mysteriously|{{AMOUNT}} appeared in your pocket",
 				"A twist of fate affects your money|You gained {{AMOUNT}}",
 				"Luck strikes your wallet|You found {{AMOUNT}} on the ground"
@@ -655,28 +635,27 @@ namespace ArchipelagoMod.Src
             public static string[] WeatherBadTexts =
 			{
 				"Dark clouds gather over the Park|It's getting {{WEATHER}}",
-				"Guests are running for cover|A {{WEATHER}} has started",
-				"Nature strikes again|Watch out for the {{WEATHER}}",
-				"Umbrellas everywhere!|The Park is affected by {{WEATHER}}",
-				"Lightning flashes and thunder rolls|A {{WEATHER}} is upon you",
-				"Rain puddles everywhere|A sudden {{WEATHER}} caught your Guests off guard",
-				"Hold onto your hats!|The Park is experiencing {{WEATHER}}",
-				"Weather alert!|Prepare for {{WEATHER}}",
-				"The sky darkens ominously|A {{WEATHER}} is brewing",
-				"Guests are slipping and sliding|Thanks to a {{WEATHER}}"
-			};
+                "Guests are running for cover|A {{WEATHER}} weather has started",
+                "Nature strikes again|Watch out for the {{WEATHER}} weather",
+                "Umbrellas everywhere!|The Park is affected by {{WEATHER}} weather",
+                "Rain puddles everywhere|A sudden {{WEATHER}} weather caught your Guests off guard",
+                "Hold onto your hats!|The Park is experiencing {{WEATHER}} weather",
+                "Weather alert!|Prepare for {{WEATHER}} weather",
+                "The sky darkens ominously|A {{WEATHER}} weather is brewing",
+                "Guests are slipping and sliding|Thanks to a {{WEATHER}} weather"
+            };
             public static string[] WeatherGoodTexts =
             {
                 "The sun shines brightly over the Park|It's a beautiful {{WEATHER}} day",
-                "Guests are smiling everywhere|Perfect weather for a {{WEATHER}}",
-                "The Park feels alive|Enjoy the wonderful {{WEATHER}}",
-                "A calm breeze passes through|It’s a lovely {{WEATHER}} today",
-                "Nature is at peace|The {{WEATHER}} couldn’t be better",
-                "Everything sparkles under the light|A perfect day of {{WEATHER}}",
-                "Visitors are taking off their jackets|What a pleasant {{WEATHER}}",
-                "Music and laughter fill the air|The {{WEATHER}} sets the perfect mood",
-                "Time for a stroll in the Park|The {{WEATHER}} is just right",
-                "Guests are relaxing happily|Enjoying the gentle {{WEATHER}}"
+                "Guests are smiling everywhere|Perfect weather for a {{WEATHER}} day",
+                "The Park feels alive|Enjoy the wonderful {{WEATHER}} weather",
+                "A calm breeze passes through|It’s a lovely {{WEATHER}} weather today",
+                "Nature is at peace|The {{WEATHER}} weather couldn’t be better",
+                "Everything sparkles under the light|A perfect day of {{WEATHER}} weather",
+                "Visitors are taking off their jackets|What a pleasant {{WEATHER}} weather",
+                "Music and laughter fill the air|The {{WEATHER}} weather sets the perfect mood",
+                "Time for a stroll in the Park|The {{WEATHER}} weather is just right",
+                "Guests are relaxing happily|Enjoying the gentle {{WEATHER}} weather"
             };
             public static string[] GetWeatherText(string weather)
             {
@@ -696,13 +675,10 @@ namespace ArchipelagoMod.Src
             {
                 "Guests are flooding in!|{{AMOUNT}} new Guests have appeared",
                 "A wave of visitors arrives|{{AMOUNT}} Guests spawned in the Park",
-                "Unexpected crowd!|{{AMOUNT}} more Guests have entered",
                 "The gates swing open magically|{{AMOUNT}} Guests appear from nowhere",
                 "Visitors multiply mysteriously|{{AMOUNT}} new Guests just arrived",
                 "Guest chaos!|{{AMOUNT}} new arrivals are making the Park lively",
                 "A sudden rush of Guests|The Park population grows by {{AMOUNT}}",
-                "Visitors appear out of thin air|{{AMOUNT}} Guests are filling up the Park",
-                "Crowds gather unexpectedly|{{AMOUNT}} new Guests are here",
                 "Your Park is bustling|{{AMOUNT}} Guests have spawned everywhere"
             };
             public static string[] GetGuestSpawnText(int amount)
@@ -714,7 +690,6 @@ namespace ArchipelagoMod.Src
             public static string[] GuestKillTexts =
             {
                 "Something terrible happened!|{{AMOUNT}} Guests were lost",
-                "Chaos in the Park!|{{AMOUNT}} Guests met an unfortunate fate",
                 "The Park just got quieter|{{AMOUNT}} Guests are no longer here",
                 "Tragedy strikes!|{{AMOUNT}} Guests have disappeared mysteriously",
                 "Visitors vanished suddenly|{{AMOUNT}} Guests removed from the Park",
@@ -722,7 +697,6 @@ namespace ArchipelagoMod.Src
                 "Park attendance drops|{{AMOUNT}} Guests are gone",
                 "Something went horribly wrong|{{AMOUNT}} Guests were taken away",
                 "The crowd thins unexpectedly|{{AMOUNT}} Guests are missing",
-                "A shocking event!|{{AMOUNT}} Guests have been eliminated"
             };
             public static string[] GetGuestKillText(int amount)
             {
@@ -737,8 +711,7 @@ namespace ArchipelagoMod.Src
                 "Cash flows weirdly|{{PERCENTAGE_GUESTS}}% of Guests each gain {{AMOUNT}}",
                 "Visitors react to sudden wealth changes|{{PERCENTAGE_GUESTS}}% of Guests gain {{AMOUNT}}",
                 "A twist of fate hits your Guests|{{PERCENTAGE_GUESTS}}% of Guests each gain {{AMOUNT}}",
-                "Guests cheer or groan|{{PERCENTAGE_GUESTS}}% of Guests have their money increased by {{AMOUNT}}",
-                "Coin chaos!|{{PERCENTAGE_GUESTS}}% of Guests gain {{AMOUNT}} coins",
+                "Money chaos!|{{PERCENTAGE_GUESTS}}% of Guests gain {{AMOUNT}} coins",
                 "Guests’ wallets fluctuate|{{PERCENTAGE_GUESTS}}% of them gain {{AMOUNT}}",
                 "Luck strikes!|{{PERCENTAGE_GUESTS}}% of Guests gain {{AMOUNT}}",
                 "A financial surprise for Guests|{{PERCENTAGE_GUESTS}}% of them gain {{AMOUNT}} more"
@@ -751,8 +724,7 @@ namespace ArchipelagoMod.Src
                 "Cash flows weirdly|{{PERCENTAGE_GUESTS}}% of Guests each lose {{AMOUNT}}",
                 "Visitors react to sudden wealth changes|{{PERCENTAGE_GUESTS}}% of Guests lose {{AMOUNT}}",
                 "A twist of fate hits your Guests|{{PERCENTAGE_GUESTS}}% of Guests each lose {{AMOUNT}}",
-                "Guests groan in frustration|{{PERCENTAGE_GUESTS}}% of Guests have their money decreased by {{AMOUNT}}",
-                "Coin chaos!|{{PERCENTAGE_GUESTS}}% of Guests lose {{AMOUNT}} coins",
+                "Money chaos!|{{PERCENTAGE_GUESTS}}% of Guests lose {{AMOUNT}} coins",
                 "Guests’ wallets fluctuate|{{PERCENTAGE_GUESTS}}% of them lose {{AMOUNT}}",
                 "Misfortune strikes!|{{PERCENTAGE_GUESTS}}% of Guests lose {{AMOUNT}}",
                 "A financial setback for Guests|{{PERCENTAGE_GUESTS}}% of them lose {{AMOUNT}}"
@@ -771,27 +743,27 @@ namespace ArchipelagoMod.Src
             }
 
             public static string[] GuestHungerTexts =
-			{
-                "Guests are feeling hungry|{{PERCENTAGE_GUESTS}}% of Guests gain {{PERCENTAGE_VALUE}}% Hunger",
-				"A rumbling in their stomachs|{{PERCENTAGE_GUESTS}}% of Guests affected by {{PERCENTAGE_VALUE}}% Hunger",
-				"Snack time crisis!|Hunger increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-				"Guests are craving food|{{PERCENTAGE_GUESTS}}% of Visitors gain {{PERCENTAGE_VALUE}}% Hunger",
-				"The Park’s smell of food backfires|{{PERCENTAGE_VALUE}}% Hunger applied to {{PERCENTAGE_GUESTS}}% of Guests",
+            {
+                "Guests are feeling hungry|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Hunger",
+                "A rumbling in their stomachs|{{PERCENTAGE_GUESTS}}% of Guests are now at {{PERCENTAGE_VALUE}}% Hunger",
+                "Snack time crisis!|Hunger is now {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
+                "Guests are craving food|{{PERCENTAGE_GUESTS}}% of Visitors are set to {{PERCENTAGE_VALUE}}% Hunger",
+                "The Park’s smell of food backfires|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Hunger"
             };
             public static string[] GetGuestHungerText(float guests, float percentage)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestHungerTexts);
                 return textBlock.Replace("{{PERCENTAGE_GUESTS}}", guests.ToString()).Replace("{{PERCENTAGE_VALUE}}", percentage.ToString()).Split(Constants.Trap.TextDivider);
             }
-          
-			public static string[] GuestThirstTexts =
+
+            public static string[] GuestThirstTexts =
             {
-				"Guests are parched|{{PERCENTAGE_GUESTS}}% of Guests gain {{PERCENTAGE_VALUE}}% Thirst",
-				"Sudden thirst hits the Park|{{PERCENTAGE_VALUE}}% Thirst added to {{PERCENTAGE_GUESTS}}% of Guests",
-				"Visitors need a drink|{{PERCENTAGE_GUESTS}}% of Guests affected by {{PERCENTAGE_VALUE}}% Thirst",
-				"A dry spell in the Park|{{PERCENTAGE_VALUE}}% Thirst for {{PERCENTAGE_GUESTS}}% of Guests",
-				"Guests are complaining|Thirst increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-			};
+                "Guests are parched|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Thirst",
+                "Sudden thirst hits the Park|{{PERCENTAGE_GUESTS}}% of Guests are now at {{PERCENTAGE_VALUE}}% Thirst",
+                "Visitors need a drink|{{PERCENTAGE_GUESTS}}% of Guests’ Thirst is now {{PERCENTAGE_VALUE}}%",
+                "A dry spell in the Park|{{PERCENTAGE_GUESTS}}% of Guests now sit at {{PERCENTAGE_VALUE}}% Thirst",
+                "Guests are complaining|{{PERCENTAGE_GUESTS}}% of Guests currently have {{PERCENTAGE_VALUE}}% Thirst"
+            };
             public static string[] GetGuestThirstText(float guests, float percentage)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestThirstTexts);
@@ -800,17 +772,18 @@ namespace ArchipelagoMod.Src
 
             public static string[] GuestBathroomTexts =
             {
-                "Nature calls!|{{PERCENTAGE_GUESTS}}% of Guests need to go {{PERCENTAGE_VALUE}}% more urgently",
-                "Guests are panicking|Bathroom urgency rises by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "A restroom emergency!|{{PERCENTAGE_GUESTS}}% of Guests affected, urgency +{{PERCENTAGE_VALUE}}%",
-                "Bathroom chaos in the Park|{{PERCENTAGE_VALUE}}% urgency increase for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests are uncomfortable|{{PERCENTAGE_GUESTS}}% of Visitors need the bathroom {{PERCENTAGE_VALUE}}% more",
-                "Hurry, the lines are long!|Bathroom need +{{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Visitors are squirming|{{PERCENTAGE_GUESTS}}% of Guests have +{{PERCENTAGE_VALUE}}% bathroom urgency",
-                "Restroom mayhem!|{{PERCENTAGE_VALUE}}% urgency applied to {{PERCENTAGE_GUESTS}}% of Guests",
-                "The Park’s hygiene alert|{{PERCENTAGE_GUESTS}}% of Guests need the bathroom more urgently (+{{PERCENTAGE_VALUE}}%)",
-                "Guests are in distress|Bathroom need increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests"
+                "Nature calls!|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Bathroom Urgency",
+                "Guests are panicking|{{PERCENTAGE_GUESTS}}% of Guests’ Bathroom Urgency is now {{PERCENTAGE_VALUE}}%",
+                "A restroom emergency!|{{PERCENTAGE_GUESTS}}% of Guests are now at {{PERCENTAGE_VALUE}}% Urgency",
+                "Bathroom chaos in the Park|{{PERCENTAGE_GUESTS}}% of Guests currently have {{PERCENTAGE_VALUE}}% Urgency",
+                "Guests are uncomfortable|{{PERCENTAGE_GUESTS}}% of Visitors’ Bathroom Urgency is now {{PERCENTAGE_VALUE}}%",
+                "Hurry, the lines are long!|{{PERCENTAGE_GUESTS}}% of Guests have reached {{PERCENTAGE_VALUE}}% Urgency",
+                "Visitors are squirming|{{PERCENTAGE_GUESTS}}% of Guests now sit at {{PERCENTAGE_VALUE}}% Urgency",
+                "Restroom mayhem!|{{PERCENTAGE_GUESTS}}% of Guests’ Urgency level is now {{PERCENTAGE_VALUE}}%",
+                "The Park’s hygiene alert|{{PERCENTAGE_GUESTS}}% of Guests currently have {{PERCENTAGE_VALUE}}% Bathroom Urgency",
+                "Guests are in distress|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Urgency"
             };
+
             public static string[] GetGuestBathroomText(float guests, float percentage)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestBathroomTexts);
@@ -819,17 +792,18 @@ namespace ArchipelagoMod.Src
 
             public static string[] GuestVomitingTexts =
             {
-                "Disaster in the Park!|{{PERCENTAGE_GUESTS}}% of Guests are vomiting (+{{PERCENTAGE_VALUE}}%)",
-                "Gross!|Vomiting increases by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests are sickened|{{PERCENTAGE_GUESTS}}% affected, Vomiting +{{PERCENTAGE_VALUE}}%",
-                "Chaos in the queues!|Vomiting rises by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Visitors",
-                "Park hygiene crisis|{{PERCENTAGE_GUESTS}}% of Guests now vomiting (+{{PERCENTAGE_VALUE}}%)",
-                "An unpleasant turn of events|Vomiting increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests feel ill|{{PERCENTAGE_VALUE}}% Vomiting applied to {{PERCENTAGE_GUESTS}}% of Visitors",
-                "Nausea spreads through the Park|{{PERCENTAGE_GUESTS}}% of Guests affected (+{{PERCENTAGE_VALUE}}%)",
-                "Visitors are queasy|Vomiting stat +{{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "A stomach-churning moment!|{{PERCENTAGE_GUESTS}}% of Guests vomiting increased by {{PERCENTAGE_VALUE}}%"
+                "Disaster in the Park!|{{PERCENTAGE_GUESTS}}% of Guests are vomiting at {{PERCENTAGE_VALUE}}% severity",
+                "Gross!|{{PERCENTAGE_GUESTS}}% of Guests are now experiencing {{PERCENTAGE_VALUE}}% Vomiting",
+                "Guests are sickened|{{PERCENTAGE_GUESTS}}% of Visitors now have {{PERCENTAGE_VALUE}}% Vomiting",
+                "Chaos in the queues!|{{PERCENTAGE_GUESTS}}% of Guests are currently at {{PERCENTAGE_VALUE}}% Vomiting",
+                "Park hygiene crisis|{{PERCENTAGE_GUESTS}}% of Guests are vomiting with {{PERCENTAGE_VALUE}}% intensity",
+                "An unpleasant turn of events|{{PERCENTAGE_GUESTS}}% of Guests now suffer {{PERCENTAGE_VALUE}}% Vomiting",
+                "Guests feel ill|{{PERCENTAGE_GUESTS}}% of Visitors currently have {{PERCENTAGE_VALUE}}% Vomiting",
+                "Nausea spreads through the Park|{{PERCENTAGE_GUESTS}}% of Guests are now at {{PERCENTAGE_VALUE}}% Vomiting",
+                "Visitors are queasy|{{PERCENTAGE_GUESTS}}% of Guests’ Vomiting level is now {{PERCENTAGE_VALUE}}%",
+                "A stomach-churning moment!|{{PERCENTAGE_GUESTS}}% of Guests are vomiting at {{PERCENTAGE_VALUE}}% intensity"
             };
+
             public static string[] GetGuestVomitingText(float guests, float percentage)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestVomitingTexts);
@@ -838,17 +812,18 @@ namespace ArchipelagoMod.Src
 
             public static string[] GuestHappinessTexts =
             {
-                "Guests are feeling uneasy|Happiness changed by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "A sour mood spreads|{{PERCENTAGE_GUESTS}}% of Guests affected, Happiness +{{PERCENTAGE_VALUE}}%",
-                "Visitors are grumpy|Happiness adjusted by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Cheerfulness drops|{{PERCENTAGE_VALUE}}% Happiness change for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests are less thrilled|Happiness altered by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Visitors",
-                "Mood swings in the Park|{{PERCENTAGE_GUESTS}}% of Guests have Happiness changed by {{PERCENTAGE_VALUE}}%",
-                "Visitors are less content|Happiness +{{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "A shift in feelings|{{PERCENTAGE_VALUE}}% Happiness applied to {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests react unpredictably|Happiness changes by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Visitors",
-                "Park mood alert|{{PERCENTAGE_GUESTS}}% of Guests Happiness adjusted by {{PERCENTAGE_VALUE}}%"
+                "Guests are feeling uneasy|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Happiness",
+                "A sour mood spreads|{{PERCENTAGE_GUESTS}}% of Guests’ Happiness is now {{PERCENTAGE_VALUE}}%",
+                "Visitors are grumpy|{{PERCENTAGE_GUESTS}}% of Guests are now at {{PERCENTAGE_VALUE}}% Happiness",
+                "Cheerfulness drops|{{PERCENTAGE_GUESTS}}% of Guests currently have {{PERCENTAGE_VALUE}}% Happiness",
+                "Guests are less thrilled|{{PERCENTAGE_GUESTS}}% of Visitors’ Happiness level is {{PERCENTAGE_VALUE}}%",
+                "Mood swings in the Park|{{PERCENTAGE_GUESTS}}% of Guests’ Happiness is now set to {{PERCENTAGE_VALUE}}%",
+                "Visitors are less content|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Happiness",
+                "A shift in feelings|{{PERCENTAGE_GUESTS}}% of Guests are currently at {{PERCENTAGE_VALUE}}% Happiness",
+                "Guests react unpredictably|{{PERCENTAGE_GUESTS}}% of Visitors’ Happiness is now {{PERCENTAGE_VALUE}}%",
+                "Park mood alert|{{PERCENTAGE_GUESTS}}% of Guests currently have {{PERCENTAGE_VALUE}}% Happiness"
             };
+
             public static string[] GetGuestHappinessText(float guests, float percentage)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestHappinessTexts);
@@ -857,17 +832,18 @@ namespace ArchipelagoMod.Src
 
             public static string[] GuestTirednessTexts =
             {
-                "Guests are getting exhausted|Tiredness increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Visitors feel sleepy|{{PERCENTAGE_GUESTS}}% of Guests Tiredness +{{PERCENTAGE_VALUE}}%",
-                "Fatigue spreads through the Park|{{PERCENTAGE_VALUE}}% Tiredness applied to {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests are dragging their feet|Tiredness rises by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Visitors",
-                "A sleepy crowd|{{PERCENTAGE_GUESTS}}% of Guests affected, Tiredness +{{PERCENTAGE_VALUE}}%",
-                "Visitors need rest|Tiredness increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests are worn out|{{PERCENTAGE_VALUE}}% Tiredness added to {{PERCENTAGE_GUESTS}}% of Guests",
-                "Fatigue alert!|Tiredness +{{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests",
-                "Guests struggle to stay awake|{{PERCENTAGE_GUESTS}}% affected, Tiredness +{{PERCENTAGE_VALUE}}%",
-                "Park visitors are exhausted|Tiredness increased by {{PERCENTAGE_VALUE}}% for {{PERCENTAGE_GUESTS}}% of Guests"
+                "Guests are getting exhausted|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Tiredness",
+                "Visitors feel sleepy|{{PERCENTAGE_GUESTS}}% of Guests are currently at {{PERCENTAGE_VALUE}}% Tiredness",
+                "Fatigue spreads through the Park|{{PERCENTAGE_GUESTS}}% of Guests’ Tiredness is now {{PERCENTAGE_VALUE}}%",
+                "Guests are dragging their feet|{{PERCENTAGE_GUESTS}}% of Visitors now sit at {{PERCENTAGE_VALUE}}% Tiredness",
+                "A sleepy crowd|{{PERCENTAGE_GUESTS}}% of Guests currently have {{PERCENTAGE_VALUE}}% Tiredness",
+                "Visitors need rest|{{PERCENTAGE_GUESTS}}% of Guests’ Tiredness level is {{PERCENTAGE_VALUE}}%",
+                "Guests are worn out|{{PERCENTAGE_GUESTS}}% of Guests now have {{PERCENTAGE_VALUE}}% Tiredness",
+                "Fatigue alert!|{{PERCENTAGE_GUESTS}}% of Guests are now at {{PERCENTAGE_VALUE}}% Tiredness",
+                "Guests struggle to stay awake|{{PERCENTAGE_GUESTS}}% affected, currently {{PERCENTAGE_VALUE}}% Tiredness",
+                "Park visitors are exhausted|{{PERCENTAGE_GUESTS}}% of Guests’ Tiredness is now {{PERCENTAGE_VALUE}}%"
             };
+
             public static string[] GetGuestTirednessText(float guests, float percentage)
             {
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestTirednessTexts);
@@ -893,14 +869,26 @@ namespace ArchipelagoMod.Src
                 return textBlock.Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
             }
         }
+        public static class Skips
+        {
+            public static string[] Types = { "Skip" };
+        }
+
+        public static class ProgressiveSpeed
+        {
+            public static string[] Types = { "Progressive Speed" };
+        }
 
         public static class Scenario
-		{
-			public static Dictionary<int, string> Maps = new Dictionary<int, string>
-			{
+        {
+            public static Dictionary<int, string> Maps = new Dictionary<int, string>
+            {
                 { 0, "Archipelago - Lakeside Gardens" },
-                { 1, "Archipelago - Dusty Ridge Ranch" }
+                { 1, "Archipelago - Dusty Ridge Ranch" },
+                { 2, "Archipelago - The Broken Atoll" },
+                { 3, "Archipelago - Magma Falls" },
             };
-		}
+        }
+
     }
 }

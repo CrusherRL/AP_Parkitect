@@ -8,26 +8,66 @@ namespace ArchipelagoMod.Src.SlotData
         public string SerializedName { get; set; }
         public Prefabs PrefabName { get; set; }
         public int LocationId{ get; set; }
-        public long ItemId { get; set; }
+        public string Playername { get; set; }
 
         public bool IsTrap = false;
 
-        public static AP_Item Init (string name, long itemId, long locationId, string serializedName = "")
+        public bool IsSkip = false;
+
+        public bool IsSpeedup = false;
+
+        public static AP_Item Init (string name, string Playername, long locationId, string serializedName = "")
         {
             AP_Item self = new AP_Item ();
 
             self.Name = name;
             self.SerializedName = serializedName;
-            self.ItemId = itemId;
+            self.Playername = Playername;
             self.LocationId = (int)locationId - Constants.ArchipelagoBaseId;
             self.IsTrap = Constants.Trap.All.Contains(self.Name);
+            self.IsSkip = Constants.Skips.Types.Contains(self.Name);
+            self.IsSpeedup = Constants.ProgressiveSpeed.Types.Contains(self.Name);
 
-            if (!self.IsTrap )
+            Helper.Debug($"[AP_Item::Init] IsTrap - " + self.IsTrap);
+            Helper.Debug($"[AP_Item::Init] IsSkip - " + self.IsSkip);
+            Helper.Debug($"[AP_Item::Init] IsSpeedup - " + self.IsSpeedup);
+
+            if (!self.IsTrap && !self.IsSkip && !self.IsSpeedup)
             {
                 self.PrefabName = Helper.GetPrefabsFromString(self.Name);
             }
 
             return self;
+        }
+
+        public string Message()
+        {
+            if (this.IsTrap)
+            {
+                return "";
+            }
+
+            if (this.IsSkip)
+            {
+                return $"You Received a Skip{this.FromPlayerMessage()}. Use it wisely!";
+            }
+
+            if (this.IsSpeedup)
+            {
+                return $"Your Speedup increased{this.FromPlayerMessage()}";
+            }
+
+            return $"You Received \"{this.SerializedName}\"{this.FromPlayerMessage()}";
+        }
+
+        private string FromPlayerMessage()
+        {
+            if (this.Playername == Constants.Playername)
+            {
+                return "";
+            }
+
+            return $" from {this.Playername}";
         }
     }
 }

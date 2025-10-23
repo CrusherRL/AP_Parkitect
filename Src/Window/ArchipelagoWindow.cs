@@ -1,5 +1,6 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -29,14 +30,17 @@ namespace ArchipelagoMod.Src.Window
             this.ParkitectController = GetComponent<ParkitectController>();
             this.SetStatus(this.State, true);
             this.SetSpeedupButtons();
+            this.SetCLI();
             this.ToggleActiveState();
 
             Helper.Debug($"[ArchipelagoWindow::OnAwake] Booted");
         }
 
-        // -----------------------------
-        // Doing things lol
-        // -----------------------------
+        public void OnDestroy ()
+        {
+            this.SaveData.Backup();
+        }
+
         public void SetStatus(_Status.States state, bool silent = false)
         {
             // Send a Parkitect Message on Connection
@@ -57,6 +61,13 @@ namespace ArchipelagoMod.Src.Window
 
         public void SetChallenge(Challenge challenge)
         {
+            if (challenge.LocationId < 0)
+            {
+                Helper.Debug($"[ArchipelagoWindow::SetChallenge] Challenge row {challenge.SerializedPanelId} completed");
+                this.RemoveSkipButton(challenge);
+                return;
+            }
+
             if (this.SaveData.HasFinished())
             {
                 return;
@@ -74,7 +85,7 @@ namespace ArchipelagoMod.Src.Window
             this.CurrentChallenges.Add(challenge);
             this.SetChallengeListener(challenge);
 
-            this.GetPanelChild(challenge.SerializedPanelId, "/Button/Text").GetComponent<TextMeshProUGUI>().text = $"({challenge.Index}) {challenge.Text()}";
+            this.GetPanelChild(challenge.SerializedPanelId, "/Button/Text").GetComponent<TextMeshProUGUI>().text = $"[{challenge.Index}] {challenge.Text()}";
             this.GetPanelChild(challenge.SerializedPanelId, "/Button/SubText").GetComponent<TextMeshProUGUI>().text = challenge.SubText();
         }
      
@@ -141,22 +152,27 @@ namespace ArchipelagoMod.Src.Window
             }
         }
 
-        public void NextChallenge (int finishedLocationId)
+        public void NextChallenge (Challenge challenge)
         {
             if (this.SaveData.HasFinished())
             {
                 return;
             }
 
-            Challenge challenge = this.all_challenges.Where(c => c.LocationId == finishedLocationId + 3).FirstOrDefault();
-
-            if (challenge == null)
+            Challenge nextChallenge = this.all_challenges.Where(c => c.LocationId == challenge.LocationId + 3).FirstOrDefault();
+          
+            if (nextChallenge == null)
             {
-                //this.ParkitectController.SendMessage("Finished all Challenges in that row!");
+                string stringId = challenge.SerializedPanelId.Split(' ')[1];
+                Int32.TryParse(stringId, out int id);
+                this.CurrentChallenges.Add(new Challenge(this.ParkitectController, id * -1));
+                this.SaveData.SetChallenges(this.CurrentChallenges);
+                this.RemoveSkipButton(challenge);
                 return;
             }
+            Helper.Debug(nextChallenge.PanelId);
 
-            this.SetChallenge(challenge);
+            this.SetChallenge(nextChallenge);
         }
        
         public void HandOver (List<Challenge> Challenges)
@@ -175,6 +191,7 @@ namespace ArchipelagoMod.Src.Window
                 return;
             }
 
+            this.UpdateSkipText();
             this.all_challenges = Challenges;
 
             List<int> locationIds = this.SaveData.GetChallenges();
@@ -191,6 +208,14 @@ namespace ArchipelagoMod.Src.Window
             List<int> deletable_location_ids = new List<int>();
             foreach (int locationId in locationIds)
             {
+                // Challenge row is done! keep pseudo challenge
+                if (locationId < 0)
+                {
+                    Challenge finishedChallenge = new Challenge(this.ParkitectController, locationId);
+                    this.SetChallenge(finishedChallenge);
+                    continue;
+                }
+
                 Helper.Debug($"[ArchipelagoWindow::HandOver] {locationId}");
                 if (locationId >= 3)
                 {
@@ -208,12 +233,59 @@ namespace ArchipelagoMod.Src.Window
 
         private void SetChallengeListener(Challenge challenge)
         {
+            this.GetPanelChild(challenge.SerializedPanelId, "/Skip").GetComponent<Button>().onClick.AddListener(() => { this.OnChallengeSkip(challenge); });
             this.GetPanelChild(challenge.SerializedPanelId, "/Button").GetComponent<Button>().onClick.AddListener(() => { this.OnChallengeClicked(challenge); });
         }
-      
+
+        private void RemoveSkipButton(Challenge challenge)
+        {
+            Helper.Debug("[ArchipelagoWindow::RemoveSkipButton]");
+            Button button = this.GetPanelChild(challenge.SerializedPanelId, "/Skip").GetComponent<Button>();
+            
+            if (button == null)
+            {
+                return;
+            }
+                
+            button.gameObject.SetActive(false);
+        }
+
         private void RemoveChallengeListener(Challenge challenge)
         {
+            this.GetPanelChild(challenge.SerializedPanelId, "/Skip").GetComponent<Button>().onClick.RemoveAllListeners();
             this.GetPanelChild(challenge.SerializedPanelId, "/Button").GetComponent<Button>().onClick.RemoveAllListeners();
+        }
+
+        public void UpdateSkipText()
+        {
+            this.GetChild("Frame/Body/Footer/Skip List/Count").GetComponent<TextMeshProUGUI>().text = this.SaveData.GetSkipCount().ToString();
+        }
+
+        public void UpdateSpeedups()
+        {
+            int maxSpeed = this.SaveData.GetMaxSpeedup();
+
+            if (maxSpeed == -1)
+            {
+                foreach (int speed in Constants.Player.SpeedupOptions)
+                {
+                    this.EnableSpeedupButton(speed);
+                }
+                return;
+            }
+      
+            this.EnableSpeedupButton(maxSpeed);
+        }
+
+        public void EnableSpeedupButton(int id)
+        {
+            string buttonList = "Frame/Body/Footer/Speedup List/Button List";
+            this.GetChild($"{buttonList}/Speed {id}").GetComponent<Button>().interactable = true;
+        }
+
+        private void OnChallengeSkip(Challenge challenge)
+        {
+            this.SkipChallenge(challenge);
         }
 
         private void OnChallengeClicked(Challenge challenge)
@@ -235,14 +307,31 @@ namespace ArchipelagoMod.Src.Window
             }
 
             this.RemoveChallenge(challenge);
-            this.NextChallenge(challenge.LocationId);
+            this.NextChallenge(challenge);
             this.SaveData.SetChallenges(this.CurrentChallenges);
             this.ArchipelagoController.CompleteLocation(challenge.LocationId, this.SaveData);
         }
 
-        public void SkipChallenge (string challenge)
+        public void SkipChallenge(string challengeSerializedPanelId, bool force = false)
         {
-            Challenge Challenge = this.CurrentChallenges.Where(c => c.SerializedPanelId == challenge).FirstOrDefault();
+            Challenge Challenge = this.CurrentChallenges.Where(c => c.SerializedPanelId == challengeSerializedPanelId).FirstOrDefault();
+            this.SkipChallenge(Challenge, force);
+        }
+
+        public void SkipChallenge(Challenge Challenge, bool force = false)
+        {
+            if (!force && !this.SaveData.HasSkipsLeft())
+            {
+                this.ParkitectController.SendMessage("No skips left");
+                return;
+            }
+
+            if (!force)
+            {
+                this.SaveData.DecreaseSkip();
+            }
+
+            this.UpdateSkipText();
             this.FinishChallenge(Challenge);
         }
 
@@ -251,12 +340,41 @@ namespace ArchipelagoMod.Src.Window
             return this.GetChild($"Frame/Body/List/{serializedPanelId}{hierarchy}");
         }
 
-        private void SetSpeedupButtons ()
+        private void SetSpeedupButtons()
         {
             string buttonList = "Frame/Body/Footer/Speedup List/Button List";
-            this.GetChild($"{ buttonList }/Speed 5").GetComponent<Button>().onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(5); });
-            this.GetChild($"{ buttonList }/Speed 7").GetComponent<Button>().onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(7); });
-            this.GetChild($"{ buttonList }/Speed 9").GetComponent<Button>().onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(9); });
+
+            foreach(int speed in Constants.Player.SpeedupOptions)
+            {
+                Button btn = this.GetChild($"{buttonList}/Speed {speed}").GetComponent<Button>();
+                btn.interactable = false;
+                btn.onClick.AddListener(() => { this.ParkitectController.PlayerRaiseSpeed(speed); });
+            }
+        }
+
+        private void SetCLI()
+        {
+            TMP_InputField input = this.GetChild($"Frame/Body/CLI").GetComponent<TMP_InputField>();
+
+            if (input == null)
+            {
+                Helper.Debug("[ArchipelagoWindow::SetCLI] no input field");
+                return;
+            }
+
+            input.onSubmit.AddListener((string text) =>
+            {
+                if (this.ArchipelagoController == null)
+                {
+                    this.ArchipelagoController = GetComponent<ArchipelagoController>();
+                }
+
+                if (text.Length > 0)
+                {
+                    this.ArchipelagoController.Speak(text);
+                    input.text = string.Empty; // clear input field
+                }
+            });
         }
     }
 }

@@ -2,13 +2,10 @@
 using ArchipelagoMod.Src.SlotData;
 using Parkitect.UI;
 using Photon.Realtime;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
-using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Controller
 {
@@ -538,14 +535,17 @@ namespace ArchipelagoMod.Src.Controller
             {
                 foreach (ProductShop productShop in productShops)
                 {
-                    GameController.Instance.park.resetDeliveriesFor(productShop);
                     foreach (Product product in productShop.selectedProducts)
                     {
                         foreach (Ingredient ingredient in product.ingredients)
                         {
-                            GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
+                            productShop.stock.modify(ingredient.resource, productShop.stock.getAmount(ingredient.resource) * -1);
+                            //productShop.stock.resourceNameContentAssoc =
+                            //GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
                         }
                     }
+
+                    productShop.checkOrderIngredients();
                 }
             });
         }
@@ -617,8 +617,14 @@ namespace ArchipelagoMod.Src.Controller
             if (AP_Item.Name == "Attraction Voucher Trap")
             {
                 float number = Randomizer.GetRandomFloat();
-                Attraction attraction = Randomizer.GetRandomAttractionFromPark(100f).First();
+                Attraction attraction = Randomizer.GetRandomAttractionFromPark(100f).FirstOrDefault();
                 List<Guest> guests = Randomizer.GetRandomGuests(number);
+
+                if (attraction == null)
+                {
+                    this.SendMessage($"{AP_Item.Name} not redeemed. No Attraction found");
+                    return;
+                }
 
                 foreach (Guest guest in guests)
                 {
@@ -654,8 +660,14 @@ namespace ArchipelagoMod.Src.Controller
             if (AP_Item.Name == "Shop Voucher Trap")
             {
                 float number = Randomizer.GetRandomFloat();
-                ProductShop shop = Randomizer.GetRandomProductShopsFromPark(100f).First();
+                ProductShop shop = Randomizer.GetRandomProductShopsFromPark(100f).FirstOrDefault();
                 List<Guest> guests = Randomizer.GetRandomGuests(number);
+
+                if (shop == null)
+                {
+                    this.SendMessage($"{AP_Item.Name} not redeemed. No Shop found");
+                    return;
+                }
 
                 foreach (Guest guest in guests)
                 {

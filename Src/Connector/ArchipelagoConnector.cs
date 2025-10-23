@@ -5,6 +5,7 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Config;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,7 +35,8 @@ namespace ArchipelagoMod.Src.Connector
         }
 
         // Events
-        public event Action<string, long, long> OnItemReceived;
+        public event Action<string> OnReceivedPacket;
+        public event Action<string, string, long> OnItemReceived;
         public event Action OnDisconnected;
         public event Action OnReconnected;
         public event Action<LoginSuccessful> OnConnected;
@@ -162,7 +164,16 @@ namespace ArchipelagoMod.Src.Connector
         {
             session.Socket.SocketClosed += this.OnSocketClosed;
             session.Socket.ErrorReceived += this.OnErrorReceived;
+            session.Socket.PacketReceived += this.OnPacketReceived;
             session.Items.ItemReceived += this.OnReceivingItem;
+        }
+        private void UnhookSessionEvents()
+        {
+            this.Session.Socket.SocketClosed -= this.OnSocketClosed;
+            this.Session.Socket.ErrorReceived -= this.OnErrorReceived;
+            this.Session.Socket.PacketReceived -= this.OnPacketReceived;
+            this.Session.Items.ItemReceived -= this.OnReceivingItem;
+            this.Session = null;
         }
 
         private void OnSocketClosed(string reason)
@@ -188,11 +199,15 @@ namespace ArchipelagoMod.Src.Connector
 
         private void OnErrorReceived(Exception e, string message)
         {
-            //this.OnDisconnected?.Invoke();
-            //Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.Message);
+            Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.Message);
 
-            //this.Session.Socket.ErrorReceived -= this.OnErrorReceived;
-            //this.Session = null;
+            if (e.Message.Contains("closed the WebSocket connection"))
+            {
+                this.UnhookSessionEvents();
+                _ = this.DisconnectAsync();
+                this.OnDisconnected?.Invoke();
+                _ = this.TryConnectWithRetries();
+            }
         }
 
         private void OnReceivingItem(IReceivedItemsHelper helper)
@@ -205,7 +220,37 @@ namespace ArchipelagoMod.Src.Connector
             long locationId = item.LocationId;
             string locationName = this.Session?.Locations?.GetLocationNameFromId(locationId);
             Helper.Debug($"[ArchipelagoConnector::OnReceivingItem] Got item -> '{itemName}' (ID {item.ItemId}) from location '{locationName}' (ID {locationId})");
-            this.OnItemReceived?.Invoke(itemName, item.ItemId, locationId);
+            this.OnItemReceived?.Invoke(itemName, item.Player.Name, locationId);
+        }
+
+        private void OnPacketReceived(ArchipelagoPacketBase packet)
+        {
+            Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] " + packet.GetType().Name);
+            if (packet is ChatPrintJsonPacket chatPrint)
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is ChatPrintJsonPacket");
+                OnReceivedPacket?.Invoke(string.Join("", chatPrint.Data.Select(p => p.Text)));
+            }
+            else if (packet is PrintJsonPacket print)
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is PrintJsonPacket");
+                OnReceivedPacket?.Invoke(string.Join("", print.Data.Select(p => p.Text)));
+            }
+        }
+
+        public void ForwardSayPacket(string message)
+        {
+            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket]");
+            if (!this.IsConnected)
+            {
+                return;
+            }
+
+            SayPacket packet = new SayPacket();
+            packet.Text = message;
+
+            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket] SendPacket");
+            this.Session.Socket.SendPacket(packet);
         }
 
         public void GoalComplete()

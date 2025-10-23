@@ -50,6 +50,14 @@ namespace ArchipelagoMod.Src.Challenges
             int id = 0;
             int index = 0;
 
+            if (locationId < 0)
+            {
+                this.Index = -1;
+                this.SerializedPanelId = $"Challenge {locationId * -1}";
+                this.PanelId = "";
+                return;
+            }
+
             if (locationId < 3)
             {
                 id = locationId + 1;
@@ -67,7 +75,7 @@ namespace ArchipelagoMod.Src.Challenges
 
         public string Text()
         {
-            return $"Have {this.Count} '{this.GetShopOrAttractionName()}' in your Park";
+            return $"Have {this.Count}x \"{this.GetShopOrAttractionName()}\"";
         }
 
         public string SubText()

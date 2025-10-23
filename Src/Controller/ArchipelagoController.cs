@@ -1,5 +1,4 @@
 ﻿using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
@@ -43,6 +42,7 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            Constants.Playername = this.ParkitectAPConfig.Playername;
             this.ArchipelagoWindow = GetComponent<ArchipelagoWindow>();
 
             if (!this.ParkitectController.PlayerIsInCorrectMode())
@@ -111,7 +111,19 @@ namespace ArchipelagoMod.Src.Controller
 
             this.ArchipelagoConnector.OnReconnected += () => {
                 this.OnConnecting();
-                Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000} seconds");
+                Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000 } seconds");
+            };
+
+            this.ArchipelagoConnector.OnReceivedPacket += (string message) =>
+            {
+                this.ParkitectController.SendMessage("Archipelago Server", message);
+                Helper.Debug($"[ArchipelagoController::Listen] PacketReceived - {message}");
+            };
+
+            this.ArchipelagoConnector.OnDisconnected += () =>
+            {
+                this.OnDisconnect();
+                this.ParkitectController.SendMessage("Lost Connection to Archipelago");
             };
 
             // Won the Scenario :)
@@ -120,10 +132,16 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
         }
 
-        private void OnReceivedItem (string prefabItem, long itemId, long locationId)
+        private void OnReceivedItem (string itemName, string player, long locationId)
         {
-            string serializedName = this.ParkitectController.GetSerializedFromPrefabs(prefabItem);
-            AP_Item AP_Item = AP_Item.Init(prefabItem, itemId, locationId, serializedName);
+            if (this.SaveData != null && this.SaveData.HasUnlockedAPLocation(locationId))
+            {
+                Helper.Debug($"[SaveData::HasUnlockedAPItem] true");
+                return;
+            }
+
+            string serializedName = this.ParkitectController.GetSerializedFromPrefabs(itemName);
+            AP_Item AP_Item = AP_Item.Init(itemName, player, locationId, serializedName);
 
             if (!this.IsReady || this.IsProcessingPendingItems || this.PendingAPItems.Count > 0)
             {
@@ -177,30 +195,41 @@ namespace ArchipelagoMod.Src.Controller
 
         private void HandleItem(AP_Item AP_Item)
         {
-            if (this.SaveData.HasUnlockedAPItem(AP_Item.ItemId))
+            if (this.SaveData.HasUnlockedAPLocation(AP_Item.LocationId))
             {
                 return;
             }
 
             Helper.Debug($"[ArchipelagoController::HandleItem] Handling Item - {AP_Item.Name}");
-            this.SaveData.SetUnlockedAPItem(AP_Item.ItemId);
-            
-            if (AP_Item.IsTrap)
-            {
-                this.ParkitectController.PlayerRedeemTrap(AP_Item);
-            }
-            else if (!this.ParkitectController.PlayerHasUnlockedItem(AP_Item))
-            {
-                this.ParkitectController.PlayerUnlockItem(AP_Item);
-                this.ParkitectController.SendMessage($"You Received: \"{AP_Item.SerializedName}\"");
-            }
+            this.SaveData.SetUnlockedAPLocation(AP_Item.LocationId);
 
-            if (AP_Item.LocationId < 0)
+            if (AP_Item.IsSkip)
             {
+                this.ParkitectController.SendMessage(AP_Item.Message());
+                this.SaveData.IncreaseSkip();
+                this.ArchipelagoWindow.UpdateSkipText();
                 return;
             }
 
-            this.ArchipelagoWindow.NextChallenge(AP_Item.LocationId);
+            if (AP_Item.IsSpeedup)
+            {
+                this.ParkitectController.SendMessage(AP_Item.Message());
+                this.SaveData.IncreaseMaxSpeedup();
+                this.ArchipelagoWindow.UpdateSpeedups();
+                return;
+            }
+
+            if (AP_Item.IsTrap)
+            {
+                this.ParkitectController.PlayerRedeemTrap(AP_Item);
+                return;
+            }
+
+            if (!this.ParkitectController.PlayerHasUnlockedItem(AP_Item))
+            {
+                this.ParkitectController.PlayerUnlockItem(AP_Item);
+                this.ParkitectController.SendMessage(AP_Item.Message());
+            }
         }
 
         public void OnDisconnect ()
@@ -235,6 +264,8 @@ namespace ArchipelagoMod.Src.Controller
                 this.SaveData = GetComponent<SaveData>();
             }
 
+            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
+        
             if (this.SaveData.HasFinished())
             {
                 this.IsReady = true;
@@ -244,10 +275,12 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
+            if (!this.HandleScenario())
+            {
+                return;
+            }
 
             this.HandleChallenges();
-            this.HandleScenario();
             this.HandleRules();
 
             if (this.SaveData != null)
@@ -267,7 +300,7 @@ namespace ArchipelagoMod.Src.Controller
             this.ProcessPendingLocations();
         }
     
-        private void HandleScenario ()
+        private bool HandleScenario ()
         {
             this.SlotData.TryGetValue("scenario", out object scenarioData);
             AP_Scenario Scenario = AP_Scenario.Init(scenarioData);
@@ -275,9 +308,9 @@ namespace ArchipelagoMod.Src.Controller
             if (!this.ParkitectController.PlayerIsInPark(Scenario.name))
             {
                 this.ParkitectController.SendMessage($"Park not recognized. Please load '{ Scenario.name }'");
-                _ = this.ArchipelagoConnector.DisconnectAsync();
                 this.OnDisconnect();
-                return;
+                this.OnDestroy();
+                return false;
             }
 
             Constants.ScenarioName = Scenario.name;
@@ -288,6 +321,8 @@ namespace ArchipelagoMod.Src.Controller
                 this.HandleGoals();
                 this.ParkitectController.SendMessage("Park is freshly started! All Shops and Attractions are removed for the Challenge", "Please save the game immediately to avoid data loss :)");
             }
+
+            return true;
         }
     
         private void HandleGoals ()
@@ -403,6 +438,14 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             this.ParkitectController.AP_Rules = AP_Rules.Init(goalData);
+
+            if (this.ParkitectController.AP_Rules.progressive_speedups == 1)
+            {
+                this.SaveData.InitMaxSpeedup();
+                return;
+            }
+
+            this.ArchipelagoWindow.UpdateSpeedups();
         }
     
         private void HandleChallenges ()
@@ -493,6 +536,11 @@ namespace ArchipelagoMod.Src.Controller
 
             Helper.Debug($"[ArchipelagoController::CompleteLocation] CompleteLocation {id}");
             return true;
+        }
+
+        public void Speak (string message)
+        {
+            this.ArchipelagoConnector.ForwardSayPacket(message);
         }
 
         public void GoalAchieved ()
