@@ -10,24 +10,29 @@ It’s also a **randomizer** in its own right! 🌀
 ## 📦 Installation
 
 1. **Download the Mod Files**
-   - You can find the latest release [here](https://github.com/CrusherRL/AP_Parkitect/releases).
+    - You can find the latest release [here](https://github.com/CrusherRL/AP_Parkitect/releases).
 
 2. **Extract the Files**
-   - Place the extracted folder into your Parkitect `Mods` directory.  
-     Example path:  
-     ```
-     ...\Documents\Parkitect\Mods\Archipelago
-     ```
+    - Place the extracted folder into your Parkitect `Mods` directory.  
+      Example path:  
+      ```
+      ...\Documents\Parkitect\Mods\Archipelago
+      ```
 
 3. **Enable the Mod**
-   - Launch Parkitect.
-   - Go to **Main Menu → Mods**.
-   - Enable **Archipelago**.
+    - Launch Parkitect.
+    - Go to **Main Menu → Mods**.
+    - Enable **Archipelago**.
 
-4. **Download/Activate the Campaign**
-   - You can find it [here](https://mod.io/g/parkitect/m/archipelago-parks#description)
+4. **Download the Campaign** (preferably manually, mod.io is weird sometimes)
+    - Place the **Archipelago.campaign** file into `\Documents\Parkitect\Saves\Campaigns`
+    - If you insist on mod.io, you can find it [here](https://mod.io/g/parkitect/m/archipelago-parks#description)
 
-5. **Configure your Config**
+5. **Start the Game** and enter corresponding Park
+   - On Main Menu click on Campaign
+     - Top left (Campaign Maps) -> Community Campaigns -> "Archipelago Parks"
+
+6. **Configure your Config**
    - If the mod can’t find the config file, it will automatically create one.
    - If you don’t see the folder yet, start Parkitect once with the mod enabled — it will generate the config automatically.
    - Anyway you can find it there:
@@ -62,15 +67,15 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 ## 🔀 What Can the Randomizer Change?
 
 ### 🎢 Player
-- Adjust **Ride Speed** (adds new options: `5x`, `7x`, `9x`)
+- Adjust **Game Speed** (adds new options: `5x`, `7x`, `9x`)
 - Add **Money**
 
 ### 🧍 Guests
 - Spawn guests
-- Modify their money
+- Modify their money (+/-)
 - Kill (remove) them
 - Change their needs (hungry, thirsty, happy, tired, bathroom)
-- Cause **vomiting** or **nausea**
+- Cause **vomiting**/**nausea**
 - Turn them into **vandals**
 
 ### 🧑‍🔧 Employees
@@ -79,11 +84,11 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 - Send for **training**
 
 ### ☁️ Weather
-- Set to **Rainy**, **Cloudy**, **Sunny**, or **Stormy**
+- Set to **Rainy**, **Cloudy**, **Sunny** or **Stormy**
 
 ### 🎠 Attractions
 - Trigger **breakdowns**
-- Enable **vouchers**
+- Apply **vouchers**
 
 ### 🍔 Stalls / Shops
 - Re-deliver ingredients
