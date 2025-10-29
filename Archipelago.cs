@@ -7,11 +7,11 @@ namespace ArchipelagoMod
 {
     public class Archipelago : AbstractMod
     {
-        public const string VERSION_NUMBER = "0.0.2";
+        public const string VERSION_NUMBER = "0.1.1";
         public override string getIdentifier() => "com.parkitectCommunity.Archipelago";
         public override string getName() => "Archipelago Mod";
         public override string getDescription() => @"A Connector to Archipelago within Parkitect";
-        public string Path { get; set; }
+        public string path { get; set; }
 
         public override string getVersionNumber() => VERSION_NUMBER;
         public override bool isMultiplayerModeCompatible() => false;
@@ -29,7 +29,7 @@ namespace ArchipelagoMod
 
         public override void onEnabled()
         {
-            Constants.ModPath = GameController.modsPath + "Archipelago\\";
+            Constants.ModPath = GameController.modsPath + System.IO.Path.Combine("Archipelago") + System.IO.Path.DirectorySeparatorChar;
             Helper.Debug("=============================================");
 
             this.GameObject = new GameObject();
