@@ -13,8 +13,8 @@ namespace ArchipelagoMod.Src.Connector
 {
     class ArchipelagoConnector
     {
-        private readonly string Game;
-        private readonly ParkitectAPConfig ParkitectAPConfig;
+        private string Game;
+        private ParkitectAPConfig ParkitectAPConfig;
         private readonly string[] _protocols = new[] { "", "wss://", "ws://" };
 
         private readonly SemaphoreSlim _sessionLock = new SemaphoreSlim(1, 1);
@@ -68,9 +68,11 @@ namespace ArchipelagoMod.Src.Connector
                 foreach (string protocol in this._protocols)
                 {
                     if (this._stopRetries)
+                    {
                         break;
-
-                    string fullHost = string.IsNullOrEmpty(protocol)
+                    }
+                    
+                    string fullHost = string.IsNullOrEmpty(this.ParkitectAPConfig.Address)
                         ? this.ParkitectAPConfig.Address
                         : protocol + this.ParkitectAPConfig.Address;
 

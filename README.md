@@ -14,9 +14,13 @@ It’s also a **randomizer** in its own right! 🌀
 
 2. **Extract the Files**
     - Place the extracted folder into your Parkitect `Mods` directory.  
-      Example path:  
+      Windows:  
       ```
       ...\Documents\Parkitect\Mods\Archipelago
+      ```
+      MacOs:  
+      ```
+      ~/Library/Application Support/Parkitect/Mods/Archipelago
       ```
 
 3. **Enable the Mod**
@@ -36,9 +40,15 @@ It’s also a **randomizer** in its own right! 🌀
    - If the mod can’t find the config file, it will automatically create one.
    - If you don’t see the folder yet, start Parkitect once with the mod enabled — it will generate the config automatically.
    - Anyway you can find it there:
-    ```
-    ...\AppData\LocalLow\Texel Raptor\Parkitect\Parkitect_Archipelago\config_parkitect.json
-    ```
+     - Windows:
+      ```
+      ...\AppData\LocalLow\Texel Raptor\Parkitect\Parkitect_Archipelago\config_parkitect.json
+      ```
+     - MacOS:
+      ```
+      ~/Library/Application Support/com.TexelRaptor.Parkitect/Parkitect_Archipelago/config_parkitect.json
+      ```
+   
     ```json
     {
         "Address": "localhost",
@@ -128,7 +138,7 @@ To complete:
 
 | Category | Status | Notes |
 |-----------|---------|-------|
-| **Operating Systems** | ✅ Tested on **Windows 10** | Not tested on **Linux** or **macOS** yet |
+| **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** | Not tested on **Linux** yet |
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
 | **Game Version** | ✅ Latest Steam release (1.12b2) | Earlier versions won’t work |
 | **Other Mods** | ⚙️ Tested with **Perspective Camera** | No major conflicts observed |

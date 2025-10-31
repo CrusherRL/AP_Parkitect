@@ -21,14 +21,16 @@ namespace ArchipelagoMod.Src.Window
         // -----------------------------
         void Awake ()
         {
-            string bundlePath = Constants.ModPath + this.BundleFilename;
+            string OS = this.GetPlatformFolder();
+            Helper.Debug($"[AbstractWindow::Awake] Operating System: {OS}");
+            string bundlePath = System.IO.Path.Combine(Constants.ModPath, OS, this.BundleFilename);
 
             // Load AssetBundle from file
             this.AssetBundle = AssetBundle.LoadFromFile(bundlePath);
 
             if (AssetBundle == null)
             {
-                Helper.Debug($"[AbstractWindow::Awake] Assetbundle not found - {this.BundleFilename}");
+                Helper.Debug($"[AbstractWindow::Awake] Assetbundle not found - {OS} -> {this.BundleFilename}");
                 return;
             }
 
@@ -110,6 +112,24 @@ namespace ArchipelagoMod.Src.Window
         public void AddDraggableScript(string element = "Frame")
         {
             this.GetChild(element).gameObject.AddComponent<DragUI>();
+        }
+
+        public string GetPlatformFolder()
+        {
+            switch (Application.platform)
+            {
+                case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.WindowsEditor:
+                    return "Windows";
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXEditor:
+                    return "macOS";
+                case RuntimePlatform.LinuxPlayer:
+                case RuntimePlatform.LinuxEditor:
+                    return "Linux";
+                default:
+                    return "Unknown";
+            }
         }
     }
 }

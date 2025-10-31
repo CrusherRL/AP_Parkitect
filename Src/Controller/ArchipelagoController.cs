@@ -259,6 +259,11 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            if (!this.HandleScenario())
+            {
+                return;
+            }
+
             if (this.SaveData == null)
             {
                 this.SaveData = GetComponent<SaveData>();
@@ -272,11 +277,6 @@ namespace ArchipelagoMod.Src.Controller
                 this.ProcessPendingLocations();
                 this.ProcessPendingItems();
                 this.GoalAchieved();
-                return;
-            }
-
-            if (!this.HandleScenario())
-            {
                 return;
             }
 
@@ -314,6 +314,8 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             Constants.ScenarioName = Scenario.name;
+            this.SaveData = GetComponent<SaveData>();
+            this.SaveData.Init();
 
             // Player had saved the game?
             if (!this.ParkitectController.PlayerHasSavegame())
