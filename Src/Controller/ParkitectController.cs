@@ -21,7 +21,6 @@ namespace ArchipelagoMod.Src.Controller
         {
             Helper.Debug($"[ParkitectController::Start]");
             this.UpdateResearchItems();
-            Constants.ScenarioName = GameController.Instance.park.parkName;
             this.SaveData = GetComponent<SaveData>();
             Helper.Debug($"[ParkitectController::Start] Booted");
         }

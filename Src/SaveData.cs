@@ -36,7 +36,7 @@ namespace ArchipelagoMod.Src
 
         private bool Loaded = false;
 
-        public void Update ()
+        public void Init ()
         {
             if (this.Loaded || Constants.ScenarioName == null)
             {
@@ -53,7 +53,7 @@ namespace ArchipelagoMod.Src
             this.ParkitectController.PlayerRemoveAllRides();
             this.ParkitectController.PlayerRemoveAllStalls();
 
-            Helper.Debug($"[SaveData::Update]");
+            Helper.Debug($"[SaveData::Init]");
             this.SaveDataExport = SaveData.Load();
 
             if (this.SaveDataExport == null)

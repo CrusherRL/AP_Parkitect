@@ -89,8 +89,7 @@ namespace ArchipelagoMod.Src.Config
 
         public static bool HasConfigFile ()
         {
-            return true;
-            //return File.Exists(ParkitectAPConfig.GetConfigFilePath());
+            return File.Exists(ParkitectAPConfig.GetConfigFilePath());
         }
     }
 }
