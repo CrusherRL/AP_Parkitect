@@ -178,7 +178,12 @@ namespace ArchipelagoMod.Src
         public void IncreaseMaxSpeedup()
         {
             this._help();
-            this.SaveDataExport.max_speedup += 1;
+
+            if (Constants.Player.SpeedupOptions.Last<int>() > this.SaveDataExport.max_speedup)
+            {
+                this.SaveDataExport.max_speedup += 1;
+            }
+
             this.Save();
         }
         public int GetMaxSpeedup()

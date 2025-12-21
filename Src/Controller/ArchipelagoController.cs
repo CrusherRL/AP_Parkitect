@@ -111,6 +111,7 @@ namespace ArchipelagoMod.Src.Controller
 
             this.ArchipelagoConnector.OnReconnected += () => {
                 this.OnConnecting();
+                this.ParkitectController.SendMessage("Lost Connection to Archipelago - retrying...");
                 Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000 } seconds");
             };
 
@@ -446,8 +447,6 @@ namespace ArchipelagoMod.Src.Controller
                 this.SaveData.InitMaxSpeedup();
                 return;
             }
-
-            this.ArchipelagoWindow.UpdateSpeedups();
         }
     
         private void HandleChallenges ()

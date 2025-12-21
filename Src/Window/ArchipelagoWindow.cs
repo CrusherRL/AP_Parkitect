@@ -192,6 +192,7 @@ namespace ArchipelagoMod.Src.Window
             }
 
             this.UpdateSkipText();
+            this.UpdateSpeedups();
             this.all_challenges = Challenges;
 
             List<int> locationIds = this.SaveData.GetChallenges();
@@ -265,16 +266,13 @@ namespace ArchipelagoMod.Src.Window
         {
             int maxSpeed = this.SaveData.GetMaxSpeedup();
 
-            if (maxSpeed == -1)
+            foreach (int speed in Constants.Player.SpeedupOptions)
             {
-                foreach (int speed in Constants.Player.SpeedupOptions)
+                if (maxSpeed == -1 || maxSpeed >= speed)
                 {
                     this.EnableSpeedupButton(speed);
                 }
-                return;
             }
-      
-            this.EnableSpeedupButton(maxSpeed);
         }
 
         public void EnableSpeedupButton(int id)

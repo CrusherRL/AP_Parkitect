@@ -16,12 +16,12 @@
 
         public string Text ()
         {
-            return $"<color={ this.Color }> > {this.Rating}{this.Currency} {this.Label}</color>";
+            return $"<color={ this.Color }> >= {this.Rating}{this.Currency} {this.Label}</color>";
         }
 
         public bool Check(float rating)
         {
-            if (rating <= 1f)
+            if (rating < 2f)
             {
                 rating *= 100f;
             }
@@ -31,7 +31,7 @@
 
         public bool Check(double rating)
         {
-            if (rating <= 1f)
+            if (rating < 2f)
             {
                 rating *= 100f;
             }
