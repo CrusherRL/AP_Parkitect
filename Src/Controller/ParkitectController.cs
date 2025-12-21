@@ -413,19 +413,23 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerUnlockItem(AP_Item AP_Item)
         {
-            this.SaveData.AddUnlockedItem(AP_Item.PrefabName);
-
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
                 this.PlayerAddStall(AP_Item.PrefabName);
+                this.SaveData.AddUnlockedItem(AP_Item.PrefabName);
                 return;
             }
-
-            this.PlayerAddAttraction(AP_Item.PrefabName);
+            
+            if (Constants.Attraction.All.Contains(AP_Item.Name))
+            {
+                this.PlayerAddAttraction(AP_Item.PrefabName);
+                this.SaveData.AddUnlockedItem(AP_Item.PrefabName);
+            }
         }
 
         public bool PlayerHasUnlockedItem(AP_Item AP_Item)
         {
+            Helper.Debug($"[ParkitectController::PlayerUnlockItem] AP_Item -> " + AP_Item.PrefabName + " --- " + AP_Item.Name);
             if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName))
             {
                 return true;
@@ -433,10 +437,17 @@ namespace ArchipelagoMod.Src.Controller
 
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
+                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Stall");
                 return this.GetAllShopsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
             }
 
-            return this.GetAllAttractionsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
+            if (Constants.Attraction.All.Contains(AP_Item.Name))
+            {
+                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Attraction");
+                return this.GetAllAttractionsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
+            }
+
+            return false;
         }
 
         // Remove all Rides from List
