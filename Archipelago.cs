@@ -7,7 +7,7 @@ namespace ArchipelagoMod
 {
     public class Archipelago : AbstractMod
     {
-        public const string VERSION_NUMBER = "0.1.2";
+        public const string VERSION_NUMBER = "1.0.0";
         public override string getIdentifier() => "com.parkitectCommunity.Archipelago";
         public override string getName() => "Archipelago Mod";
         public override string getDescription() => @"A Connector to Archipelago within Parkitect";

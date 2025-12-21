@@ -125,30 +125,17 @@ To complete:
 
 ---
 
-## ⚠️ Known Bugs & Errors
-
-| Issue | Description | Workaround |
-|--------|--------------|-------------|
-| Manual Goal Completion | Manually finishing the park or editing the data file won’t trigger goal completion. | Use the Debugger workaround. |
-| Possible Game Crashes | In rare cases, the game may crash. | Please report this on GitHub and attach both `debug.log` and `Player.log` (found in `...\AppData\LocalLow\Texel Raptor\Parkitect\`). |
-
----
-
 ## 🧪 Testing & Compatibility
 
 | Category | Status | Notes |
 |-----------|---------|-------|
 | **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** | Not tested on **Linux** yet |
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
-| **Game Version** | ✅ Latest Steam release (1.12b2) | Earlier versions won’t work |
-| **Other Mods** | ⚙️ Tested with **Perspective Camera** | No major conflicts observed |
+| **Game Version** | ✅ Steam release (1.12c) | Earlier versions before Steam release (1.12b2) won’t work |
+| **Other Mods** | ⚙️ Attraction/Shop Mods do not work! ||
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |
-| **Archipelago Multigame** | ✅ Stable |  |
-
-> 💡 If you test the mod on other systems or with different mods, please share your results via GitHub or Discord to help expand this table!
-
----
+| **Archipelago Multigame** | ✅ Stable ||
 
 > If you find new issues, please report them (see below).
 
@@ -186,7 +173,7 @@ If you encounter issues or have suggestions:
 To be accepted, a scenario **must**:
 - Include **all attractions and shops**
   - Decorations are optional, they will not be randomized
-- Have **1 mandatory goal** (usually 100% Happiness)
+- Have **1 mandatory goal** (usually 95% Happiness)
 - Allow **guests to enter** the park without issues
 - Be **fun and engaging** (no empty maps 😅)
 - Be **possible** but not overly difficult
