@@ -1,11 +1,11 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
-using MiniJSON;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using static MoneyLabelMerger.MoneyLabel;
 
 namespace ArchipelagoMod.Src
 {
@@ -15,9 +15,11 @@ namespace ArchipelagoMod.Src
 
         public int available_skips = 5;
 
-        public int max_speedup = -1; // -1 is always false -> no progressive speedup. 3 or more meant to be max speedup with progressive speedup
+        public int max_speedup = -1; // -1 is no progressive speedup. 3 or more meant to be max speedup with progressive speedup
 
         public List<int> current_challenges = new List<int>(); // our 3 current challenges
+
+        public string seed = string.Empty;
        
         public List<string> unlocked_items { get; set; } = new List<string>(); // Prefab name of the Attraction/Shop we received
         
@@ -36,7 +38,7 @@ namespace ArchipelagoMod.Src
 
         private bool Loaded = false;
 
-        public void Init ()
+        public void Init(string seed)
         {
             if (this.Loaded || Constants.ScenarioName == null)
             {
@@ -54,11 +56,13 @@ namespace ArchipelagoMod.Src
             this.ParkitectController.PlayerRemoveAllStalls();
 
             Helper.Debug($"[SaveData::Init]");
-            this.SaveDataExport = SaveData.Load();
+            this.CreateSavegameFolder(seed);
+            this.SaveDataExport = SaveData.Load(seed);
 
             if (this.SaveDataExport == null)
             {
                 this.SaveDataExport = new SaveDataExport();
+                this.SetSeed(seed);
                 this.Save();
                 return;
             }
@@ -85,6 +89,33 @@ namespace ArchipelagoMod.Src
         {
             this._help();
             return this.SaveDataExport.current_challenges;
+        }
+
+        protected void SetSeed(string seed)
+        {
+            this._help();
+
+            if (this.GetSeed() != string.Empty)
+            {
+                return;
+            }
+
+            this.SaveDataExport.seed = seed;
+        }
+
+        public string GetSeed()
+        {
+            return this.SaveDataExport.seed;
+        }
+
+        public bool IsSameSeed(string seed)
+        {
+            if (string.IsNullOrEmpty(seed))
+            {
+                return false;
+            }
+
+            return this.GetSeed() == seed;
         }
 
         public void SetChallenges(List<Challenge> challenges)
@@ -215,7 +246,7 @@ namespace ArchipelagoMod.Src
         public void Save()
         {
             Helper.Debug("[SaveData::Save]");
-            File.WriteAllText(SaveData.GetFilePath(), this.MakeJsonData());
+            File.WriteAllText(SaveData.GetFilePath(this.GetSeed()), this.MakeJsonData());
         }
 
         public void Backup()
@@ -223,24 +254,30 @@ namespace ArchipelagoMod.Src
             if (this.SaveDataExport == null) {
                 return;
             }
+
             Helper.Debug("[SaveData::Backup]");
-            File.WriteAllText(SaveData.GetFilePath() + ".backup", this.MakeJsonData());
+            File.WriteAllText(SaveData.GetFilePath(this.GetSeed()) + ".backup", this.MakeJsonData());
         }
 
-        public static SaveDataExport Load()
+        private void CreateSavegameFolder(string seed)
+        {
+            Directory.CreateDirectory(SaveData.GetSaveGamePath(seed));
+        }
+
+        public static SaveDataExport Load(string seed)
         {
             Helper.Debug("[SaveData::Load]");
             try
             {
-                string json = File.ReadAllText(SaveData.GetFilePath());
+                string json = File.ReadAllText(SaveData.GetFilePath(seed));
                 if (string.IsNullOrEmpty(json))
                 {
-                    return new SaveDataExport();
+                    return null;
                 }
 
                 return JsonConvert.DeserializeObject<SaveDataExport>(json);
             } catch {
-                return new SaveDataExport();
+                return null;
             }
         }
 
@@ -259,9 +296,14 @@ namespace ArchipelagoMod.Src
             this.Save();
         }
 
-        public static string GetFilePath()
+        public static string GetFilePath(string seed)
         {
-            return Constants.ModPath + Constants.ScenarioName + ".data";
+            return SaveData.GetSaveGamePath(seed) + "park.data";
+        }
+
+        public static string GetSaveGamePath(string seed)
+        {
+            return System.IO.Path.Combine(Constants.SaveGamesPath, seed);
         }
 
         private string MakeJsonData()

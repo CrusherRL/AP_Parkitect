@@ -56,26 +56,22 @@ namespace ArchipelagoMod.Src
 
         public static string SerializeText (string[] items)
         {
-            string result;
-
             if (items.Length == 0)
             {
-                result = string.Empty;
+                return string.Empty;
             }
-            else if (items.Length == 1)
+            
+            if (items.Length == 1)
             {
-                result = items[0];
+                return items[0];
             }
-            else if (items.Length == 2)
+            
+            if (items.Length == 2)
             {
-                result = string.Join(" and ", items);
+                return string.Join(" and ", items);
             }
-            else
-            {
-                result = string.Join(", ", items, 0, items.Length - 1) + " and " + items[items.Length - 1];
-            }
-
-            return result;
+         
+            return string.Join(", ", items, 0, items.Length - 1) + " and " + items[items.Length - 1];
         }
     }
 }
