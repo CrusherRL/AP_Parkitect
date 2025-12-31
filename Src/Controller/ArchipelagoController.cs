@@ -270,7 +270,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.SaveData = GetComponent<SaveData>();
             }
 
-            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), $"{Constants.ScenarioName}.slot_data.json", false);
+            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), SaveData.GetSaveGamePath(this.GetSlotDataSeed()) + "slot_data.json", false);
         
             if (this.SaveData.HasFinished())
             {
@@ -316,7 +316,7 @@ namespace ArchipelagoMod.Src.Controller
 
             Constants.ScenarioName = Scenario.name;
             this.SaveData = GetComponent<SaveData>();
-            this.SaveData.Init();
+            this.SaveData.Init(this.GetSlotDataSeed());
 
             // Player had saved the game?
             if (!this.ParkitectController.PlayerHasSavegame())
@@ -435,12 +435,12 @@ namespace ArchipelagoMod.Src.Controller
    
         private void HandleRules ()
         {
-            if (!this.SlotData.TryGetValue("rules", out object goalData))
+            if (!this.SlotData.TryGetValue("rules", out object rulesData))
             {
                 return;
             }
 
-            this.ParkitectController.AP_Rules = AP_Rules.Init(goalData);
+            this.ParkitectController.AP_Rules = AP_Rules.Init(rulesData);
 
             if (this.ParkitectController.AP_Rules.progressive_speedups == 1)
             {
@@ -448,15 +448,25 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
         }
-    
+
+        private string GetSlotDataSeed()
+        {
+            if (!this.SlotData.TryGetValue("seed", out object seedData))
+            {
+                return null;
+            }
+
+            return seedData.ToString();
+        }
+
         private void HandleChallenges ()
         {
-            if (!this.SlotData.TryGetValue("challenges", out object goalData))
+            if (!this.SlotData.TryGetValue("challenges", out object challengesData))
             {
                 return;
             }
 
-            AP_Challenges AP_Challenges = AP_Challenges.Init(goalData);
+            AP_Challenges AP_Challenges = AP_Challenges.Init(challengesData);
 
             foreach (AP_Challenge ap_challenge in AP_Challenges.challenges)
             {

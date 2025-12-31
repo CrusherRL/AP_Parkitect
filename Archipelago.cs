@@ -1,13 +1,14 @@
 ﻿using ArchipelagoMod.Src;
 using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.Window;
+using System.IO;
 using UnityEngine;
 
 namespace ArchipelagoMod
 {
     public class Archipelago : AbstractMod
     {
-        public const string VERSION_NUMBER = "1.0.0";
+        public const string VERSION_NUMBER = "1.1.0";
         public override string getIdentifier() => "com.parkitectCommunity.Archipelago";
         public override string getName() => "Archipelago Mod";
         public override string getDescription() => @"A Connector to Archipelago within Parkitect";
@@ -29,8 +30,10 @@ namespace ArchipelagoMod
 
         public override void onEnabled()
         {
-            Constants.ModPath = GameController.modsPath + System.IO.Path.Combine("Archipelago") + System.IO.Path.DirectorySeparatorChar;
             Helper.Debug("=============================================");
+            Constants.ModPath = GameController.modsPath + System.IO.Path.Combine("Archipelago") + System.IO.Path.DirectorySeparatorChar;
+            Constants.SaveGamesPath = Constants.ModPath + System.IO.Path.Combine("Savegames") + System.IO.Path.DirectorySeparatorChar;
+            Directory.CreateDirectory(Constants.SaveGamesPath);
 
             this.GameObject = new GameObject();
 

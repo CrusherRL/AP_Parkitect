@@ -14,6 +14,7 @@ namespace ArchipelagoMod.Src
 		public static string ParkitectAPFolder = "Parkitect_Archipelago";
 
         public static string ModPath = null;
+        public static string SaveGamesPath = null;
         public static string ScenarioName = null;
         public static bool Debug = true;
 
