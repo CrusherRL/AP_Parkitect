@@ -298,7 +298,7 @@ namespace ArchipelagoMod.Src
 
         public static string GetFilePath(string seed)
         {
-            return SaveData.GetSaveGamePath(seed) + "park.data";
+            return System.IO.Path.Combine(SaveData.GetSaveGamePath(seed), "park.data");
         }
 
         public static string GetSaveGamePath(string seed)

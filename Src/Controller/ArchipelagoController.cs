@@ -270,7 +270,10 @@ namespace ArchipelagoMod.Src.Controller
                 this.SaveData = GetComponent<SaveData>();
             }
 
-            Helper.Debug(JsonConvert.SerializeObject(this.SlotData, Formatting.Indented), SaveData.GetSaveGamePath(this.GetSlotDataSeed()) + "slot_data.json", false);
+            Helper.LogSlotData(
+                JsonConvert.SerializeObject(this.SlotData, Formatting.Indented),
+                System.IO.Path.Combine(SaveData.GetSaveGamePath(this.GetSlotDataSeed()), "slot_data.json")
+            );
         
             if (this.SaveData.HasFinished())
             {

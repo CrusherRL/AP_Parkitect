@@ -1,10 +1,8 @@
-﻿using ArchipelagoMod.Src.Challenges;
-using ArchipelagoMod.Src.Controller;
+﻿using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.SlotData;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Window
 {
@@ -453,35 +451,6 @@ namespace ArchipelagoMod.Src.Window
             {
                 Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Completion");
                 GetComponent<ArchipelagoController>().GoalAchieved();
-            }
-
-            GUILayout.EndHorizontal();
-        }
-     
-        public void DrawTestingOptions()
-        {
-            this.SetLabel("Testing:");
-            GUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("Log all rides and shops"))
-            {
-                List<Attraction> atts = this.Controller.GetAllAttractionsFromAssetManager();
-                List<Shop> shops = this.Controller.GetAllShopsFromAssetManager();
-
-                Helper.Debug("===================================");
-                Helper.Debug("===================================");
-                Helper.Debug("===================================");
-                foreach (Attraction att in atts)
-                {
-                    Helper.Debug($"{{{att.getPrefabType()}}}, {{{att.getName()}}}");
-                }
-                foreach (Shop shop in shops)
-                {
-                    Helper.Debug($"{{{shop.getPrefabType()}}}, {{{shop.getName()}}}");
-                }
-                Helper.Debug("===================================");
-                Helper.Debug("===================================");
-                Helper.Debug("===================================");
             }
 
             GUILayout.EndHorizontal();
