@@ -8,7 +8,8 @@ namespace ArchipelagoMod.Src
     class Helper
     {
         private static readonly object fileLock = new object();
-    
+        private static readonly object fileLock2 = new object();
+
         public static bool IsRange(List<(int Start, int End)> ranges, (int Start, int End) range)
         {
             return ranges.Any(v => v.Start == range.Start && v.End == range.End);
@@ -21,7 +22,8 @@ namespace ArchipelagoMod.Src
 
         public static void Debug(string content, string filename = "debug.log.txt", bool append = true)
         {
-            if (!Constants.Debug) {
+            if (!Constants.Debug)
+            {
                 return;
             }
 
@@ -39,6 +41,19 @@ namespace ArchipelagoMod.Src
             lock (fileLock)
             {
                 File.WriteAllText(filePath, content + "\n");
+            }
+        }
+
+        public static void LogSlotData(string content, string path)
+        {
+            //if (!Constants.Debug)
+            //{
+            //    return;
+            //}
+
+            lock (fileLock2)
+            {
+                File.WriteAllText(path, content + "\n");
             }
         }
 
