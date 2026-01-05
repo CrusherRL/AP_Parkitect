@@ -272,7 +272,7 @@ namespace ArchipelagoMod.Src.Controller
 
             Helper.LogSlotData(
                 JsonConvert.SerializeObject(this.SlotData, Formatting.Indented),
-                SaveData.GetSaveGamePath(this.GetSlotDataSeed()) + "_slot_data.json"
+                System.IO.Path.Combine(SaveData.GetSaveGamePath(this.GetSlotDataSeed()), "slot_data.json")
             );
         
             if (this.SaveData.HasFinished())
