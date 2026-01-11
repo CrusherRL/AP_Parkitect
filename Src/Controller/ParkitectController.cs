@@ -922,11 +922,27 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Attraction> GetAllAttractionsFromAssetManager(Prefabs prefab)
         {
-            return this.GetAllAttractionsFromAssetManager().Where(a => a.getPrefabType() == prefab).ToList();
+            return this.GetAllAttractionsFromAssetManager().Where(a => {
+                try
+                {
+                    return a.getPrefabType() == prefab;
+                } catch {
+                    return false;
+                }
+            }).ToList();
         }
         public List<Attraction> GetAllAttractionsFromAssetManager(string prefabName)
         {
-            return this.GetAllAttractionsFromAssetManager().Where(a => a.getPrefabType().ToString() == prefabName).ToList();
+            return this.GetAllAttractionsFromAssetManager().Where(a => {
+                try
+                {
+                    return a.getPrefabType().ToString() == prefabName;
+                }
+                catch
+                {
+                    return false;
+                }
+            }).ToList();
         }
         public Attraction GetAttractionFromAssetManager(string attraction)
         {
@@ -939,19 +955,36 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Attraction> GetAllAttractionsFromPark (Prefabs prefab)
         {
-            return this.GetAllAttractionsFromPark().Where(a => a.getPrefabType() == prefab).ToList();
+            return this.GetAllAttractionsFromPark().Where(a => {
+                try
+                {
+                    return a.getPrefabType() == prefab;
+                }
+                catch
+                {
+                    return false;
+                }
+            }).ToList();
         }
         public List<Attraction> GetAllCountableAttractionsFromPark(string attractionPrefab)
         {
             Prefabs prefabs = Helper.GetPrefabsFromString(attractionPrefab);
 
             return this.GetAllAttractionsFromPark()
-                .Where(a =>
-                    a.getPrefabType() == prefabs &&
-                    a.state == Attraction.State.OPENED &&
-                    a.customersCount > 0 &&
-                    !a.statsAreOutdated
-                ).ToList();
+                .Where(a => {
+                    try
+                    {
+                        return a.getPrefabType() == prefabs &&
+                            a.state == Attraction.State.OPENED &&
+                            a.customersCount > 0 &&
+                            !a.statsAreOutdated;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
+                .ToList();
         }
         public List<Attraction> GetAllCountableAttractionsTypeFromPark(string type)
         {
@@ -975,12 +1008,20 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             return this.GetAllAttractionsFromPark()
-                .Where(a =>
-                    attractions.Contains(a.getPrefabType().ToString()) &&
-                    a.state == Attraction.State.OPENED &&
-                    a.customersCount > 0 &&
-                    !a.statsAreOutdated
-                ).ToList();
+                .Where(a => {
+                    try
+                    {
+                        return attractions.Contains(a.getPrefabType().ToString()) &&
+                            a.state == Attraction.State.OPENED &&
+                            a.customersCount > 0 &&
+                            !a.statsAreOutdated;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
+                .ToList();
         }
 
         // Gets all Stalls
@@ -990,11 +1031,30 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Shop> GetAllShopsFromAssetManager(Prefabs prefab)
         {
-            return this.GetAllShopsFromAssetManager().Where(a => a.getPrefabType() == prefab).ToList();
+            return this.GetAllShopsFromAssetManager().Where(s =>
+            {
+                try
+                {
+                    return s.getPrefabType() == prefab;
+                }
+                catch {
+                    return false;
+                }
+            }).ToList();
         }
         public List<Shop> GetAllShopsFromAssetManager(string prefabName)
         {
-            return this.GetAllShopsFromAssetManager().Where(a => a.getPrefabType().ToString() == prefabName).ToList();
+            return this.GetAllShopsFromAssetManager().Where(s =>
+            {
+                try
+                {
+                    return s.getPrefabType().ToString() == prefabName;
+                }
+                catch
+                {
+                    return false;
+                }
+            }).ToList();
         }
 
         public List<Shop> GetAllShopsFromPark ()
@@ -1003,7 +1063,17 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Shop> GetAllShopsFromPark (Prefabs prefab)
         {
-            return this.GetAllShopsFromPark().Where(a => a.getPrefabType() == prefab).ToList();
+            return this.GetAllShopsFromPark().Where(s =>
+            {
+                try
+                {
+                    return s.getPrefabType() == prefab;
+                }
+                catch
+                {
+                    return false;
+                }
+            }).ToList();
         }
 
         public List<Shop> GetAllCountableShopsFromPark (string shopPrefab)
@@ -1012,10 +1082,19 @@ namespace ArchipelagoMod.Src.Controller
 
             return this.GetAllShopsFromPark()
                 .Where(s =>
-                    s.getPrefabType() == prefabs &&
-                    s.opened &&
-                    s.customersCount > 0
-                ).ToList();
+                {
+                    try
+                    {
+                        return s.getPrefabType() == prefabs &&
+                            s.opened &&
+                            s.customersCount > 0;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
+                .ToList();
         }
         public List<Shop> GetAllCountableShopsTypeFromPark(string type)
         {
@@ -1037,10 +1116,19 @@ namespace ArchipelagoMod.Src.Controller
 
             return this.GetAllShopsFromPark()
                 .Where(s =>
-                    shops.Contains(s.getPrefabType().ToString()) &&
-                    s.opened &&
-                    s.customersCount > 0
-                ).ToList();
+                {
+                    try
+                    {
+                        return shops.Contains(s.getPrefabType().ToString()) &&
+                            s.opened &&
+                            s.customersCount > 0;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
+                .ToList();
         }
 
         public _ResearchItem GetResearchItem (string referenceName)

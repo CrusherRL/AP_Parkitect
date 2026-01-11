@@ -201,6 +201,11 @@ namespace ArchipelagoMod.Src.Connector
 
         private void OnErrorReceived(Exception e, string message)
         {
+            if (e.Message.Contains("Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy"))
+            {
+                return;
+            }
+
             Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.Message);
 
             if (e.Message.Contains("closed the WebSocket connection"))
