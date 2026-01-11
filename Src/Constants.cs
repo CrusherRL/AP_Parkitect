@@ -872,6 +872,7 @@ namespace ArchipelagoMod.Src
                 return textBlock.Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
             }
         }
+    
         public static class Skips
         {
             public static string[] Types = { "Skip" };
@@ -893,5 +894,11 @@ namespace ArchipelagoMod.Src
             };
         }
 
+        public static string[] AllItems = (new[]
+        {
+            Constants.Attraction.All,
+            Constants.Stall.All,
+        })
+            .SelectMany(a => a).ToArray();
     }
 }
