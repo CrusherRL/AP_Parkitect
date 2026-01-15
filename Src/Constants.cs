@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace ArchipelagoMod.Src
 {
@@ -898,7 +899,91 @@ namespace ArchipelagoMod.Src
         {
             Constants.Attraction.All,
             Constants.Stall.All,
+            Constants.Mods.All,
         })
             .SelectMany(a => a).ToArray();
+
+        public static class Mods
+        {
+            public static string[] Stalls =
+            {
+                "Dragon Shop",
+                "Taco Shop",
+                "Pancake Shop",
+            };
+            public static string[] CalmRides =
+            {
+                "Hopper",
+                "Rockin' Tug",
+                "Circus Show",
+            };
+            public static string[] ThrillRides =
+            {
+                "Power Swing",
+                "Mega Swing",
+                "Kraken Attack",
+                "Hexentanz",
+                "RotoShake",
+                "Demon Drop",
+                "Fish In A Barrel",
+                "Jump²",
+                "Inverter",
+                "Somersault",
+                "Monster",
+                "Revolution",
+            };
+            public static string[] CoasterRides =
+            {
+                "CorkscrewCoaster",
+                "Inverted Launch Coaster",
+                "Quadruple Rail Coaster",
+                "Retro Steel Coaster",
+            };
+            public static string[] TransportRides =
+            {};
+            public static string[] WaterRides =
+            {};
+
+            public static string[] All = (new[]
+            {
+                Constants.Mods.Stalls,
+                Constants.Mods.CalmRides,
+                Constants.Mods.ThrillRides,
+                Constants.Mods.CoasterRides,
+                Constants.Mods.TransportRides,
+                Constants.Mods.WaterRides
+            })
+                .SelectMany(a => a).ToArray();
+
+            public static string GetType(string thing)
+            {
+                if (Constants.Mods.CalmRides.Contains(thing))
+                {
+                    return Constants.Attraction.Types[0];
+                }
+
+                if (Constants.Mods.CalmRides.Contains(thing))
+                {
+                    return Constants.Attraction.Types[1];
+                }
+
+                if (Constants.Mods.CoasterRides.Contains(thing))
+                {
+                    return Constants.Attraction.Types[2];
+                }
+
+                if (Constants.Mods.TransportRides.Contains(thing))
+                {
+                    return Constants.Attraction.Types[3];
+                }
+
+                if (Constants.Mods.WaterRides.Contains(thing))
+                {
+                    return Constants.Attraction.Types[4];
+                }
+
+                return Constants.Stall.Types[0];
+            }
+        }
     }
 }

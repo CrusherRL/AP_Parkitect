@@ -413,6 +413,20 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerUnlockItem(AP_Item AP_Item)
         {
+            if (AP_Item.IsMod)
+            {
+                if (Constants.Mods.Stalls.Contains(AP_Item.Name))
+                {
+                    this.PlayerAddStall(AP_Item.Name);
+                    this.SaveData.AddUnlockedItem(AP_Item.Name);
+                    return;
+                }
+
+                this.PlayerAddAttraction(AP_Item.Name);
+                this.SaveData.AddUnlockedItem(AP_Item.Name);
+                return;
+            }
+
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
                 this.PlayerAddStall(AP_Item.PrefabName);
@@ -429,10 +443,23 @@ namespace ArchipelagoMod.Src.Controller
 
         public bool PlayerHasUnlockedItem(AP_Item AP_Item)
         {
-            Helper.Debug($"[ParkitectController::PlayerUnlockItem] AP_Item -> " + AP_Item.PrefabName + " --- " + AP_Item.Name);
-            if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName))
+            string prefabName = AP_Item.IsMod ? AP_Item.Name : AP_Item.PrefabName.ToString();
+            Helper.Debug($"[ParkitectController::PlayerUnlockItem] AP_Item -> " + prefabName + " --- " + AP_Item.Name);
+            if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName) || this.SaveData.HasUnlockedItem(AP_Item.Name))
             {
                 return true;
+            }
+
+            if (AP_Item.IsMod)
+            {
+                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Mod::{AP_Item.ModType}");
+
+                if (Constants.Mods.Stalls.Contains(AP_Item.Name))
+                {
+                    return this.GetShopFromAssetManager(AP_Item.Name).isAvailableInParks;
+                }
+
+                return this.GetAttractionFromAssetManager(AP_Item.Name).isAvailableInParks;
             }
 
             if (Constants.Stall.All.Contains(AP_Item.Name))
@@ -478,7 +505,13 @@ namespace ArchipelagoMod.Src.Controller
         }
         public void PlayerAddAttraction(string prefabName)
         {
-            Attraction attraction = this.GetAllAttractionsFromAssetManager(prefabName).First();
+            Attraction attraction = this.GetAllAttractionsFromAssetManager(prefabName).FirstOrDefault();
+
+            if (attraction == null)
+            {
+                attraction = this.GetAttractionFromAssetManager(prefabName);
+            }
+
             this.PlayerAddAttraction(attraction);
         }
         public void PlayerAddAttraction(Attraction attraction)
@@ -522,7 +555,12 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerAddStall(string prefabName)
         {
-            Shop shop = this.GetAllShopsFromAssetManager(prefabName).First();
+            Shop shop = this.GetAllShopsFromAssetManager(prefabName).FirstOrDefault();
+
+            if (shop == null)
+            {
+                shop = this.GetShopFromAssetManager(prefabName);
+            }
             this.PlayerAddStall(shop);
         }
 
@@ -1056,6 +1094,10 @@ namespace ArchipelagoMod.Src.Controller
                 }
             }).ToList();
         }
+        public Shop GetShopFromAssetManager(string shop)
+        {
+            return this.GetAllShopsFromAssetManager().Where(s => s.getName() == shop).First();
+        }
 
         public List<Shop> GetAllShopsFromPark ()
         {
@@ -1139,7 +1181,7 @@ namespace ArchipelagoMod.Src.Controller
         public string GetSerializedFromPrefabs (string prefabs)
         {
             // Counts for all items except ingame items :)
-            if (Constants.AllNonItemTypes.Contains(prefabs))
+            if (Constants.AllNonItemTypes.Contains(prefabs) || Constants.Mods.All.Contains(prefabs))
             {
                 return prefabs;
             }

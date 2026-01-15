@@ -94,6 +94,7 @@ namespace ArchipelagoMod.Src.Window
             this.DrawStallOptions();
             this.DrawTraps();
             this.DrawChallengeOptions();
+            this.DrawTestingOptions();
         }
 
         // -----------------------------
@@ -451,6 +452,49 @@ namespace ArchipelagoMod.Src.Window
             {
                 Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Completion");
                 GetComponent<ArchipelagoController>().GoalAchieved();
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        public void DrawTestingOptions()
+        {
+            this.SetLabel("Testing:");
+            GUILayout.BeginHorizontal();
+            ParkitectController parkitectController = GetComponent<ParkitectController>();
+
+            if (GUILayout.Button("Log All Attractions"))
+            {
+                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Attractions");
+                List<Attraction> attractions = parkitectController.GetAllAttractionsFromAssetManager();
+                foreach (Attraction attraction in attractions)
+                {
+                    try
+                    {
+                        Helper.Debug(attraction.getName().ToString());
+                    }
+                    catch
+                    {
+                        Helper.Debug($"--- Failed ---");
+                    }
+                }
+            }
+
+            if (GUILayout.Button("Log All Shops"))
+            {
+                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Shops");
+                List<Shop> shops = parkitectController.GetAllShopsFromAssetManager();
+                foreach (Shop shop in shops)
+                {
+                    try
+                    {
+                        Helper.Debug(shop.getName().ToString());
+                    }
+                    catch
+                    {
+                        Helper.Debug($"--- Failed ---");
+                    }
+                }
             }
 
             GUILayout.EndHorizontal();
