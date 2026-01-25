@@ -13,34 +13,14 @@ namespace ArchipelagoMod.Src.Controller
     {
         // Timescale for Speedups
         readonly float OldTimeScale = Time.timeScale;
-        private List<_ResearchItem> ResearchItems = new List<_ResearchItem>();
         public AP_Rules AP_Rules = null;
         public SaveData SaveData = null;
 
         void Start()
         {
             Helper.Debug($"[ParkitectController::Start]");
-            this.UpdateResearchItems();
             this.SaveData = GetComponent<SaveData>();
             Helper.Debug($"[ParkitectController::Start] Booted");
-        }
-
-        public void UpdateResearchItems ()
-        {
-            this.ResearchItems = new List<_ResearchItem>();
-            int length = GameController.Instance.park.scenario.research.getItems().Count;
-
-            for (int i = 0; i < length; i++)
-            {
-                string referenceName = GameController.Instance.park.scenario.research.getItemReferenceNames()[i];
-                this.ResearchItems.Add(new _ResearchItem(i, referenceName));
-            }
-        }
-
-        public bool HasResearchItem (string ReferenceName)
-        {
-            _ResearchItem item = this.ResearchItems.Find(i => i.ReferenceName == ReferenceName);
-            return item != null;
         }
 
         // -----------------------------
@@ -643,14 +623,6 @@ namespace ArchipelagoMod.Src.Controller
             return goals.Contains(goal);
         }
 
-        // -----------------------------
-        // Research options
-        // -----------------------------
-        public void PlayerChangeResearchState (bool flag = false)
-        {
-
-        }
-
         public void PlayerRedeemTrap (AP_Item AP_Item)
         {
             if (AP_Item.Name == "Attraction Breakdown Trap")
@@ -986,78 +958,70 @@ namespace ArchipelagoMod.Src.Controller
         {
             return this.GetAllAttractionsFromAssetManager().Where(a => a.getName() == attraction).First();
         }
-
         public List<Attraction> GetAllAttractionsFromPark ()
         {
             return GameController.Instance.park.getAttractions().ToList();
         }
-        public List<Attraction> GetAllAttractionsFromPark (Prefabs prefab)
-        {
-            return this.GetAllAttractionsFromPark().Where(a => {
-                try
-                {
-                    return a.getPrefabType() == prefab;
-                }
-                catch
-                {
-                    return false;
-                }
-            }).ToList();
-        }
         public List<Attraction> GetAllCountableAttractionsFromPark(string attractionPrefab)
         {
-            Prefabs prefabs = Helper.GetPrefabsFromString(attractionPrefab);
-
             return this.GetAllAttractionsFromPark()
                 .Where(a => {
-                    try
+                    bool isAttraction = false;
+
+                    if (this.AttractionHasPrefabType(a))
                     {
-                        return a.getPrefabType() == prefabs &&
-                            a.state == Attraction.State.OPENED &&
-                            a.customersCount > 0 &&
-                            !a.statsAreOutdated;
+                        isAttraction = a.getPrefabType() == Helper.GetPrefabsFromString(attractionPrefab);
                     }
-                    catch
+                    else
                     {
-                        return false;
+                        isAttraction = a.getName() == this.GetSerializedFromPrefabs(attractionPrefab);
                     }
+
+                    return isAttraction
+                        && a.state == Attraction.State.OPENED
+                        && a.customersCount > 0
+                        && !a.statsAreOutdated;
                 })
                 .ToList();
         }
         public List<Attraction> GetAllCountableAttractionsTypeFromPark(string type)
         {
-            string[] attractions = Constants.Attraction.WaterRides;
+            string[] attractions = Constants.Attraction.WaterRides.Concat(Constants.Mods.WaterRides).ToArray();
 
             if (type == "Calm Rides")
             {
-                attractions = Constants.Attraction.CalmRides;
+                attractions = Constants.Attraction.CalmRides.Concat(Constants.Mods.CalmRides).ToArray();
             }
-            if (type == "Thrill Rides")
+            else if (type == "Thrill Rides")
             {
-                attractions = Constants.Attraction.ThrillRides;
+                attractions = Constants.Attraction.ThrillRides.Concat(Constants.Mods.ThrillRides).ToArray();
             }
-            if (type == "Coaster Rides")
+            else if (type == "Coaster Rides")
             {
-                attractions = Constants.Attraction.CoasterRides;
+                attractions = Constants.Attraction.CoasterRides.Concat(Constants.Mods.CoasterRides).ToArray();
             }
-            if (type == "Transport Rides")
+            else if (type == "Transport Rides")
             {
-                attractions = Constants.Attraction.TransportRides;
+                attractions = Constants.Attraction.TransportRides.Concat(Constants.Mods.TransportRides).ToArray();
             }
 
             return this.GetAllAttractionsFromPark()
                 .Where(a => {
-                    try
+                    bool isAttraction = false;
+
+                    if (this.AttractionHasPrefabType(a))
                     {
-                        return attractions.Contains(a.getPrefabType().ToString()) &&
-                            a.state == Attraction.State.OPENED &&
-                            a.customersCount > 0 &&
-                            !a.statsAreOutdated;
+                        isAttraction = attractions.Contains(a.getPrefabType().ToString());
                     }
-                    catch
+                    else
                     {
-                        return false;
+                        isAttraction = attractions.Contains(a.getName());
                     }
+
+                    return isAttraction
+                        && a.state == Attraction.State.OPENED
+                        && a.customersCount > 0
+                        && !a.statsAreOutdated;
                 })
                 .ToList();
         }
@@ -1103,44 +1067,31 @@ namespace ArchipelagoMod.Src.Controller
         {
             return GameController.Instance.park.getShops().ToList();
         }
-        public List<Shop> GetAllShopsFromPark (Prefabs prefab)
-        {
-            return this.GetAllShopsFromPark().Where(s =>
-            {
-                try
-                {
-                    return s.getPrefabType() == prefab;
-                }
-                catch
-                {
-                    return false;
-                }
-            }).ToList();
-        }
-
         public List<Shop> GetAllCountableShopsFromPark (string shopPrefab)
         {
-            Prefabs prefabs = Helper.GetPrefabsFromString(shopPrefab);
-
             return this.GetAllShopsFromPark()
                 .Where(s =>
                 {
-                    try
+                    bool isShop = false;
+
+                    if (this.ShopHasPrefabType(s))
                     {
-                        return s.getPrefabType() == prefabs &&
-                            s.opened &&
-                            s.customersCount > 0;
+                        isShop = s.getPrefabType() == Helper.GetPrefabsFromString(shopPrefab); ;
                     }
-                    catch
+                    else
                     {
-                        return false;
+                        isShop = s.getName() == this.GetSerializedFromPrefabs(shopPrefab);
                     }
+
+                    return isShop
+                        && s.opened
+                        && s.customersCount > 0;
                 })
                 .ToList();
         }
         public List<Shop> GetAllCountableShopsTypeFromPark(string type)
         {
-            string[] shops = Constants.Stall.All;
+            string[] shops = Constants.Stall.All.Concat(Constants.Mods.Stalls).ToArray();
 
             // For the future !
             //if (type == "Drinks")
@@ -1159,23 +1110,21 @@ namespace ArchipelagoMod.Src.Controller
             return this.GetAllShopsFromPark()
                 .Where(s =>
                 {
-                    try
+                    bool isShop = false;
+
+                    if (this.ShopHasPrefabType(s))
                     {
-                        return shops.Contains(s.getPrefabType().ToString()) &&
-                            s.opened &&
-                            s.customersCount > 0;
-                    }
-                    catch
+                        isShop = shops.Contains(s.getPrefabType().ToString());
+                    } else
                     {
-                        return false;
+                        shops.Contains(s.getName());
                     }
+
+                    return isShop
+                        && s.opened
+                        && s.customersCount > 0;
                 })
                 .ToList();
-        }
-
-        public _ResearchItem GetResearchItem (string referenceName)
-        {
-            return this.ResearchItems.Where(i => i.ReferenceName == referenceName).First();
         }
 
         public string GetSerializedFromPrefabs (string prefabs)
@@ -1187,6 +1136,32 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             return Constants.AllGameItems[Helper.GetPrefabsFromString(prefabs)];
+        }
+
+        protected bool AttractionHasPrefabType(Attraction attraction)
+        {
+            try
+            {
+                Prefabs prefabs = attraction.getPrefabType();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        protected bool ShopHasPrefabType(Shop shop)
+        {
+            try
+            {
+                Prefabs prefab = shop.getPrefabType();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ namespace ArchipelagoMod.Src.Connector
     {
         private string Game;
         private ParkitectAPConfig ParkitectAPConfig;
-        private readonly string[] _protocols = new[] { "", "wss://", "ws://" };
+        private readonly string[] _protocols = new[] { "wss://", "", "ws://" };
 
         private readonly SemaphoreSlim _sessionLock = new SemaphoreSlim(1, 1);
         private volatile bool _stopRetries;

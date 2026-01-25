@@ -74,7 +74,7 @@ namespace ArchipelagoMod.Src.SlotData
                 return message;
             }
 
-            return message + $"\nMod Items need to be researched!\nType: {this.ModType}";
+            return message + $"\nMod Items may to be researched!\nType: {this.ModType}";
         }
 
         private string FromPlayerMessage()

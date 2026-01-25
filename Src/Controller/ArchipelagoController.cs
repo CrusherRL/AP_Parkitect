@@ -29,7 +29,7 @@ namespace ArchipelagoMod.Src.Controller
         public List<Challenge> Challenges = new List<Challenge>();
         public bool IsProcessingPendingItems = false;
 
-        void Start ()
+        void Start()
         {
             Helper.Debug("[ArchipelagoController::Start]");
             this.ParkitectController = GetComponent<ParkitectController>();
@@ -53,7 +53,7 @@ namespace ArchipelagoMod.Src.Controller
             Helper.Debug("[ArchipelagoController::Start] -> Booted");
         }
 
-        void Update ()
+        void Update()
         {
             if (this.ArchipelagoConnector == null && GameController.Instance.loadingHasBeenCompleted)
             {
@@ -63,20 +63,20 @@ namespace ArchipelagoMod.Src.Controller
             //this.ParkitectController.PlayerCheckHasWon();
         }
 
-        void OnDestroy ()
+        void OnDestroy()
         {
             this.ArchipelagoConnector.OnItemReceived -= this.OnReceivedItem;
             _ = this.ArchipelagoConnector.DisconnectAsync();
         }
 
-        private void ConnectWithArchipelago ()
+        private void ConnectWithArchipelago()
         {
             this.ArchipelagoConnector = new ArchipelagoConnector(this.ParkitectAPConfig, this.Game);
             this.Listen();
             this.ArchipelagoConnector.ConnectAsync();
         }
 
-        private void InitAPConfig ()
+        private void InitAPConfig()
         {
             if (!ParkitectAPConfig.HasConfigFile())
             {
@@ -91,7 +91,7 @@ namespace ArchipelagoMod.Src.Controller
             this.ParkitectAPConfig = ParkitectAPConfig.Load();
         }
 
-        protected void Listen ()
+        protected void Listen()
         {
             Helper.Debug("[ArchipelagoController::Listen]");
             this.ArchipelagoConnector.OnConnected += (LoginSuccessful success) => {
@@ -133,7 +133,7 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
         }
 
-        private void OnReceivedItem (string itemName, string player, long locationId)
+        private void OnReceivedItem(string itemName, string player, long locationId)
         {
             if (this.SaveData != null && this.SaveData.HasUnlockedAPLocation(locationId))
             {
@@ -233,30 +233,34 @@ namespace ArchipelagoMod.Src.Controller
             }
         }
 
-        public void OnDisconnect ()
+        public void OnDisconnect()
         {
             this.ArchipelagoWindow.SetStatus(_Status.States.DISCONNECTED);
         }
 
-        public void OnConnecting ()
+        public void OnConnecting()
         {
             //this.ArchipelagoWindow.SetStatus(_Status.States.CONNECTING);
         }
 
-        public void OnConnected ()
+        public void OnConnected()
         {
             this.ArchipelagoWindow.SetStatus(_Status.States.CONNECTED);
         }
 
-        public bool IsOffline ()
+        public bool IsOffline()
         {
             return this.ArchipelagoConnector.Session == null || this.ArchipelagoConnector.Session.Locations == null || this.ArchipelagoConnector.Session.Locations.AllLocations == null;
         }
 
-        private void Handle ()
+        private void Handle()
         {
-            if (this.SlotData == null)
+            this.SlotData.TryGetValue("version", out object ap_world_version);
+            Version Version = new Version(ap_world_version.ToString());
+
+            if (!Version.IsCompatible())
             {
+                this.ParkitectController.SendMessage(Version.Messages());
                 return;
             }
 
@@ -304,7 +308,7 @@ namespace ArchipelagoMod.Src.Controller
             this.ProcessPendingLocations();
         }
     
-        private bool HandleScenario ()
+        private bool HandleScenario()
         {
             this.SlotData.TryGetValue("scenario", out object scenarioData);
             AP_Scenario Scenario = AP_Scenario.Init(scenarioData);
@@ -331,7 +335,7 @@ namespace ArchipelagoMod.Src.Controller
             return true;
         }
     
-        private void HandleGoals ()
+        private void HandleGoals()
         {
             if (!this.SlotData.TryGetValue("goals", out object goalData))
             {
@@ -436,7 +440,7 @@ namespace ArchipelagoMod.Src.Controller
             }
         }
    
-        private void HandleRules ()
+        private void HandleRules()
         {
             if (!this.SlotData.TryGetValue("rules", out object rulesData))
             {
@@ -462,7 +466,7 @@ namespace ArchipelagoMod.Src.Controller
             return seedData.ToString();
         }
 
-        private void HandleChallenges ()
+        private void HandleChallenges()
         {
             if (!this.SlotData.TryGetValue("challenges", out object challengesData))
             {
@@ -482,7 +486,7 @@ namespace ArchipelagoMod.Src.Controller
                 }
 
                 // Challenge is to have a specific shop
-                else if (ap_challenge.item.type == "shop")
+                else if (ap_challenge.item.type == "Shops" || ap_challenge.item.type == "shop")
                 {
                     challenge.SetShop(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
@@ -496,7 +500,7 @@ namespace ArchipelagoMod.Src.Controller
                 }
 
                 // Challenge is to have a specific ride
-                else if (ap_challenge.item.type == "ride")
+                else if (ap_challenge.item.type == "Rides" || (ap_challenge.item.type == "ride"))
                 {
                     challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
@@ -504,7 +508,7 @@ namespace ArchipelagoMod.Src.Controller
                 }
 
                 // Challenge is to have a specific coaster
-                else if (ap_challenge.item.type == "coaster")
+                else if (ap_challenge.item.type == "Coaster Rides" || ap_challenge.item.type == "coaster")
                 {
                     challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
@@ -552,12 +556,12 @@ namespace ArchipelagoMod.Src.Controller
             return true;
         }
 
-        public void Speak (string message)
+        public void Speak(string message)
         {
             this.ArchipelagoConnector.ForwardSayPacket(message);
         }
 
-        public void GoalAchieved ()
+        public void GoalAchieved()
         {
             Helper.Debug($"[ArchipelagoController::GoalAchieved]");
             this.ParkitectController.SendMessage($"Congratulations! You've won this Scenario. I hope you enjoyed the Game :)");

@@ -57,11 +57,6 @@ namespace ArchipelagoMod.Src.Window
             this.isOpen = !this.isOpen;
         }
       
-        public void OpenWindow()
-        {
-            this.isOpen = true;
-        }
-      
         public void CloseWindow()
         {
             this.isOpen = false;

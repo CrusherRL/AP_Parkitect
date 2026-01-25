@@ -6,6 +6,7 @@ namespace ArchipelagoMod.Src
 {
     class Constants
     {
+        public const string VERSION = "1.3.0";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 

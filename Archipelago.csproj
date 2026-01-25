@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <Reference Include="Parkitect">
-      <HintPath>D:\Festplatte\1 SPIELE\SteamLibrary\steamapps\common\Parkitect\Parkitect_Data\Managed\Parkitect.dll</HintPath>
+      <HintPath>E:\Steam\steamapps\common\Parkitect\Parkitect_Data\Managed\Parkitect.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>C:\Program Files\Unity 2020.3.37f1\Editor\Data\Resources\PackageManager\ProjectTemplates\libcache\com.unity.template.universal-10.8.0\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
@@ -155,7 +155,7 @@
       <HintPath>C:\Program Files\Unity 2020.3.37f1\Editor\Data\Managed\UnityEngine\UnityEngine.TLSModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>D:\Festplatte\1 SPIELE\SteamLibrary\SteamApps\common\Parkitect\Parkitect_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>E:\Steam\steamapps\common\Parkitect\Parkitect_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UIElementsModule">
       <HintPath>C:\Program Files\Unity 2020.3.37f1\Editor\Data\Managed\UnityEngine\UnityEngine.UIElementsModule.dll</HintPath>
