@@ -80,8 +80,6 @@ namespace ArchipelagoMod.Src.Window
                 return;
             }
 
-            Helper.Debug($"[ArchipelagoWindow::SetChallenge] {challenge.SerializedPanelId} - {challenge.PanelId}");
-
             this.CurrentChallenges.Add(challenge);
             this.SetChallengeListener(challenge);
 

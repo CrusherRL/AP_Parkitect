@@ -59,7 +59,7 @@ It’s also a **randomizer** in its own right! 🌀
     ```
     - Once configured you should restart your Park. Preferably you should quit the current park and re-enter it. In this way all Mods are reloading.
 
-6. **Connect to Archipelago**
+7. **Connect to Archipelago**
    - This mod does not need an extra Client to connect to the Archipelago Server
 
 ---
@@ -132,7 +132,7 @@ To complete:
 | **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** | Not tested on **Linux** yet |
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
 | **Game Version** | ✅ Steam release (1.12c) | Earlier versions before Steam release (1.12b2) won’t work |
-| **Other Mods** | ⚙️ Attraction/Shop Mods do not work! ||
+| **Other Mods** | ⚙️ Attraction/Shop Mods are Supported ([Steam Collection](https://steamcommunity.com/sharedfiles/filedetails/?id=3647109901)) ||
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |
 | **Archipelago Multigame** | ✅ Stable ||

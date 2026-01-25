@@ -21,7 +21,7 @@ namespace ArchipelagoMod.Src
             {
                 return _Status.Red;
             }
-            if (state == States.CONNECTED)
+            else if (state == States.CONNECTED)
             {
                 return _Status.Green;
             }

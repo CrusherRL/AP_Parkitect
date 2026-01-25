@@ -13,34 +13,14 @@ namespace ArchipelagoMod.Src.Controller
     {
         // Timescale for Speedups
         readonly float OldTimeScale = Time.timeScale;
-        private List<_ResearchItem> ResearchItems = new List<_ResearchItem>();
         public AP_Rules AP_Rules = null;
         public SaveData SaveData = null;
 
         void Start()
         {
             Helper.Debug($"[ParkitectController::Start]");
-            this.UpdateResearchItems();
             this.SaveData = GetComponent<SaveData>();
             Helper.Debug($"[ParkitectController::Start] Booted");
-        }
-
-        public void UpdateResearchItems ()
-        {
-            this.ResearchItems = new List<_ResearchItem>();
-            int length = GameController.Instance.park.scenario.research.getItems().Count;
-
-            for (int i = 0; i < length; i++)
-            {
-                string referenceName = GameController.Instance.park.scenario.research.getItemReferenceNames()[i];
-                this.ResearchItems.Add(new _ResearchItem(i, referenceName));
-            }
-        }
-
-        public bool HasResearchItem (string ReferenceName)
-        {
-            _ResearchItem item = this.ResearchItems.Find(i => i.ReferenceName == ReferenceName);
-            return item != null;
         }
 
         // -----------------------------
@@ -413,6 +393,20 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerUnlockItem(AP_Item AP_Item)
         {
+            if (AP_Item.IsMod)
+            {
+                if (Constants.Mods.Stalls.Contains(AP_Item.Name))
+                {
+                    this.PlayerAddStall(AP_Item.Name);
+                    this.SaveData.AddUnlockedItem(AP_Item.Name);
+                    return;
+                }
+
+                this.PlayerAddAttraction(AP_Item.Name);
+                this.SaveData.AddUnlockedItem(AP_Item.Name);
+                return;
+            }
+
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
                 this.PlayerAddStall(AP_Item.PrefabName);
@@ -429,10 +423,23 @@ namespace ArchipelagoMod.Src.Controller
 
         public bool PlayerHasUnlockedItem(AP_Item AP_Item)
         {
-            Helper.Debug($"[ParkitectController::PlayerUnlockItem] AP_Item -> " + AP_Item.PrefabName + " --- " + AP_Item.Name);
-            if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName))
+            string prefabName = AP_Item.IsMod ? AP_Item.Name : AP_Item.PrefabName.ToString();
+            Helper.Debug($"[ParkitectController::PlayerUnlockItem] AP_Item -> " + prefabName + " --- " + AP_Item.Name);
+            if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName) || this.SaveData.HasUnlockedItem(AP_Item.Name))
             {
                 return true;
+            }
+
+            if (AP_Item.IsMod)
+            {
+                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Mod::{AP_Item.ModType}");
+
+                if (Constants.Mods.Stalls.Contains(AP_Item.Name))
+                {
+                    return this.GetShopFromAssetManager(AP_Item.Name).isAvailableInParks;
+                }
+
+                return this.GetAttractionFromAssetManager(AP_Item.Name).isAvailableInParks;
             }
 
             if (Constants.Stall.All.Contains(AP_Item.Name))
@@ -478,7 +485,13 @@ namespace ArchipelagoMod.Src.Controller
         }
         public void PlayerAddAttraction(string prefabName)
         {
-            Attraction attraction = this.GetAllAttractionsFromAssetManager(prefabName).First();
+            Attraction attraction = this.GetAllAttractionsFromAssetManager(prefabName).FirstOrDefault();
+
+            if (attraction == null)
+            {
+                attraction = this.GetAttractionFromAssetManager(prefabName);
+            }
+
             this.PlayerAddAttraction(attraction);
         }
         public void PlayerAddAttraction(Attraction attraction)
@@ -522,7 +535,12 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerAddStall(string prefabName)
         {
-            Shop shop = this.GetAllShopsFromAssetManager(prefabName).First();
+            Shop shop = this.GetAllShopsFromAssetManager(prefabName).FirstOrDefault();
+
+            if (shop == null)
+            {
+                shop = this.GetShopFromAssetManager(prefabName);
+            }
             this.PlayerAddStall(shop);
         }
 
@@ -603,14 +621,6 @@ namespace ArchipelagoMod.Src.Controller
             ReadOnlyCollection<IScenarioGoal> goals = GameController.Instance.park.scenario.goals.getGoals();
 
             return goals.Contains(goal);
-        }
-
-        // -----------------------------
-        // Research options
-        // -----------------------------
-        public void PlayerChangeResearchState (bool flag = false)
-        {
-
         }
 
         public void PlayerRedeemTrap (AP_Item AP_Item)
@@ -948,78 +958,70 @@ namespace ArchipelagoMod.Src.Controller
         {
             return this.GetAllAttractionsFromAssetManager().Where(a => a.getName() == attraction).First();
         }
-
         public List<Attraction> GetAllAttractionsFromPark ()
         {
             return GameController.Instance.park.getAttractions().ToList();
         }
-        public List<Attraction> GetAllAttractionsFromPark (Prefabs prefab)
-        {
-            return this.GetAllAttractionsFromPark().Where(a => {
-                try
-                {
-                    return a.getPrefabType() == prefab;
-                }
-                catch
-                {
-                    return false;
-                }
-            }).ToList();
-        }
         public List<Attraction> GetAllCountableAttractionsFromPark(string attractionPrefab)
         {
-            Prefabs prefabs = Helper.GetPrefabsFromString(attractionPrefab);
-
             return this.GetAllAttractionsFromPark()
                 .Where(a => {
-                    try
+                    bool isAttraction = false;
+
+                    if (this.AttractionHasPrefabType(a))
                     {
-                        return a.getPrefabType() == prefabs &&
-                            a.state == Attraction.State.OPENED &&
-                            a.customersCount > 0 &&
-                            !a.statsAreOutdated;
+                        isAttraction = a.getPrefabType() == Helper.GetPrefabsFromString(attractionPrefab);
                     }
-                    catch
+                    else
                     {
-                        return false;
+                        isAttraction = a.getName() == this.GetSerializedFromPrefabs(attractionPrefab);
                     }
+
+                    return isAttraction
+                        && a.state == Attraction.State.OPENED
+                        && a.customersCount > 0
+                        && !a.statsAreOutdated;
                 })
                 .ToList();
         }
         public List<Attraction> GetAllCountableAttractionsTypeFromPark(string type)
         {
-            string[] attractions = Constants.Attraction.WaterRides;
+            string[] attractions = Constants.Attraction.WaterRides.Concat(Constants.Mods.WaterRides).ToArray();
 
             if (type == "Calm Rides")
             {
-                attractions = Constants.Attraction.CalmRides;
+                attractions = Constants.Attraction.CalmRides.Concat(Constants.Mods.CalmRides).ToArray();
             }
-            if (type == "Thrill Rides")
+            else if (type == "Thrill Rides")
             {
-                attractions = Constants.Attraction.ThrillRides;
+                attractions = Constants.Attraction.ThrillRides.Concat(Constants.Mods.ThrillRides).ToArray();
             }
-            if (type == "Coaster Rides")
+            else if (type == "Coaster Rides")
             {
-                attractions = Constants.Attraction.CoasterRides;
+                attractions = Constants.Attraction.CoasterRides.Concat(Constants.Mods.CoasterRides).ToArray();
             }
-            if (type == "Transport Rides")
+            else if (type == "Transport Rides")
             {
-                attractions = Constants.Attraction.TransportRides;
+                attractions = Constants.Attraction.TransportRides.Concat(Constants.Mods.TransportRides).ToArray();
             }
 
             return this.GetAllAttractionsFromPark()
                 .Where(a => {
-                    try
+                    bool isAttraction = false;
+
+                    if (this.AttractionHasPrefabType(a))
                     {
-                        return attractions.Contains(a.getPrefabType().ToString()) &&
-                            a.state == Attraction.State.OPENED &&
-                            a.customersCount > 0 &&
-                            !a.statsAreOutdated;
+                        isAttraction = attractions.Contains(a.getPrefabType().ToString());
                     }
-                    catch
+                    else
                     {
-                        return false;
+                        isAttraction = attractions.Contains(a.getName());
                     }
+
+                    return isAttraction
+                        && a.state == Attraction.State.OPENED
+                        && a.customersCount > 0
+                        && !a.statsAreOutdated;
                 })
                 .ToList();
         }
@@ -1056,49 +1058,40 @@ namespace ArchipelagoMod.Src.Controller
                 }
             }).ToList();
         }
+        public Shop GetShopFromAssetManager(string shop)
+        {
+            return this.GetAllShopsFromAssetManager().Where(s => s.getName() == shop).First();
+        }
 
         public List<Shop> GetAllShopsFromPark ()
         {
             return GameController.Instance.park.getShops().ToList();
         }
-        public List<Shop> GetAllShopsFromPark (Prefabs prefab)
-        {
-            return this.GetAllShopsFromPark().Where(s =>
-            {
-                try
-                {
-                    return s.getPrefabType() == prefab;
-                }
-                catch
-                {
-                    return false;
-                }
-            }).ToList();
-        }
-
         public List<Shop> GetAllCountableShopsFromPark (string shopPrefab)
         {
-            Prefabs prefabs = Helper.GetPrefabsFromString(shopPrefab);
-
             return this.GetAllShopsFromPark()
                 .Where(s =>
                 {
-                    try
+                    bool isShop = false;
+
+                    if (this.ShopHasPrefabType(s))
                     {
-                        return s.getPrefabType() == prefabs &&
-                            s.opened &&
-                            s.customersCount > 0;
+                        isShop = s.getPrefabType() == Helper.GetPrefabsFromString(shopPrefab); ;
                     }
-                    catch
+                    else
                     {
-                        return false;
+                        isShop = s.getName() == this.GetSerializedFromPrefabs(shopPrefab);
                     }
+
+                    return isShop
+                        && s.opened
+                        && s.customersCount > 0;
                 })
                 .ToList();
         }
         public List<Shop> GetAllCountableShopsTypeFromPark(string type)
         {
-            string[] shops = Constants.Stall.All;
+            string[] shops = Constants.Stall.All.Concat(Constants.Mods.Stalls).ToArray();
 
             // For the future !
             //if (type == "Drinks")
@@ -1117,34 +1110,58 @@ namespace ArchipelagoMod.Src.Controller
             return this.GetAllShopsFromPark()
                 .Where(s =>
                 {
-                    try
+                    bool isShop = false;
+
+                    if (this.ShopHasPrefabType(s))
                     {
-                        return shops.Contains(s.getPrefabType().ToString()) &&
-                            s.opened &&
-                            s.customersCount > 0;
-                    }
-                    catch
+                        isShop = shops.Contains(s.getPrefabType().ToString());
+                    } else
                     {
-                        return false;
+                        shops.Contains(s.getName());
                     }
+
+                    return isShop
+                        && s.opened
+                        && s.customersCount > 0;
                 })
                 .ToList();
-        }
-
-        public _ResearchItem GetResearchItem (string referenceName)
-        {
-            return this.ResearchItems.Where(i => i.ReferenceName == referenceName).First();
         }
 
         public string GetSerializedFromPrefabs (string prefabs)
         {
             // Counts for all items except ingame items :)
-            if (Constants.AllNonItemTypes.Contains(prefabs))
+            if (Constants.AllNonItemTypes.Contains(prefabs) || Constants.Mods.All.Contains(prefabs))
             {
                 return prefabs;
             }
 
             return Constants.AllGameItems[Helper.GetPrefabsFromString(prefabs)];
+        }
+
+        protected bool AttractionHasPrefabType(Attraction attraction)
+        {
+            try
+            {
+                Prefabs prefabs = attraction.getPrefabType();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        protected bool ShopHasPrefabType(Shop shop)
+        {
+            try
+            {
+                Prefabs prefab = shop.getPrefabType();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

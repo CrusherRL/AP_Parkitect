@@ -1,5 +1,6 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
+using ArchipelagoMod.Src.SlotData;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
@@ -69,7 +70,19 @@ namespace ArchipelagoMod.Src
 
             foreach (string thing in this.SaveDataExport.unlocked_items)
             {
-                if (Constants.Attraction.All.Contains(thing))
+                if (Constants.Mods.All.Contains(thing))
+                {
+                    if (Constants.Mods.Stalls.Contains(thing))
+                    {
+                        this.ParkitectController.PlayerAddStall(thing);
+                        return;
+                    } else
+                    {
+                        this.ParkitectController.PlayerAddAttraction(thing);
+                    }
+                }
+
+                else if (Constants.Attraction.All.Contains(thing))
                 {
                     this.ParkitectController.PlayerAddAttraction(thing);
                 }

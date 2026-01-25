@@ -105,7 +105,7 @@ namespace ArchipelagoMod.Src
             int length = Constants.Attraction.All.Length;
             string attraction = Constants.Attraction.All[Randomizer.GetRandomInt(1, length)];
 
-            if (attraction != null && controller.HasResearchItem(attraction))
+            if (attraction != null)
             {
                 return attraction;
             }
