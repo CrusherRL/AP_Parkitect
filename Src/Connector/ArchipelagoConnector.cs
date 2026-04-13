@@ -206,7 +206,7 @@ namespace ArchipelagoMod.Src.Connector
                 return;
             }
 
-            Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.Message);
+            Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.ToString());
 
             if (e.Message.Contains("closed the WebSocket connection"))
             {
