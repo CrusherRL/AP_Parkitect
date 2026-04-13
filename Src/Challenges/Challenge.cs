@@ -222,7 +222,6 @@ namespace ArchipelagoMod.Src.Challenges
 
                 if (attractions == null || lowestCount < this.Count)
                 {
-                    Helper.Debug(this.ParkitectController.GetSerializedFromPrefabs(this.Attraction));
                     unsolvedList.Insert(0, $"- {this.Count - lowestCount}x {this.ParkitectController.GetSerializedFromPrefabs(this.Attraction)}");
                 }
             }

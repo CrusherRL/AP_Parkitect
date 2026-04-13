@@ -22,6 +22,10 @@ It’s also a **randomizer** in its own right! 🌀
       ```
       ~/Library/Application Support/Parkitect/Mods/Archipelago
       ```
+      Linux:  
+      ```
+      /home/[username]/.local/share/Steam/steamapps/common/Parkitect/Mods
+      ```
 
 3. **Enable the Mod**
     - Launch Parkitect.
@@ -47,6 +51,10 @@ It’s also a **randomizer** in its own right! 🌀
      - MacOS:
       ```
       ~/Library/Application Support/com.TexelRaptor.Parkitect/Parkitect_Archipelago/config_parkitect.json
+      ```
+     - Linux:
+      ```
+      /home/[username]/.config/unity3d/Texel Raptor/Parkitect/Parkitect_Archipelago
       ```
    
     ```json
@@ -131,7 +139,7 @@ To complete:
 |-----------|---------|-------|
 | **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** | Not tested on **Linux** yet |
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
-| **Game Version** | ✅ Steam release (1.12c) | Earlier versions before Steam release (1.12b2) won’t work |
+| **Game Version** | ✅ Steam release (1.12e) | Earlier versions before Steam release (1.12b2) won’t work |
 | **Other Mods** | ⚙️ Attraction/Shop Mods are Supported ([Steam Collection](https://steamcommunity.com/sharedfiles/filedetails/?id=3647109901)) ||
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |
