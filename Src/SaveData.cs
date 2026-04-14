@@ -1,12 +1,10 @@
 ﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
-using ArchipelagoMod.Src.SlotData;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static MoneyLabelMerger.MoneyLabel;
 
 namespace ArchipelagoMod.Src
 {
@@ -51,12 +49,11 @@ namespace ArchipelagoMod.Src
                 this.ParkitectController = GetComponent<ParkitectController>();
             }
 
-            this.Loaded = true;
+            Helper.Debug($"[SaveData::Init]");
 
             this.ParkitectController.PlayerRemoveAllRides();
             this.ParkitectController.PlayerRemoveAllStalls();
 
-            Helper.Debug($"[SaveData::Init]");
             this.CreateSavegameFolder(seed);
             this.SaveDataExport = SaveData.Load(seed);
 
@@ -75,8 +72,8 @@ namespace ArchipelagoMod.Src
                     if (Constants.Mods.Stalls.Contains(thing))
                     {
                         this.ParkitectController.PlayerAddStall(thing);
-                        return;
-                    } else
+                    }
+                    else
                     {
                         this.ParkitectController.PlayerAddAttraction(thing);
                     }
@@ -91,8 +88,10 @@ namespace ArchipelagoMod.Src
                     this.ParkitectController.PlayerAddStall(thing);
                 }
             }
+
+            this.Loaded = true;
         }
-        
+
         public SaveDataExport GetExport()
         {
             return this.SaveDataExport;
