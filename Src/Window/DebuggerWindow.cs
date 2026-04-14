@@ -466,7 +466,7 @@ namespace ArchipelagoMod.Src.Window
                 {
                     try
                     {
-                        Helper.Debug(attraction.getName().ToString());
+                        Helper.Debug(attraction.getName());
                     }
                     catch
                     {
@@ -483,7 +483,7 @@ namespace ArchipelagoMod.Src.Window
                 {
                     try
                     {
-                        Helper.Debug(shop.getName().ToString());
+                        Helper.Debug(shop.getName());
                     }
                     catch
                     {

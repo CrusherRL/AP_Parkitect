@@ -85,7 +85,7 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 ## 🔀 What Can the Randomizer Change?
 
 ### 🎢 Player
-- Adjust **Game Speed** (adds new options: `5x`, `7x`, `9x`)
+- Adjust **Game Speed** (adds new options: `4x`, `5x`, `6x`, `7x`, `7x, `9x`)
 - Add **Money**
 
 ### 🧍 Guests
@@ -118,15 +118,67 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 
 ---
 
-## 🎯 Challenge Requirements
+## 🎯 Goals
+You can configure multiple win conditions for your scenario. Each goal can be adjusted individually:
 
-### 🎡 Attraction Challenge
+### 👥 Guest Goal
+Defines how many guests must be in your park to win.  
+- **Range:** 1 – 2500  
+- **Default:** 1000  
+
+### 💰 Money Goal
+Requires reaching a certain amount of money.  
+- **Range:** 50,000 – 500,000  
+- **Default:** 100,000  
+
+### 🎢 Roller Coaster Goal
+Number of roller coasters required.  
+- **Range:** 0 – 12  
+- **Default:** 4  
+
+### 😀 Excitement Rating
+Minimum excitement required for a coaster to count.  
+Set to **0** to disable this requirement.  
+- **Range:** 0 – 80  
+- **Default:** 50  
+
+### 😬 Intensity Rating
+Minimum intensity required for a coaster to count.  
+Set to **0** to disable this requirement.  
+- **Range:** 0 – 80  
+- **Default:** 50  
+
+### 📈 Ride Profit Goal
+Total profit required from all rides.  
+- **Range:** 0 – 10,000  
+- **Default:** 1500  
+
+### 🎟️ Park Tickets Goal
+Number of park tickets that must be sold.  
+- **Range:** 0 – 20,000  
+- **Default:** 0  
+
+### 🏪 Shops Goal
+Number of shops required in the park.  
+- **Range:** 0 – 100  
+- **Default:** 30  
+
+### 💵 Shop Profit Goal
+Total profit required from shops.  
+- **Range:** 0 – 3,000  
+- **Default:** 500  
+
+---
+
+## 🎯 Challenge/Check Requirements
+
+### 🎡 Attraction Challenge/Check
 To complete:
 - Must be **open**
 - Stats must **not be outdated**
 - Must have had **at least one customer**
 
-### 🍟 Shop Challenge
+### 🍟 Shop Challenge/Check
 To complete:
 - Must be **open**
 - Must have had **at least one customer**
@@ -137,7 +189,7 @@ To complete:
 
 | Category | Status | Notes |
 |-----------|---------|-------|
-| **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** | Not tested on **Linux** yet |
+| **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** and **Linux** ||
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
 | **Game Version** | ✅ Steam release (1.12e) | Earlier versions before Steam release (1.12b2) won’t work |
 | **Other Mods** | ⚙️ Attraction/Shop Mods are Supported ([Steam Collection](https://steamcommunity.com/sharedfiles/filedetails/?id=3647109901)) ||
@@ -174,18 +226,18 @@ If you encounter issues or have suggestions:
 
 ---
 
-## 🧭 Scenario Rules
+## 🧭 Scenario Rules (for Contributors)
 
 > 💡 You can **request maps** if you’d like to contribute!
 
 To be accepted, a scenario **must**:
-- Include **all attractions and shops**
+- Include **all attractions and shops** except **Mod Items**
   - Decorations are optional, they will not be randomized
 - Have **1 mandatory goal** (usually 95% Happiness)
-- Allow **guests to enter** the park without issues
+- Allow **guests to enter** the park without path issues
 - Be **fun and engaging** (no empty maps 😅)
 - Be **possible** but not overly difficult
-- Enough **Space** to build alot of stuff 
+- Enough **Space** to build a lot of stuff 
 - The Park **must** work in vanilla
 
 ---
@@ -209,11 +261,8 @@ To submit a park:
   - unlocks new features when deliveries are complete
 - add more diverse **Scenarios**
 - improve **Scenario Design**
-- add **Skips** to help the player (as individual items)
 - improve **Shop Ingredient Trap**
 - enhance the **UI Window** (fade animations)
-- add input fields or a dedicated input window
-- support **Archipelago hints**
 
 ---
 

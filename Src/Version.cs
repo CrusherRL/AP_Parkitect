@@ -12,6 +12,7 @@ namespace ArchipelagoMod.Src
             { "1.3.0", new[] { "v1.2.1", "v1.3.0" } },
             { "1.3.1", new[] { "v1.2.1", "v1.3.0" } },
             { "1.3.2", new[] { "v1.2.1", "v1.3.0" } },
+            { "1.3.3", new[] { "v1.2.1", "v1.3.0" } },
         };
 
         public string ap_world_version = null;

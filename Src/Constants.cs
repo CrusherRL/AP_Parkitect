@@ -6,7 +6,7 @@ namespace ArchipelagoMod.Src
 {
     class Constants
     {
-        public const string VERSION = "1.3.2";
+        public const string VERSION = "1.3.3";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
@@ -963,7 +963,7 @@ namespace ArchipelagoMod.Src
                     return Constants.Attraction.Types[0];
                 }
 
-                if (Constants.Mods.CalmRides.Contains(thing))
+                if (Constants.Mods.ThrillRides.Contains(thing))
                 {
                     return Constants.Attraction.Types[1];
                 }
@@ -983,7 +983,12 @@ namespace ArchipelagoMod.Src
                     return Constants.Attraction.Types[4];
                 }
 
-                return Constants.Stall.Types[0];
+                if (Constants.Mods.Stalls.Contains(thing))
+                {
+                    return Constants.Stall.Types[0];
+                }
+
+                return "unknown";
             }
         }
     }

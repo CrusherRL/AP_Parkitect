@@ -65,6 +65,11 @@ namespace ArchipelagoMod.Src.Controller
 
         void OnDestroy()
         {
+            this.ArchipelagoConnector.OnConnected -= this.OnConnected;
+            this.ArchipelagoConnector.OnConnectionFailed -= this.OnConnectionFailed;
+            this.ArchipelagoConnector.OnReconnected -= this.OnReconnected;
+            this.ArchipelagoConnector.OnReceivedPacket -= this.OnReceivedPacket;
+            this.ArchipelagoConnector.OnDisconnected -= this.OnDisconnected;
             this.ArchipelagoConnector.OnItemReceived -= this.OnReceivedItem;
             _ = this.ArchipelagoConnector.DisconnectAsync();
         }
@@ -94,43 +99,51 @@ namespace ArchipelagoMod.Src.Controller
         protected void Listen()
         {
             Helper.Debug("[ArchipelagoController::Listen]");
-            this.ArchipelagoConnector.OnConnected += (LoginSuccessful success) => {
-                Helper.Debug("[ArchipelagoController::Listen] -> OnConnected");
-                this.OnConnected();
-                this.SlotData = success.SlotData;
-                this.Handle();
-            };
-
-            this.ArchipelagoConnector.OnConnectionFailed += () => {
-                if (this.ArchipelagoConnector.Session.Socket.Connected)
-                {
-                    Helper.Debug("[ArchipelagoController::Listen] -> OnConnectionFailed");
-                    this.OnDisconnect();
-                }
-            };
-
-            this.ArchipelagoConnector.OnReconnected += () => {
-                this.OnConnecting();
-                this.ParkitectController.SendMessage("Lost Connection to Archipelago - retrying...");
-                Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : { this.ArchipelagoConnector.Retry / 1000 } seconds");
-            };
-
-            this.ArchipelagoConnector.OnReceivedPacket += (string message) =>
-            {
-                this.ParkitectController.SendMessage("Archipelago Server", message);
-                Helper.Debug($"[ArchipelagoController::Listen] PacketReceived - {message}");
-            };
-
-            this.ArchipelagoConnector.OnDisconnected += () =>
-            {
-                this.OnDisconnect();
-                this.ParkitectController.SendMessage("Lost Connection to Archipelago");
-            };
+            this.ArchipelagoConnector.OnConnected += this.OnConnected;
+            this.ArchipelagoConnector.OnConnectionFailed += this.OnConnectionFailed;
+            this.ArchipelagoConnector.OnReconnected += this.OnReconnected;
+            this.ArchipelagoConnector.OnReceivedPacket += this.OnReceivedPacket;
+            this.ArchipelagoConnector.OnDisconnected += this.OnDisconnected;
+            this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
 
             // Won the Scenario :)
             EventManager.Instance.OnScenarioWon += this.GoalAchieved;
+        }
 
-            this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
+        private void OnConnected(LoginSuccessful success)
+        {
+            Helper.Debug("[ArchipelagoController::Listen] -> OnConnected");
+            this.OnConnected();
+            this.SlotData = success.SlotData;
+            this.Handle();
+        }
+
+        private void OnConnectionFailed()
+        {
+            if (this.ArchipelagoConnector.Session.Socket.Connected)
+            {
+                Helper.Debug("[ArchipelagoController::Listen] -> OnConnectionFailed");
+                this.OnDisconnect();
+            }
+        }
+
+        private void OnReconnected()
+        {
+            this.OnConnecting();
+            this.ParkitectController.SendMessage("Lost Connection to Archipelago - retrying...");
+            Helper.Debug($"[ArchipelagoController::Listen] OnReconnected - Retry in : {this.ArchipelagoConnector.Retry / 1000} seconds");
+        }
+
+        private void OnReceivedPacket(string message)
+        {
+            this.ParkitectController.SendMessage("Archipelago Server", message);
+            Helper.Debug($"[ArchipelagoController::Listen] PacketReceived - {message}");
+        }
+
+        private void OnDisconnected()
+        {
+            this.OnDisconnect();
+            this.ParkitectController.SendMessage("Lost Connection to Archipelago");
         }
 
         private void OnReceivedItem(string itemName, string player, long locationId)

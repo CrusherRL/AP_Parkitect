@@ -964,20 +964,15 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Attraction> GetAllCountableAttractionsFromPark(string attractionPrefab)
         {
+            bool prefabIsMod = Constants.Mods.All.Contains(attractionPrefab);
+            string prefabName = prefabIsMod ? this.GetSerializedFromPrefabs(attractionPrefab) : Helper.GetPrefabsFromString(attractionPrefab).ToString();
+            
             return this.GetAllAttractionsFromPark()
                 .Where(a => {
-                    bool isAttraction = false;
+                    bool attractionIsMod = !this.AttractionHasPrefabType(a);
+                    string aName = attractionIsMod ? a.getName() : a.getPrefabType().ToString();
 
-                    if (this.AttractionHasPrefabType(a))
-                    {
-                        isAttraction = a.getPrefabType() == Helper.GetPrefabsFromString(attractionPrefab);
-                    }
-                    else
-                    {
-                        isAttraction = a.getName() == this.GetSerializedFromPrefabs(attractionPrefab);
-                    }
-
-                    return isAttraction
+                    return aName == prefabName
                         && a.state == Attraction.State.OPENED
                         && a.customersCount > 0
                         && !a.statsAreOutdated;
@@ -1063,27 +1058,23 @@ namespace ArchipelagoMod.Src.Controller
             return this.GetAllShopsFromAssetManager().Where(s => s.getName() == shop).First();
         }
 
-        public List<Shop> GetAllShopsFromPark ()
+        public List<Shop> GetAllShopsFromPark()
         {
             return GameController.Instance.park.getShops().ToList();
         }
+
         public List<Shop> GetAllCountableShopsFromPark (string shopPrefab)
         {
+            bool prefabIsMod = Constants.Mods.All.Contains(shopPrefab);
+            string prefabName = prefabIsMod ? this.GetSerializedFromPrefabs(shopPrefab) : Helper.GetPrefabsFromString(shopPrefab).ToString();
+
             return this.GetAllShopsFromPark()
                 .Where(s =>
                 {
-                    bool isShop = false;
+                    bool shopIsMod = !this.ShopHasPrefabType(s);
+                    string sName = shopIsMod ? s.getName() : s.getPrefabType().ToString();
 
-                    if (this.ShopHasPrefabType(s))
-                    {
-                        isShop = s.getPrefabType() == Helper.GetPrefabsFromString(shopPrefab); ;
-                    }
-                    else
-                    {
-                        isShop = s.getName() == this.GetSerializedFromPrefabs(shopPrefab);
-                    }
-
-                    return isShop
+                    return sName == prefabName
                         && s.opened
                         && s.customersCount > 0;
                 })
