@@ -8,10 +8,10 @@ namespace ArchipelagoMod.Src.Config
 {
     class ParkitectAPConfig
     {
-        [JsonProperty] public string Address = null;
+        [JsonProperty] public string Address = "";
         [JsonProperty] public int Port = 0;
-        [JsonProperty] public string Playername = null;
-        [JsonProperty] public string Password = null;
+        [JsonProperty] public string Playername = "";
+        [JsonProperty] public string Password = "";
 
         public static void CreateConfig ()
         {
@@ -67,10 +67,8 @@ namespace ArchipelagoMod.Src.Config
             }
         }
 
-        public static ParkitectAPConfig Load (bool debug = false)
+        public static ParkitectAPConfig LoadLocal ()
         {
-            string jsonData = File.ReadAllText(ParkitectAPConfig.GetConfigFilePath());
-            // Manual parse only – avoids any global converter noise.
             ParkitectAPConfig self = new ParkitectAPConfig();
 
             self.Address = "localhost";
@@ -90,6 +88,11 @@ namespace ArchipelagoMod.Src.Config
         public static bool HasConfigFile ()
         {
             return File.Exists(ParkitectAPConfig.GetConfigFilePath());
+        }
+
+        public void Save()
+        {
+            File.WriteAllText(ParkitectAPConfig.GetConfigFilePath(), Helper.MakeJsonData(this));
         }
     }
 }

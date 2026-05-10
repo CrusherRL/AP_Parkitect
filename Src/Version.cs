@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace ArchipelagoMod.Src
 {
@@ -13,11 +14,12 @@ namespace ArchipelagoMod.Src
             { "1.3.1", new[] { "v1.2.1", "v1.3.0" } },
             { "1.3.2", new[] { "v1.2.1", "v1.3.0" } },
             { "1.3.3", new[] { "v1.2.1", "v1.3.0" } },
+            { "1.3.4", new[] { "v1.2.1", "v1.3.0" } },
         };
 
         public string ap_world_version = null;
 
-        public Version(string ap_world_version)
+        public Version(string ap_world_version = null)
         {
             this.ap_world_version = ap_world_version;
         }
@@ -28,6 +30,7 @@ namespace ArchipelagoMod.Src
             {
                 return false;
             }
+
             return SupportedVersions[Constants.VERSION].Contains(this.ap_world_version);
         }
 
@@ -38,7 +41,12 @@ namespace ArchipelagoMod.Src
                 return new[] { "Version Matcher does not include current version! Please Contact the Owner of the Mod!" };
             }
 
-            return new[] { $"Your AP World version is not compatible with this mod!nAP World version: {this.ap_world_version}\nMod version: {Constants.VERSION}\n", $"Supported Versions: [{SupportedVersions[Constants.VERSION]}]" };
+            return new[] { $"Your AP World version is not compatible with this mod!\nAP World version: {this.ap_world_version}\nMod version: {Constants.VERSION}\n", $"Supported Versions: [{this.GetSupportedVersions()}]" };
+        }
+
+        public string GetSupportedVersions()
+        {
+            return Helper.SerializeText(SupportedVersions[Constants.VERSION]);
         }
 
         private bool HasVersion()

@@ -1,4 +1,5 @@
 ﻿using Archipelago.MultiClient.Net;
+using Archipelago.Src.UI;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
@@ -59,8 +60,6 @@ namespace ArchipelagoMod.Src.Controller
             {
                 this.ConnectWithArchipelago();
             }
-
-            //this.ParkitectController.PlayerCheckHasWon();
         }
 
         void OnDestroy()
@@ -105,6 +104,8 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoConnector.OnReceivedPacket += this.OnReceivedPacket;
             this.ArchipelagoConnector.OnDisconnected += this.OnDisconnected;
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
+
+            ScriptableSingleton<ArchipelagoSettings>.Instance.UpdatedParkitectAPConfig += this.UpdatedParkitectAPConfig;
 
             // Won the Scenario :)
             EventManager.Instance.OnScenarioWon += this.GoalAchieved;
@@ -165,6 +166,22 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             this.HandleItem(AP_Item);
+        }
+
+        private void UpdatedParkitectAPConfig()
+        {
+            if (this.ArchipelagoConnector.IsConnected)
+            {
+                this.ParkitectController.SendMessage("Archipelago settings were updated, but you're already connected. The current connection will remain active.");
+                return;
+            }
+
+            this.ParkitectController.SendMessage("Archipelago settings were updated. Reconnecting...");
+            this.OnDestroy();
+            this.InitAPConfig();
+
+            // removing the Connector entirely. Update method from Unity will restart it.
+            this.ArchipelagoConnector = null;
         }
 
         public void ProcessPendingItems()
