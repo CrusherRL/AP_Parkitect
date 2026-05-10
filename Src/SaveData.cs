@@ -321,7 +321,7 @@ namespace ArchipelagoMod.Src
         private string MakeJsonData()
         {
             JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-            return JsonConvert.SerializeObject(this.SaveDataExport, Formatting.None, jsonSettings);
+            return Helper.MakeJsonData(this.SaveDataExport, jsonSettings);
         }
     }
 }

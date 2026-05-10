@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -87,6 +88,16 @@ namespace ArchipelagoMod.Src
             }
          
             return string.Join(", ", items, 0, items.Length - 1) + " and " + items[items.Length - 1];
+        }
+
+        public static string MakeJsonData(object data, JsonSerializerSettings jsonSettings = null)
+        {
+            if (jsonSettings != null)
+            {
+                return JsonConvert.SerializeObject(data, Formatting.Indented, jsonSettings);
+            }
+
+            return JsonConvert.SerializeObject(data, Formatting.Indented);
         }
     }
 }

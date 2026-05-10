@@ -27,45 +27,22 @@ It’s also a **randomizer** in its own right! 🌀
       /home/[username]/.local/share/Steam/steamapps/common/Parkitect/Mods
       ```
 
-3. **Enable the Mod**
+3. **Download the Campaign** (preferably manually, mod.io is weird sometimes)
+    - Place the **Archipelago.campaign** file into `\Documents\Parkitect\Saves\Campaigns`
+    - If you insist on mod.io, you can find it [here](https://mod.io/g/parkitect/m/archipelago-parks#description)
+
+4. **Enable the Mod**
     - Launch Parkitect.
     - Go to **Main Menu → Mods**.
     - Enable **Archipelago**.
 
-4. **Download the Campaign** (preferably manually, mod.io is weird sometimes)
-    - Place the **Archipelago.campaign** file into `\Documents\Parkitect\Saves\Campaigns`
-    - If you insist on mod.io, you can find it [here](https://mod.io/g/parkitect/m/archipelago-parks#description)
+5. **Configure your AP Connection**
+   In Mod Menu, open `Settings` and configure your Archipelago connection. Don't forget to save your changes.
+   Once configured, the mod will automatically reconnect if it is currently disconnected.
 
-5. **Start the Game** and enter corresponding Park
+6. **Start the Game** and enter corresponding Park
    - On Main Menu click on Campaign
      - Top left (Campaign Maps) -> Community Campaigns -> "Archipelago Parks"
-
-6. **Configure your Config**
-   - If the mod can’t find the config file, it will automatically create one.
-   - If you don’t see the folder yet, start Parkitect once with the mod enabled — it will generate the config automatically.
-   - Anyway you can find it there:
-     - Windows:
-      ```
-      ...\AppData\LocalLow\Texel Raptor\Parkitect\Parkitect_Archipelago\config_parkitect.json
-      ```
-     - MacOS:
-      ```
-      ~/Library/Application Support/com.TexelRaptor.Parkitect/Parkitect_Archipelago/config_parkitect.json
-      ```
-     - Linux:
-      ```
-      /home/[username]/.config/unity3d/Texel Raptor/Parkitect/Parkitect_Archipelago
-      ```
-   
-    ```json
-    {
-        "Address": "localhost",
-        "Port": 38281,
-        "Playername": "CrusherParkitect",
-        "Password": ""
-    }
-    ```
-    - Once configured you should restart your Park. Preferably you should quit the current park and re-enter it. In this way all Mods are reloading.
 
 7. **Connect to Archipelago**
    - This mod does not need an extra Client to connect to the Archipelago Server
@@ -85,7 +62,7 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 ## 🔀 What Can the Randomizer Change?
 
 ### 🎢 Player
-- Adjust **Game Speed** (adds new options: `4x`, `5x`, `6x`, `7x`, `7x, `9x`)
+- Adjust **Game Speed** (adds new options: `4x`, `5x`, `6x`, `7x`, `8x`, `9x`)
 - Add **Money**
 
 ### 🧍 Guests

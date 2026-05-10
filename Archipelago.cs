@@ -1,4 +1,5 @@
-﻿using ArchipelagoMod.Src;
+﻿using Archipelago.Src.UI;
+using ArchipelagoMod.Src;
 using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.Window;
 using System.IO;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 namespace ArchipelagoMod
 {
-    public class Archipelago : AbstractMod
+    public class Archipelago : AbstractMod, IModSettings
     {
         public const string VERSION_NUMBER = Constants.VERSION;
         public override string getIdentifier() => "com.parkitectCommunity.Archipelago";
@@ -35,6 +36,8 @@ namespace ArchipelagoMod
             Constants.SaveGamesPath = Constants.ModPath + System.IO.Path.Combine("Savegames") + System.IO.Path.DirectorySeparatorChar;
             Directory.CreateDirectory(Constants.SaveGamesPath);
 
+            ScriptableSingleton<ArchipelagoSettings>.Instance.Load();
+
             this.GameObject = new GameObject();
 
             this.SaveData = this.GameObject.AddComponent<SaveData>();
@@ -49,6 +52,18 @@ namespace ArchipelagoMod
         public override void onDisabled()
         {
             UnityEngine.Object.Destroy(this.GameObject);
+        }
+        public void onDrawSettingsUI()
+        {
+            ArchipelagoSettingsUI.Draw();
+        }
+        public void onSettingsOpened()
+        {
+            ScriptableSingleton<ArchipelagoSettings>.Instance.Load();
+        }
+
+        public void onSettingsClosed()
+        {
         }
     }
 }
