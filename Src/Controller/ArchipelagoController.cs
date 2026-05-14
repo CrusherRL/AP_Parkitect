@@ -1,5 +1,5 @@
 ﻿using Archipelago.MultiClient.Net;
-using Archipelago.Src.UI;
+using ArchipelagoMod.Src.UI;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
@@ -33,12 +33,12 @@ namespace ArchipelagoMod.Src.Controller
         void Start()
         {
             Helper.Debug("[ArchipelagoController::Start]");
+            this.listenAPConfigChangeFromUI();
             this.ParkitectController = GetComponent<ParkitectController>();
             this.InitAPConfig();
 
             if (this.ParkitectAPConfig == null)
             {
-                this.ParkitectController.SendMessage("Archipelago Config missing. Can be found here", ParkitectAPConfig.GetConfigFilePath());
                 Helper.Debug("[ArchipelagoController::Start] -> Missing AP Config");
                 return;
             }
@@ -56,7 +56,12 @@ namespace ArchipelagoMod.Src.Controller
 
         void Update()
         {
-            if (this.ArchipelagoConnector == null && GameController.Instance.loadingHasBeenCompleted)
+            if (
+                this.ArchipelagoConnector == null
+                && GameController.Instance.loadingHasBeenCompleted
+                && this.ParkitectAPConfig != null
+                && this.ParkitectAPConfig.IsValid()
+                )
             {
                 this.ConnectWithArchipelago();
             }
@@ -64,6 +69,11 @@ namespace ArchipelagoMod.Src.Controller
 
         void OnDestroy()
         {
+            if (this.ArchipelagoConnector == null)
+            {
+                return;
+            }
+
             this.ArchipelagoConnector.OnConnected -= this.OnConnected;
             this.ArchipelagoConnector.OnConnectionFailed -= this.OnConnectionFailed;
             this.ArchipelagoConnector.OnReconnected -= this.OnReconnected;
@@ -82,17 +92,23 @@ namespace ArchipelagoMod.Src.Controller
 
         private void InitAPConfig()
         {
+            Helper.Debug("[ArchipelagoController::InitAPConfig]");
             if (!ParkitectAPConfig.HasConfigFile())
             {
                 ParkitectAPConfig.CreateConfig();
-                this.ParkitectController.SendMessage(
-                    "Parkitect config file for Archipelago not found",
-                    "Created a new file here: " + ParkitectAPConfig.GetConfigFilePath()
-                );
-                return;
             }
 
             this.ParkitectAPConfig = ParkitectAPConfig.Load();
+
+            if (!this.ParkitectAPConfig.IsValid())
+            {
+                this.ParkitectController.SendMessage(this.ParkitectAPConfig.GetInvalidMessage());
+            }
+        }
+
+        protected void ListenAPConfigChangeFromUI()
+        {
+            ScriptableSingleton<ArchipelagoSettings>.Instance.UpdatedParkitectAPConfig += this.UpdatedParkitectAPConfig;
         }
 
         protected void Listen()
@@ -104,8 +120,6 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoConnector.OnReceivedPacket += this.OnReceivedPacket;
             this.ArchipelagoConnector.OnDisconnected += this.OnDisconnected;
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
-
-            ScriptableSingleton<ArchipelagoSettings>.Instance.UpdatedParkitectAPConfig += this.UpdatedParkitectAPConfig;
 
             // Won the Scenario :)
             EventManager.Instance.OnScenarioWon += this.GoalAchieved;
@@ -170,13 +184,17 @@ namespace ArchipelagoMod.Src.Controller
 
         private void UpdatedParkitectAPConfig()
         {
-            if (this.ArchipelagoConnector.IsConnected)
+            Helper.Debug($"[ArchipelagoController::UpdatedParkitectAPConfig]");
+            if (
+                this.ArchipelagoConnector != null
+                && this.ArchipelagoConnector.IsConnected
+                )
             {
                 this.ParkitectController.SendMessage("Archipelago settings were updated, but you're already connected. The current connection will remain active.");
                 return;
             }
 
-            this.ParkitectController.SendMessage("Archipelago settings were updated. Reconnecting...");
+            this.ParkitectController.SendMessage("Archipelago settings were updated.");
             this.OnDestroy();
             this.InitAPConfig();
 

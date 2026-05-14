@@ -1,7 +1,7 @@
-﻿using Archipelago.Src.UI;
-using ArchipelagoMod.Src;
+﻿using ArchipelagoMod.Src;
 using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.Window;
+using ArchipelagoMod.Src.UI;
 using System.IO;
 using UnityEngine;
 

@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace ArchipelagoMod.Src.Config
@@ -50,12 +52,6 @@ namespace ArchipelagoMod.Src.Config
                 self.Playername = (string)json["Playername"];
                 self.Password = (string)json["Password"];
 
-                if (string.IsNullOrWhiteSpace(self.Address))
-                {
-                    Helper.Debug("[ParkitectAPConfig::ParkitectAPConfig] Invalid address given.");
-                    return null;
-                }
-
                 Helper.Debug($"[ParkitectAPConfig::ParkitectAPConfig] Using server={self.Address}:{self.Port} player={self.Playername}");
                 return self;
             }
@@ -93,6 +89,38 @@ namespace ArchipelagoMod.Src.Config
         public void Save()
         {
             File.WriteAllText(ParkitectAPConfig.GetConfigFilePath(), Helper.MakeJsonData(this));
+        }
+
+        public bool IsValid()
+        {
+            return !String.IsNullOrEmpty(this.Address) && this.Port > 0 && !String.IsNullOrEmpty(this.Playername);
+        }
+
+        public string GetInvalidMessage()
+        {
+            List<string> messages = new List<string>() { "Archipelago Config is invalid:" };
+
+            if (this.IsValid())
+            {
+                return "";
+            }
+
+            if (String.IsNullOrEmpty(this.Address))
+            {
+                messages.Add("- Address is empty");
+            }
+
+            if (this.Port <= 0)
+            {
+                messages.Add("- Port must be higher than 0");
+            }
+
+            if (String.IsNullOrEmpty(this.Playername))
+            {
+                messages.Add("- Playername is empty");
+            }
+
+            return String.Join("\n", messages);
         }
     }
 }

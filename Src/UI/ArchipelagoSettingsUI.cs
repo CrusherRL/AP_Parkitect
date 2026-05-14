@@ -1,9 +1,7 @@
-﻿using ArchipelagoMod.Src;
-using ArchipelagoMod.Src.Config;
-using System.Drawing.Printing;
+﻿using ArchipelagoMod.Src.Config;
 using UnityEngine;
 
-namespace Archipelago.Src.UI
+namespace ArchipelagoMod.Src.UI
 {
     static class ArchipelagoSettingsUI
     {
@@ -61,15 +59,7 @@ namespace Archipelago.Src.UI
             string portInput = instance.ParkitectAPConfig.Port.ToString();
             portInput = GUILayout.TextField(portInput, defaultStyle, width);
             GUILayout.EndHorizontal();
-            if (portInput.Length == 0)
-            {
-                portInput = portInput.Substring(0, 5);
-            }
-            if (string.IsNullOrWhiteSpace(portInput))
-            {
-                instance.ParkitectAPConfig.Port = 0;
-            }
-            else if (int.TryParse(portInput, out int port))
+            if (int.TryParse(portInput, out int port))
             {
                 instance.ParkitectAPConfig.Port = port;
             }
