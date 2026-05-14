@@ -33,7 +33,7 @@ namespace ArchipelagoMod.Src.Controller
         void Start()
         {
             Helper.Debug("[ArchipelagoController::Start]");
-            this.listenAPConfigChangeFromUI();
+            this.ListenAPConfigChangeFromUI();
             this.ParkitectController = GetComponent<ParkitectController>();
             this.InitAPConfig();
 
