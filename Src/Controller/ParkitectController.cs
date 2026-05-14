@@ -889,6 +889,11 @@ namespace ArchipelagoMod.Src.Controller
 
         public void SendMessage(string message, string secondaryMessage = "", bool silent = false, Notification.Type type = Notification.Type.DEFAULT)
         {
+            if (string.IsNullOrEmpty(message))
+            {
+                return;
+            }
+
             MainThreadDispatcher.Enqueue(() =>
             {
                 Notification notification = new Notification(message, secondaryMessage, Notification.Type.DEFAULT, null);

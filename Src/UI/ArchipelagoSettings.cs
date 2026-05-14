@@ -1,7 +1,7 @@
 ﻿using ArchipelagoMod.Src.Config;
 using System;
 
-namespace Archipelago.Src.UI
+namespace ArchipelagoMod.Src.UI
 {
     class ArchipelagoSettings: ScriptableSingleton<ArchipelagoSettings>
     {
