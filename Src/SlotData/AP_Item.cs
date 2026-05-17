@@ -18,12 +18,32 @@ namespace ArchipelagoMod.Src.SlotData
 
         public bool IsMod = false;
         public string ModType = null;
+        public string Type = null;
+        public string Rule = null;
 
         public static AP_Item Init (string name, string Playername, long locationId, string serializedName = "")
         {
-            AP_Item self = new AP_Item ();
-
+            AP_Item self = new AP_Item();
             self.Name = name;
+
+            if (self.Name.Contains("="))
+            {
+                // One of these:
+                // "Research Trap=Attraction"
+                // "Research Trap=Shop"
+                // "Research Trap=Decorations-{Rule}"
+                string[] parts = self.Name.Split('=');
+                self.Name = parts[0];
+                self.Type = parts.Length > 1 ? parts[1] : null;
+
+                if (!string.IsNullOrEmpty(self.Type) && self.Type.Contains("~"))
+                {
+                    string[] subs = self.Type.Split('-');
+                    self.Type = subs[0];
+                    self.Rule = subs.Length > 1 ? subs[1] : null;
+                }
+            }
+
             self.SerializedName = serializedName;
             self.Playername = Playername;
             self.LocationId = (int)locationId - Constants.ArchipelagoBaseId;
@@ -37,14 +57,20 @@ namespace ArchipelagoMod.Src.SlotData
             Helper.Debug($"[AP_Item::Init] IsSpeedup - " + self.IsSpeedup);
             Helper.Debug($"[AP_Item::Init] IsMod - " + self.IsMod);
 
-            if (!self.IsTrap && !self.IsSkip && !self.IsSpeedup && !self.IsMod)
-            {
-                self.PrefabName = Helper.GetPrefabsFromString(self.Name);
-            }
-
             if (self.IsMod)
             {
                 self.ModType = Constants.Mods.GetType(self.Name);
+            }
+
+            if (
+                !self.IsTrap
+                && !self.IsSkip
+                && !self.IsSpeedup
+                && !self.IsMod
+                && !Constants.Research.Rules.All.Contains(self.Name)
+                )
+            {
+                self.PrefabName = Helper.GetPrefabsFromString(self.Name);
             }
 
             return self;

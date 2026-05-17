@@ -1,8 +1,10 @@
 ﻿using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.SlotData;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using UnityEngine;
+using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Window
 {
@@ -11,7 +13,7 @@ namespace ArchipelagoMod.Src.Window
         protected int id = 1;
         protected ParkitectController Controller = null;
         protected string windowName = "Archipelago Debugger";
-        public Rect WindowRect = new Rect(20, 20, 200, 200);
+        public Rect WindowRect = new Rect(40, 40, 200, 200);
         public Rect TitleBarRect = new Rect(0, 0, 200000000, 20);
         public bool isOpen = false;
         private KeyCode KeyCode = KeyCode.F12;
@@ -20,7 +22,7 @@ namespace ArchipelagoMod.Src.Window
         {
             Helper.Debug($"[DebuggerWindow::Awake]");
             this.Controller = GetComponent<ParkitectController>();
-            WindowRect = new Rect(20, 20, 700, 200);
+            this.WindowRect = new Rect(20, 20, 700, 200);
             Helper.Debug($"[DebuggerWindow::Awake] Booted");
         }
 
@@ -71,10 +73,10 @@ namespace ArchipelagoMod.Src.Window
                 CloseWindow();
             }
 
-            GUI.BeginGroup(new Rect(0, /*27*/0, WindowRect.width, WindowRect.height/* - 33*/));
+            //GUI.BeginGroup(new Rect(0, /*27*/0, WindowRect.width, WindowRect.height/* - 33*/));
             DrawContent();
 
-            GUI.EndGroup();
+            //GUI.EndGroup();
             GUI.DragWindow(TitleBarRect);
         }
      
@@ -425,6 +427,27 @@ namespace ArchipelagoMod.Src.Window
             }
 
             GUILayout.EndHorizontal();
+            this.SetLabel("Research Traps:");
+            GUILayout.BeginHorizontal();
+            int j = 0;
+
+            foreach (string trap in Constants.Trap.Research)
+            {
+                if (j % 5 == 0)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+
+                if (GUILayout.Button(trap))
+                {
+                    this.FakeRedeemTrap(trap);
+                }
+
+                j += 1;
+            }
+
+            GUILayout.EndHorizontal();
         }
 
         public void DrawChallengeOptions()
@@ -493,13 +516,62 @@ namespace ArchipelagoMod.Src.Window
             }
 
             GUILayout.EndHorizontal();
+            this.SetLabel("Decorations:");
+            GUILayout.BeginHorizontal();
+
+            int k = 0;
+
+            foreach (string rule in Constants.Research.Rules.All)
+            {
+                if (k % 5 == 0)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+
+                if (GUILayout.Button(rule))
+                {
+                    string trap = $"{Constants.Trap.Research[0]}=Decorations~{rule}";
+                    this.FakeRedeemTrap(trap);
+                }
+
+                k += 1;
+            }
+
+            GUILayout.EndHorizontal();
+            this.SetLabel("Theme Tags:");
+            GUILayout.BeginHorizontal();
+
+            int l = 0;
+            foreach (string themeTag in Constants.Decorations.ThemeTags)
+            {
+                if (l % 5 == 0)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+
+                if (GUILayout.Button(themeTag))
+                {
+                    parkitectController.PlayerRemoveAllDecorations();
+                    ThemeContainer themeContainer = parkitectController.FindThemeContainer(themeTag);
+                    parkitectController.PlayerAddDecorations(themeContainer);
+                }
+
+                l += 1;
+            }
+            GUILayout.EndHorizontal();
         }
 
         private void FakeRedeemTrap(string trap)
         {
             Helper.Debug($"executing {trap}");
-            AP_Item AP_Item = AP_Item.Init(trap, Constants.Playername, -1);
-            this.Controller.PlayerRedeemTrap(AP_Item);
+            this.Controller.PlayerRedeemTrap(this.CreateFakeAPItem(trap));
+        }
+
+        private AP_Item CreateFakeAPItem(string thing)
+        {
+            return AP_Item.Init(thing, Constants.Playername, -1);
         }
 
         protected void SetLabel(string label, bool newLineAfter = true)

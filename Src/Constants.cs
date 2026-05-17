@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
+using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src
 {
     class Constants
     {
-        public const string VERSION = "1.3.5";
+        public const string VERSION = "1.4.0";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
@@ -373,6 +377,36 @@ namespace ArchipelagoMod.Src
                 Constants.Attraction.WaterRides
             })
                 .SelectMany(a => a).ToArray();
+
+            public static string DetermineType(string name)
+            {
+                if (Constants.Attraction.CalmRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[0];
+                }
+
+                if (Constants.Attraction.ThrillRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[1];
+                }
+                
+                if (Constants.Attraction.CoasterRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[2];
+                }
+
+                if (Constants.Attraction.TransportRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[3];
+                }
+
+                if (Constants.Attraction.WaterRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[4];
+                }
+
+                return Constants.Mods.GetType(name);
+            }
         }
 
         public static class Stall
@@ -474,6 +508,10 @@ namespace ArchipelagoMod.Src
                 "Guest Tiredness Trap",
                 "Guest Vandal Trap",
             };
+            public static string[] Research =
+            {
+                "Research Trap",
+            };
 
             public static string[] All = (new[]
             {
@@ -483,6 +521,7 @@ namespace ArchipelagoMod.Src
                 Constants.Trap.Player,
                 Constants.Trap.Weather,
                 Constants.Trap.Guest,
+                Constants.Trap.Research,
             })
                 .SelectMany(a => a).ToArray();
 
@@ -872,8 +911,29 @@ namespace ArchipelagoMod.Src
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestVandalsTexts);
                 return textBlock.Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
             }
+
+            // -----------------------------
+            // General Traps
+            // -----------------------------
+            public static string[] ResearchTexts =
+            {
+                "The prototype looked promising until it exploded. Research for:",
+                "The team requires additional time. Research for:",
+                "The team is exploring new directions. Research for:",
+                "Results were... unexpected. Research for:",
+                "Great effort, questionable results. Research for:",
+                "More testing is required after an unfortunate incident. Research for:",
+                "Progress has been made, but more work remains. Research for:",
+                "New concepts are under review. Research for:",
+                "Turns out research is hard. Research for:",
+                "We found several new problems. Research for:",
+            };
+            public static string GetResearchText()
+            {
+                return Constants.Trap.GetRandomText(Constants.Trap.ResearchTexts);
+            }
         }
-    
+
         public static class Skips
         {
             public static string[] Types = { "Skip" };
@@ -989,6 +1049,110 @@ namespace ArchipelagoMod.Src
 
                 return "unknown";
             }
+        }
+
+        public static class Research
+        {
+            public static int MaxAttractions = 4;
+            public static int MaxShops = 3;
+            public static int MaxDeco = 5;
+            public static int MaxPathAttachments = 2;
+
+            public static string[] Types =
+            {
+                "Attraction",
+                "Shop",
+                "Decorations"
+            };
+
+            public static class Rules
+            {
+                public static string[] Decorations =
+                {
+                    "Adventure",
+                    "Ancient World",
+                    "Candyland",
+                    "Dino",
+                    "Effects",
+                    "Fantasy",
+                    "Industrial Structures",
+                    "Medieval Props",
+                    "Medieval Structures",
+                    "Race Props",
+                    "Sci-Fi Props",
+                    "Sci-Fi Structures",
+                    "Sculptures and Statues",
+                    "Spooky Props",
+                    "Spooky Structures",
+                    "Steam Pipes",
+                    "Steamworks Props",
+                    "Topiaries",
+                    "Western Props",
+                };
+
+                public static string[] Statistics =
+                {
+                    "statAvgAttractionsVisited",
+                    "statAvgFoodConsumed",
+                    "statAvgMoneySpent",
+                    "statAvgQueueTime",
+                    "statAvgTimeInPark",
+                    "statsCustomersLastMonth",
+                    "statDecoPrice",
+                    "statDecoValue",
+                    "statMissedCustomersLastMonth",
+                    "statMostProfitableAttraction",
+                    "statMostProfitableShop",
+                    "statVouchersRedeemed",
+                    "statRidesPrice",
+                    "statRidesValue",
+                    "statShopsPrice",
+                    "statShopsValue",
+                    "statTotalAttractionBreakdowns",
+                    "statTotalAttractionCustomers",
+                    "statTotalAttractionProfit",
+                    "statTotalAttractionRevenue",
+                    "statTotalAttractionsMaintained",
+                    "statTotalAttractionsRepaired",
+                    "statTotalCratesDelivered",
+                    "statTotalFootpathsSwept",
+                    "statTotalGuests",
+                    "statTotalGuestsEntertained",
+                    "statTotalShopProfit",
+                    "statTotalShopRevenue",
+                    "statTotalToiletsScrubbed",
+                    "statTotalTrashBinsEmptied",
+                    "statTotalPathAttachmentsRepaired",
+                    "statTotalVandalsCaught",
+                };
+                
+                public static string[] All = (new[]
+                {
+                    Constants.Research.Rules.Decorations,
+                    Constants.Research.Rules.Statistics,
+                })
+                    .SelectMany(a => a)
+                    .ToArray();
+            }
+        }
+
+        public static class Decorations
+        {
+            public static string uncategorized = "uncategorized";
+
+            public static string[] ThemeTags = {
+                "Generic",
+                "Spooky",
+                "Medieval",
+                "Steamworks",
+                "Science Fiction",
+                "Western",
+                "Fantasy",
+                "Candyland",
+                "Adventure",
+                "Classic", // Ancient World
+                "Dino",
+            };
         }
     }
 }

@@ -2,10 +2,13 @@
 using ArchipelagoMod.Src.SlotData;
 using Parkitect.UI;
 using Photon.Realtime;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.Linq;
 using UnityEngine;
+using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Controller
 {
@@ -328,7 +331,6 @@ namespace ArchipelagoMod.Src.Controller
             });
         }
 
-        // Send Employee to Trainingsroom
         public void PlayerSetEmployeesTraining(List<Employee> employees)
         {
             MainThreadDispatcher.Enqueue(() =>
@@ -457,7 +459,6 @@ namespace ArchipelagoMod.Src.Controller
             return false;
         }
 
-        // Remove all Rides from List
         public void PlayerRemoveAllRides()
         {
             List<Attraction> attractions = this.GetAllAttractionsFromAssetManager();
@@ -477,7 +478,6 @@ namespace ArchipelagoMod.Src.Controller
             }
         }
 
-        // Add a new Ride to List
         public void PlayerAddAttraction(Prefabs prefab)
         {
             Attraction attraction = this.GetAllAttractionsFromAssetManager(prefab).First();
@@ -506,7 +506,6 @@ namespace ArchipelagoMod.Src.Controller
         // Stall options
         // -----------------------------
 
-        // Remove all Rides
         public void PlayerRemoveAllStalls()
         {
             List<Shop> shops = this.GetAllShopsFromAssetManager();
@@ -553,10 +552,51 @@ namespace ArchipelagoMod.Src.Controller
         }
 
         // -----------------------------
+        // Decorations options
+        // -----------------------------
+        public void PlayerAddDecorations(ThemeContainer themeContainer)
+        {
+            foreach (BuildableObject item in this.GetAllDecorationsFromAssetManager(themeContainer))
+            {
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    item.isAvailableInParks = true;
+                });
+            }
+        }
+        public void PlayerRemoveAllDecorations()
+        {
+            foreach (BuildableObject item in this.GetAllDecorationsFromAssetManager())
+            {
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    item.isAvailableInParks = false;
+                });
+            }
+        }
+
+        // -----------------------------
+        // UtilityBuilding options
+        // -----------------------------
+        public void PlayerAddUtilityBuilding(UtilityBuilding utilityBuilding)
+        {
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                utilityBuilding.isAvailableInParks = true;
+            });
+        }
+        public void PlayerRemoveUtilityBuilding(UtilityBuilding utilityBuilding)
+        {
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                utilityBuilding.isAvailableInParks = false;
+            });
+        }
+
+        // -----------------------------
         // Shops options
         // -----------------------------
 
-        // Re-deliver Ingredients for a shop
         public void PlayerSetReDeliveryForProductShops (List<ProductShop> productShops)
         {
             MainThreadDispatcher.Enqueue(() =>
@@ -578,7 +618,6 @@ namespace ArchipelagoMod.Src.Controller
             });
         }
 
-        // Clean up product shops
         public void PlayerSetCleanShopJob(List<ProductShop> productShops)
         {
             MainThreadDispatcher.Enqueue(() =>
@@ -621,6 +660,41 @@ namespace ArchipelagoMod.Src.Controller
             ReadOnlyCollection<IScenarioGoal> goals = GameController.Instance.park.scenario.goals.getGoals();
 
             return goals.Contains(goal);
+        }
+
+
+        // -----------------------------
+        // Research options
+        // -----------------------------
+        public void PlayerAddToResearch(Attraction attraction)
+        {
+            this.UpdateResearchRule(attraction.getResearchReferenceName());
+        }
+        public void PlayerAddToResearch(Shop shop)
+        {
+            this.UpdateResearchRule(shop.getResearchReferenceName());
+        }
+        public void PlayerAddToResearch(Deco deco)
+        {
+            this.UpdateResearchRule(deco.getResearchReferenceName());
+        }
+        public void PlayerAddToResearch(PathAttachment pathAttachment)
+        {
+            this.UpdateResearchRule(pathAttachment.getResearchReferenceName());
+        }
+        public void PlayerAddToResearch(AP_Item AP_Item)
+        {
+            if (!Constants.Research.Types.Contains(AP_Item.Type))
+            {
+                Helper.Debug($"[ParkitectController::PlayerAddToResearch] research Type not found! {AP_Item.Type}");
+                return;
+            }
+            if (!Constants.Research.Rules.All.Contains(AP_Item.Rule))
+            {
+                Helper.Debug($"[ParkitectController::PlayerAddToResearch] research Rule not found! {AP_Item.Rule}");
+                return;
+            }
+            this.UpdateResearchRule(AP_Item.Rule);
         }
 
         public void PlayerRedeemTrap (AP_Item AP_Item)
@@ -884,6 +958,87 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            if (AP_Item.Name == "Research Trap")
+            {
+                string trapType = AP_Item.Type;
+                int count = 0;
+                List<string> messages = new List<string>();
+
+                // Attractions
+                if (trapType == Constants.Research.Types[0])
+                {
+                    List<Attraction> attractions = Randomizer.GetRandomAttractionFromParkForResearch(this);
+                    foreach (Attraction attraction in attractions)
+                    {
+                        this.PlayerAddToResearch(attraction);
+                        count += 1;
+                        string name = this.AttractionHasPrefabType(attraction) ? attraction.getPrefabType().ToString() : attraction.getName();
+                        string type = Constants.Attraction.DetermineType(name);
+                        messages.Add($"- {attraction.getName()} ({type})");
+                    }
+                }
+
+                // Shops
+                else if (trapType == Constants.Research.Types[1])
+                {
+                    List<Shop> shops = Randomizer.GetRandomShopsFromParkForResearch(this);
+                    foreach (Shop shop in shops)
+                    {
+                        this.PlayerAddToResearch(shop);
+                        count += 1;
+                        messages.Add($"- {shop.getName()} (Shops)");
+                    }
+                }
+
+                // Decorations
+                else if (trapType == Constants.Research.Types[2])
+                {
+                    this.PlayerAddToResearch(AP_Item);
+                    count += 1;
+
+                    bool isStatistics = Constants.Research.Rules.Statistics.Contains(AP_Item.Rule);
+                    string type = isStatistics ? "Statistics" : "Decorations";
+                    string itemName = this.FindResearchItem(AP_Item.Rule).name;
+                    messages.Add($"- {itemName} ({type})");
+                }
+
+                //// Deco
+                //else if (trapType == Constants.Research.Types[2])
+                //{
+                //    List<Deco> decos = Randomizer.GetRandomDecoFromParkForResearch(this);
+                //    foreach (Deco deco in decos)
+                //    {
+                //        this.PlayerAddToResearch(deco);
+                //        count += 1;
+                //        messages.Add($"- {deco.getName()}");
+                //    }
+                //}
+
+                //// Path Attachments
+                //else if (trapType == Constants.Research.Types[3])
+                //{
+                //    List<PathAttachment> pathAttachments = Randomizer.GetRandomPathAttachmentFromParkForResearch(this);
+                //    foreach (PathAttachment pathAttachment in pathAttachments)
+                //    {
+                //        this.PlayerAddToResearch(pathAttachment);
+                //        count += 1;
+                //        messages.Add($"- {pathAttachment.getName()}");
+                //    }
+                //}
+
+                if (messages.Count <= 0)
+                {
+                    this.SendMessage("Research Trap activated, but it was harmless. You're lucky!");
+                    Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> No Items found!");
+                    return;
+                }
+
+                Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> preparing!");
+                string message = Constants.Trap.GetResearchText();
+                this.SendMessage(message, string.Join("\n", messages));
+                return;
+            }
+
             Helper.Debug($"[ParkitectController::PlayerRedeemTrap] No Trap Handler found!");
         }
 
@@ -930,7 +1085,7 @@ namespace ArchipelagoMod.Src.Controller
             return GameController.Instance.park.getEmployees().ToList();
         }
 
-        // Gets all Attractions
+        // Attractions
         public List<Attraction> GetAllAttractionsFromAssetManager ()
         {
             return ScriptableSingleton<AssetManager>.Instance.getAttractionObjects().ToList();
@@ -1025,8 +1180,12 @@ namespace ArchipelagoMod.Src.Controller
                 })
                 .ToList();
         }
+        public List<Attraction> GetAllAvailableAttractions()
+        {
+            return this.GetAllAttractionsFromAssetManager().Where(a => this.HasUnlockedResearchRule(a.getResearchReferenceName())).ToList();
+        }
 
-        // Gets all Stalls
+        // Stalls/Shops
         public List<Shop> GetAllShopsFromAssetManager()
         {
             return ScriptableSingleton<AssetManager>.Instance.getShopObjects().ToList();
@@ -1122,6 +1281,10 @@ namespace ArchipelagoMod.Src.Controller
                 })
                 .ToList();
         }
+        public List<Shop> GetAllAvailableShops()
+        {
+            return this.GetAllShopsFromAssetManager().Where(s => this.HasUnlockedResearchRule(s.getResearchReferenceName())).ToList();
+        }
 
         public string GetSerializedFromPrefabs (string prefabs)
         {
@@ -1159,5 +1322,139 @@ namespace ArchipelagoMod.Src.Controller
                 return false;
             }
         }
+
+        // Decorations
+        public List<Deco> GetAllDecosFromAssetManager()
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getDecoObjects().ToList();
+        }
+
+        public List<Deco> GetAllDecosFromPark()
+        {
+            return this.GetAllAvailableDecosFromPark().Where(d => d.isAvailableInParks).ToList();
+        }
+
+        public List<Deco> GetAllDecosFromPark(string themeTag)
+        {
+            return this.GetAllAvailableDecosFromPark().Where(d => d.themeTag == themeTag).ToList();
+        }
+
+        public List<Deco> GetAllAvailableDecosFromPark()
+        {
+            return this.GetAllDecosFromAssetManager().Where(d => this.HasUnlockedResearchRule(d.getResearchReferenceName())).ToList();
+        }
+
+        public List<PathAttachment> GetAllPathAttachmentsFromAssetManager()
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getPathAttachmentObjects().ToList();
+        }
+
+        public List<PathAttachment> GetAllPathAttachmentsFromPark()
+        {
+            return this.GetAllPathAttachmentsFromAssetManager().Where(p => p.isAvailableInParks).ToList();
+        }
+
+        public List<PathAttachment> GetAllPathAttachmentsFromPark(string themeTag)
+        {
+            return this.GetAllPathAttachmentsFromPark().Where(p => p.themeTag == themeTag).ToList();
+        }
+
+        public List<PathAttachment> GetAllAvailablePathAttachmentsFromPark()
+        {
+            return this.GetAllPathAttachmentsFromAssetManager().Where(p => this.HasUnlockedResearchRule(p.getResearchReferenceName())).ToList();
+        }
+
+        public List<BuildableObject> GetAllDecorationsFromAssetManager()
+        {
+            return this.GetAllDecosFromAssetManager()
+                .Cast<BuildableObject>()
+                .Concat(this.GetAllPathAttachmentsFromAssetManager())
+                .ToList();
+        }
+        public List<BuildableObject> GetAllDecorationsFromAssetManager(ThemeContainer themeContainer)
+        {
+            return this.GetAllDecorationsFromAssetManager()
+                .Where(d => d.themeTag == themeContainer.themeTag)
+                .ToList();
+        }
+
+        // Research
+        protected void UpdateResearchRule(string referenceName)
+        {
+            if (!this.HasUnlockedResearchRule(referenceName))
+            {
+                Helper.Debug($"[ParkitectController::UpdateResearchRule] unlocked already = {referenceName}");
+                return;
+            }
+
+            ResearchRule rule = GameController.Instance.park.scenario.research.getRule(referenceName);
+
+            if (rule == null)
+            {
+                Helper.Debug($"[ParkitectController::UpdateResearchRule] No Rule found for {referenceName}");
+                return;
+            }
+
+            GameController.Instance.park.scenario.research.removeRule(rule);
+            rule.isUnlocked = false;
+            GameController.Instance.park.scenario.research.addRule(rule);
+            GameController.Instance.park.scenario.research.unlockNewContentInNewParks = true;
+
+            foreach (ResearchTeam researchTeam in GameController.Instance.park.scenario.research.getTeams())
+            {
+                researchTeam.updateResearchableState();
+            }
+        }
+
+        public bool HasUnlockedResearchRule(string referenceName)
+        {
+            // Generic Theme
+            if (referenceName == "uncategorized")
+            {
+                return false;
+            }
+            return GameController.Instance.park.scenario.research.getRule(referenceName).isUnlocked;
+        }
+
+        public ResearchItem FindResearchItem(string referenceName)
+        {
+            return GameController.Instance.park.scenario.research.getItems()[referenceName] ?? null;
+        }
+
+        public ThemeContainer FindThemeContainer(string themeTag)
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getTheme(themeTag);
+        }
+
+
+
+
+
+        // TODO: Getter
+        public void ToggleUtilityBuildings()
+        {
+            List<UtilityBuilding> utilityBuildings = ScriptableSingleton<AssetManager>.Instance.getUtilityBuildingObjects().ToList();
+
+            foreach (UtilityBuilding utilityBuilding in utilityBuildings)
+            {
+                if (!utilityBuilding.enabled)
+                {
+                    return;
+                }
+                try
+                {
+                    Helper.Debug($"Prefab: {utilityBuilding.getPrefabType().ToString()}");
+                }
+                catch
+                {
+                    Helper.Debug($"Name: {utilityBuilding.getName()}");
+                }
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    utilityBuilding.isAvailableInParks = !utilityBuilding.isAvailableInParks;
+                });
+            }
+        }
+
     }
 }
