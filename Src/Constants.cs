@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Photon.Realtime;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ArchipelagoMod.Src
 {
     class Constants
     {
-        public const string VERSION = "1.3.5";
+        public const string VERSION = "1.4.0";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
@@ -19,6 +20,41 @@ namespace ArchipelagoMod.Src
         public static string ScenarioName = null;
         public static bool Debug = true;
 
+        public static float NextCheckTimeDelay = .45f;
+
+        public static string[] TrapLinks = {
+            // OpenRCT2
+            "Bathroom Trap",
+            "Furry Convention Trap",
+            "Food poisoning Trap",
+
+            // Pokemon
+            "Burn Trap",
+            "Fire Trap",
+            "Poison Trap",
+            "Sleep Trap",
+            "Ice Trap",
+            "Freeze Trap",
+
+            // Brave Fencer Musashi
+            "Stinky Trap",
+            "Toxin Trap",
+
+            // Freedom Planet 2
+            "Expensive Stocks",
+            "No Stocks",
+
+            // Hammerwatch
+            "Frost Trap",
+
+            // Noita
+            "Pea Soup Trap",
+
+            // no clue D:
+            "Frozen Trap",
+        };
+
+        // Decorations and Statistics are not listen here, since there is not prefabs for that
         public static Dictionary<Prefabs, string> AllGameItems = new Dictionary<Prefabs, string>
         {
             { Prefabs.AcceleratorCoaster, "Hydraulically-Launched Coaster"},
@@ -140,18 +176,12 @@ namespace ArchipelagoMod.Src
             { Prefabs.Toilets, "Toilets"},
             { Prefabs.TurkeyLegStall, "Turkey Legs"},
             { Prefabs.UmbrellaStall, "Umbrellas"},
-            { Prefabs.VendingMachine, "Vending Machine"}
+            { Prefabs.VendingMachine, "Vending Machine"},
+            { Prefabs.Depot, "Depot"},
+            { Prefabs.StaffRoom, "Staff Room"},
+            { Prefabs.TrainingRoom, "Training Room"},
+            { Prefabs.TrashChute, "Trash Chute"},
         };
-
-        public static string[] AllNonItemTypes = (new[]
-        {
-            Constants.Trap.All,
-            Constants.Attraction.Types,
-            Constants.Stall.Types,
-            Constants.Skips.Types,
-            Constants.ProgressiveSpeed.Types,
-        })
-            .SelectMany(a => a).ToArray();
 
         public static class Player
         {
@@ -233,6 +263,15 @@ namespace ArchipelagoMod.Src
 				Prefabs.Entertainer,
 				Prefabs.Handyman
 			};
+
+            public static Dictionary<Prefabs, List<int>> ExperienceLevels = new Dictionary<Prefabs, List<int>>()
+            {
+                { Prefabs.Mechanic, new List<int> { 2, 3, 4, 5 } },
+                { Prefabs.Janitor, new List<int> { 2, 3, 4, 5 } },
+                { Prefabs.Security, new List<int> { 1, 2, 3, 4 } },
+                { Prefabs.Entertainer, new List<int> { 4, 5, 7, 9 } },
+                { Prefabs.Handyman, new List<int> { 2, 3, 4, 5 } }
+            };
 		}
 
 		public static class Attraction
@@ -372,7 +411,48 @@ namespace ArchipelagoMod.Src
                 Constants.Attraction.TransportRides,
                 Constants.Attraction.WaterRides
             })
-                .SelectMany(a => a).ToArray();
+                .SelectMany(a => a)
+                .ToArray();
+
+            public static string DetermineType(string name)
+            {
+                if (Constants.Attraction.CalmRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[0];
+                }
+
+                if (Constants.Attraction.ThrillRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[1];
+                }
+                
+                if (Constants.Attraction.CoasterRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[2];
+                }
+
+                if (Constants.Attraction.TransportRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[3];
+                }
+
+                if (Constants.Attraction.WaterRides.Contains(name))
+                {
+                    return Constants.Attraction.Types[4];
+                }
+
+                return Constants.Mods.GetType(name);
+            }
+
+            public static string[] DecoRatings =
+            { // Order is important here!
+                "Amazing",
+                "High",
+                "Medium",
+                "Low",
+                "Bad",
+                "Very low", // should never happen
+            };
         }
 
         public static class Stall
@@ -431,7 +511,103 @@ namespace ArchipelagoMod.Src
                 .SelectMany(a => a).ToArray();
         }
 
-		public static class Trap
+        public static class UtilityBuilding
+        {
+            public static string[] All = (new[]
+            {
+                Prefabs.Depot.ToString(),
+                Prefabs.StaffRoom.ToString(),
+                Prefabs.TrainingRoom.ToString(),
+                Prefabs.TrashChute.ToString(),
+            });
+        }
+
+        public static class Decorations
+        {
+            public static string[] Excludes =
+            {
+                "Scenario Marker",
+            };
+
+            public static string[] ThemeTags = {
+                "Generic",
+                "Spooky",
+                "Medieval",
+                "Steamworks",
+                "Science Fiction",
+                "Western",
+                "Fantasy",
+                "Candyland",
+                "Adventure",
+                "Classic", // Ancient World
+                "Dino",
+            };
+
+            public static Dictionary<string, List<string>> ThemeTagMapToProps = new Dictionary<string, List<string>>()
+            {
+                { "Generic", new List<string>() { "Effects", "Race Props", "Sculptures and Statues", "Topiaries" } },
+                { "Spooky", new List<string>() { "Spooky Props", "Spooky Structures", } },
+                { "Medieval", new List<string>() { "Medieval Props", "Medieval Structures", } },
+                { "Steamworks", new List<string>() { "Steam Pipes", "Steamworks Props", "Industrial Structures", } },
+                { "Science Fiction", new List<string>() { "Sci-Fi Props", "Sci-Fi Structures", } },
+                { "Western", new List<string>() { "Western Props" } },
+                { "Fantasy", new List<string>() { "Fantasy" } },
+                { "Candyland", new List<string>() { "Candyland" } },
+                { "Adventure", new List<string>() { "Adventure" } },
+                { "Classic", new List<string>() { "Ancient World" } },
+                { "Dino", new List<string>() { "Dino" } },
+            };
+
+            public static string[] All = (new[]
+            {
+                Constants.Decorations.ThemeTags,
+            })
+            .SelectMany(a => a)
+            .ToArray();
+        }
+
+        public static class Statistics
+            {
+                public static readonly Dictionary<string, string> map = new Dictionary<string, string>()
+                {
+                    { "statAvgAttractionsVisited", "Average attractions visited" },
+                    { "statAvgFoodConsumed", "Average food consumed" },
+                    { "statAvgMoneySpent", "Average money spent" },
+                    { "statAvgQueueTime", "Average queue time" },
+                    { "statAvgTimeInPark", "Average time in park" },
+                    { "statsCustomersLastMonth", "Customers last month" },
+                    { "statDecoPrice", "Deco construction costs" },
+                    { "statDecoValue", "Deco remaining value" },
+                    { "statMissedCustomersLastMonth", "Missed customers last month" },
+                    { "statMostProfitableAttraction", "Most profitable attraction" },
+                    { "statMostProfitableShop", "Most profitable shop" },
+                    { "statVouchersRedeemed", "Redeemed vouchers" },
+                    { "statRidesPrice", "Rides construction costs" },
+                    { "statRidesValue", "Rides remaining value" },
+                    { "statShopsPrice", "Shops construction costs" },
+                    { "statShopsValue", "Shops remaining value" },
+                    { "statTotalAttractionBreakdowns", "Total attraction breakdowns" },
+                    { "statTotalAttractionCustomers", "Total attraction customers" },
+                    { "statTotalAttractionProfit", "Total attraction profit" },
+                    { "statTotalAttractionRevenue", "Total attraction revenue" },
+                    { "statTotalAttractionsMaintained", "Total attractions maintained" },
+                    { "statTotalAttractionsRepaired", "Total attractions repaired" },
+                    { "statTotalCratesDelivered", "Total crates delivered" },
+                    { "statTotalFootpathsSwept", "Total footpaths swept" },
+                    { "statTotalGuests", "Total guests" },
+                    { "statTotalGuestsEntertained", "Total guests entertained" },
+                    { "statTotalShopProfit", "Total shop profit" },
+                    { "statTotalShopRevenue", "Total shop revenue" },
+                    { "statTotalToiletsScrubbed", "Total toilets scrubbed" },
+                    { "statTotalTrashBinsEmptied", "Total trash bins emptied" },
+                    { "statTotalPathAttachmentsRepaired", "Total vandalized objects repaired" },
+                    { "statTotalVandalsCaught", "Total vandals caught" }
+                };
+
+                public static string[] All = Constants.Statistics.map.Values.ToArray();
+            }
+
+        public static class Trap
         {
             public static string[] Attraction =
             {
@@ -447,8 +623,8 @@ namespace ArchipelagoMod.Src
             public static string[] Employee =
             {
                 "Employee Hiring Trap",
-                "Employee Training Trap",
                 "Employee Tiredness Trap",
+                "Employee Training Trap",
             };
             public static string[] Player =
             {
@@ -456,23 +632,27 @@ namespace ArchipelagoMod.Src
             };
             public static string[] Weather =
             {
+                "Weather Cloudy Trap",
                 "Weather Rainy Trap",
                 "Weather Stormy Trap",
-                "Weather Cloudy Trap",
                 "Weather Sunny Trap",
             };
             public static string[] Guest =
             {
-                "Guest Spawn Trap",
+                "Guest Bathroom Trap",
+                "Guest Happiness Trap",
+                "Guest Hunger Trap",
                 "Guest Kill Trap",
                 "Guest Money Trap",
-                "Guest Hunger Trap",
+                "Guest Spawn Trap",
                 "Guest Thirst Trap",
-                "Guest Bathroom Trap",
-                "Guest Vomiting Trap",
-                "Guest Happiness Trap",
                 "Guest Tiredness Trap",
                 "Guest Vandal Trap",
+                "Guest Vomiting Trap",
+            };
+            public static string[] Research =
+            {
+                "Research Trap",
             };
 
             public static string[] All = (new[]
@@ -483,6 +663,7 @@ namespace ArchipelagoMod.Src
                 Constants.Trap.Player,
                 Constants.Trap.Weather,
                 Constants.Trap.Guest,
+                Constants.Trap.Research,
             })
                 .SelectMany(a => a).ToArray();
 
@@ -872,8 +1053,29 @@ namespace ArchipelagoMod.Src
                 string textBlock = Constants.Trap.GetRandomText(Constants.Trap.GuestVandalsTexts);
                 return textBlock.Replace("{{AMOUNT}}", amount.ToString()).Split(Constants.Trap.TextDivider);
             }
+
+            // -----------------------------
+            // General Traps
+            // -----------------------------
+            public static string[] ResearchTexts =
+            {
+                "The prototype looked promising until it exploded. Research for:",
+                "The team requires additional time. Research for:",
+                "The team is exploring new directions. Research for:",
+                "Results were... unexpected. Research for:",
+                "Great effort, questionable results. Research for:",
+                "More testing is required after an unfortunate incident. Research for:",
+                "Progress has been made, but more work remains. Research for:",
+                "New concepts are under review. Research for:",
+                "Turns out research is hard. Research for:",
+                "We found several new problems. Research for:",
+            };
+            public static string GetResearchText()
+            {
+                return Constants.Trap.GetRandomText(Constants.Trap.ResearchTexts);
+            }
         }
-    
+
         public static class Skips
         {
             public static string[] Types = { "Skip" };
@@ -990,5 +1192,69 @@ namespace ArchipelagoMod.Src
                 return "unknown";
             }
         }
+
+        public static class Research
+        {
+            public static int MaxAttractions = 4;
+            public static int MaxShops = 3;
+            public static int MaxDeco = 1;
+
+            public static string[] Types =
+            {
+                "Attraction",
+                "Shop",
+                "Decorations"
+            };
+
+            public static class Rules
+            {
+                public static string[] Decorations =
+                {
+                    "Adventure",
+                    "Ancient World",
+                    "Candyland",
+                    "Dino",
+                    "Effects",
+                    "Fantasy",
+                    "Industrial Structures",
+                    "Medieval Props",
+                    "Medieval Structures",
+                    "Race Props",
+                    "Sci-Fi Props",
+                    "Sci-Fi Structures",
+                    "Sculptures and Statues",
+                    "Spooky Props",
+                    "Spooky Structures",
+                    "Steam Pipes",
+                    "Steamworks Props",
+                    "Topiaries",
+                    "Western Props",
+                };
+
+                public static string[] Statistics = Constants.Statistics.map.Keys.ToArray();
+
+
+                public static string[] All = (new[]
+                {
+                    Constants.Research.Rules.Decorations,
+                    Constants.Research.Rules.Statistics,
+                })
+                    .SelectMany(a => a)
+                    .ToArray();
+            }
+        }
+
+        public static string[] AllNonItemTypes = (new[]
+        {
+            Constants.Trap.All,
+            Constants.Attraction.Types,
+            Constants.Stall.Types,
+            Constants.Skips.Types,
+            Constants.ProgressiveSpeed.Types,
+            Constants.Decorations.All,
+            Constants.Statistics.All,
+            Constants.Research.Rules.All,
+        })
+            .SelectMany(a => a).ToArray();
     }
 }

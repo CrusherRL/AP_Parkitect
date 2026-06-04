@@ -1,4 +1,6 @@
-﻿using ArchipelagoMod.Src.Dispatcher;
+﻿using Archipelago.Src;
+using ArchipelagoMod.Src.Challenges;
+using ArchipelagoMod.Src.Dispatcher;
 using ArchipelagoMod.Src.SlotData;
 using Parkitect.UI;
 using Photon.Realtime;
@@ -15,6 +17,7 @@ namespace ArchipelagoMod.Src.Controller
         readonly float OldTimeScale = Time.timeScale;
         public AP_Rules AP_Rules = null;
         public SaveData SaveData = null;
+        private float SuppressMessagesUntilTime = 0f;
 
         void Start()
         {
@@ -40,7 +43,7 @@ namespace ArchipelagoMod.Src.Controller
         }
 
         // Receive a small amount of money
-        public void PlayerAddMoney (float money = 500)
+        public void PlayerAddMoney(float money = 500)
         {
             MainThreadDispatcher.Enqueue(() =>
             {
@@ -49,6 +52,14 @@ namespace ArchipelagoMod.Src.Controller
                     return;
                 }
                 GameController.Instance.park.parkInfo.moneyTransaction(money, MonthlyTransactions.Transaction.REWARD);
+            });
+        }
+   
+        public void PlayerRemoveMoney(double money)
+        {
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                GameController.Instance.park.parkInfo.setMoney(this.GetPlayerMoney() - money);
             });
         }
 
@@ -89,6 +100,29 @@ namespace ArchipelagoMod.Src.Controller
             });
         }
 
+        public void PlayerAddMyGuests()
+        {
+            ParkitectGuests.CreateMe();
+            ParkitectGuests.CreateFirstChatter();
+        }
+
+        public void PlayerAddGuestInventory(List<Guest> guests, Item voucher)
+        {
+            List<List<Guest>> chunkList = Helper.Chunk(guests);
+            float nextProcessTime = Time.time;
+
+            foreach (List<Guest> chunks in chunkList)
+            {
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.addToInventory(voucher);
+                    }
+                });
+            }
+        }
+
         // Adds/Substracts Guests money
         public void PlayerChangeGuestsMoney (float money = 30f, float guests = 25f, string sign = "+")
         {
@@ -97,20 +131,25 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    if (sign == "+")
+                    foreach (Guest guest in chunks)
                     {
-                        guest.Money += money;
+                        if (sign == "+")
+                        {
+                            guest.Money += money;
+                        }
+                        else
+                        {
+                            guest.Money -= money;
+                        }
                     }
-                    else
-                    {
-                        guest.Money -= money;
-                    }
-                }
-            });
+                });
+            }
         }
 
         // Kills specific guests
@@ -121,13 +160,18 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(0, guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(0, guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.Kill();
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.Kill();
+                    }
+                });
+            }
         }
 
         // Set amount of guests hungry
@@ -138,13 +182,18 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests( guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.Hunger = hunger;
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.Hunger = hunger;
+                    }
+                });
+            }
         }
 
         // Set amount of guests thirsty
@@ -155,13 +204,18 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.Thirst = thirst;
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.Thirst = thirst;
+                    }
+                });
+            }
         }
 
         // set amount of guests to the bathroom
@@ -171,14 +225,19 @@ namespace ArchipelagoMod.Src.Controller
             {
                 return;
             }
+            
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(guests));
 
-            MainThreadDispatcher.Enqueue(() =>
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.ToiletUrgency = bathroom;
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.ToiletUrgency = bathroom;
+                    }
+                });
+            }
         }
 
         // Set amount of guests to vomit
@@ -189,17 +248,18 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    if (!guest.isBusy())
+                    foreach (Guest guest in chunks)
                     {
-                        guest.standUp();
+                        guest.Nausea = vomit;
                     }
-                    guest.Nausea = vomit;
-                }
-            });
+                });
+            }
         }
 
         // Set amount of guests happy
@@ -210,13 +270,18 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.Happiness = happiness;
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.Happiness = happiness;
+                    }
+                });
+            }
         }
 
         // Set amount of guests tired
@@ -227,13 +292,18 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
-            MainThreadDispatcher.Enqueue(() =>
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(guests));
+
+            foreach (List<Guest> chunks in chunkList)
             {
-                foreach (Guest guest in Randomizer.GetRandomGuests(guests))
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.Tiredness = tiredness;
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.Tiredness = tiredness;
+                    }
+                });
+            }
         }
 
         // Set amount of guests tired
@@ -248,15 +318,18 @@ namespace ArchipelagoMod.Src.Controller
         }
         public void PlayerSetGuestsAsVandals(int amount)
         {
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                List<Guest> guests = Randomizer.GetRandomGuests(0f, amount);
+            List<List<Guest>> chunkList = Helper.Chunk(Randomizer.GetRandomGuests(0f, amount));
 
-                foreach (Guest guest in guests)
+            foreach (List<Guest> chunks in chunkList)
+            {
+                MainThreadDispatcher.Enqueue(() =>
                 {
-                    guest.setIsVandal(true);
-                }
-            });
+                    foreach (Guest guest in chunks)
+                    {
+                        guest.setIsVandal(true);
+                    }
+                });
+            }
         }
 
         // Create a Attraction Voucher and assigning the attraction to it
@@ -282,9 +355,8 @@ namespace ArchipelagoMod.Src.Controller
         // -----------------------------
 
         // Hire new Employees
-        public void PlayerHireEmployees(Prefabs employee, (int Start, int End) range, int customeIndex = 0) // Note: the last Hired Employeee will be picked up always
+        public void PlayerHireEmployees(Prefabs employee, (int Start, int End) range, int customeIndex = 0)
         {
-            // fix position they spawn
             if (!Helper.IsRange(Constants.Employee.SpawnRanges, range) || !Constants.Employee.Options.Contains(employee))
             {
                 return;
@@ -292,15 +364,16 @@ namespace ArchipelagoMod.Src.Controller
 
             this.PlayerHireEmployees(employee, Randomizer.GetRandomInt(range), customeIndex);
         }
-        public void PlayerHireEmployees(Prefabs employee, int amount, int customeIndex = 0) // Note: the last Hired Employeee will be picked up always
+        public void PlayerHireEmployees(Prefabs employee, int amount, int customeIndex = 0)
         {
             MainThreadDispatcher.Enqueue(() =>
             {
                 for (int i = 0; i < amount; i += 1)
                 {
-                    EmployeeHireCommand hireCommand = new EmployeeHireCommand(employee, customeIndex);
-                    hireCommand.isOwnCommand = true;
-                    hireCommand.run();
+                    Employee e = (Employee)GameController.Instance.park.spawnUnInitializedPerson(employee);
+                    e.applyCostume(e.costumes[customeIndex]);
+                    e.Initialize();
+                    EventManager.Instance.RaiseOnEmployeeHired(e);
                 }
             });
         }
@@ -328,7 +401,6 @@ namespace ArchipelagoMod.Src.Controller
             });
         }
 
-        // Send Employee to Trainingsroom
         public void PlayerSetEmployeesTraining(List<Employee> employees)
         {
             MainThreadDispatcher.Enqueue(() =>
@@ -395,15 +467,15 @@ namespace ArchipelagoMod.Src.Controller
         {
             if (AP_Item.IsMod)
             {
+                this.SaveData.AddUnlockedItem(AP_Item.Name);
+
                 if (Constants.Mods.Stalls.Contains(AP_Item.Name))
                 {
                     this.PlayerAddStall(AP_Item.Name);
-                    this.SaveData.AddUnlockedItem(AP_Item.Name);
                     return;
                 }
 
                 this.PlayerAddAttraction(AP_Item.Name);
-                this.SaveData.AddUnlockedItem(AP_Item.Name);
                 return;
             }
 
@@ -418,21 +490,59 @@ namespace ArchipelagoMod.Src.Controller
             {
                 this.PlayerAddAttraction(AP_Item.PrefabName);
                 this.SaveData.AddUnlockedItem(AP_Item.PrefabName);
+                return;
+            }
+
+            if (Constants.UtilityBuilding.All.Contains(AP_Item.Name))
+            {
+                this.PlayerAddUtilityBuilding(AP_Item.PrefabName);
+                this.SaveData.AddUnlockedItem(AP_Item.PrefabName);
+                return;
+            }
+
+            if (Constants.Decorations.All.Contains(AP_Item.Name))
+            {
+                ThemeContainer tc = this.FindThemeContainer(AP_Item.Name);
+                this.PlayerAddDecorations(tc);
+                this.SaveData.AddUnlockedItem(AP_Item.Name);
+                return;
+            }
+
+            if (Constants.Statistics.All.Contains(AP_Item.Name))
+            {
+                string referenceName = Constants.Statistics.map.FirstOrDefault(x => x.Value == AP_Item.Name).Key;
+                this.ResearchRuleUpdateCanUnlock(referenceName);
+                this.SaveData.AddUnlockedItem(referenceName);
+                return;
             }
         }
 
         public bool PlayerHasUnlockedItem(AP_Item AP_Item)
         {
-            string prefabName = AP_Item.IsMod ? AP_Item.Name : AP_Item.PrefabName.ToString();
-            Helper.Debug($"[ParkitectController::PlayerUnlockItem] AP_Item -> " + prefabName + " --- " + AP_Item.Name);
-            if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName) || this.SaveData.HasUnlockedItem(AP_Item.Name))
+            if (!AP_Item.IsMod && !AP_Item.IsDeco && !AP_Item.IsStatistic)
             {
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] AP_Item --- PrefabName -> {AP_Item.PrefabName}");
+
+                if (this.SaveData.HasUnlockedItem(AP_Item.PrefabName))
+                {
+                    Helper.Debug("[ParkitectController::PlayerHasUnlockedItem] AP_Item exists");
+                    return true;
+                }
+            } else
+            {
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] AP_Item --- Name -> {AP_Item.Name}");
+            }
+
+            if (this.SaveData.HasUnlockedItem(AP_Item.Name))
+            {
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] AP_Item exists");
                 return true;
             }
 
+
             if (AP_Item.IsMod)
             {
-                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Mod::{AP_Item.ModType}");
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] is Mod::{AP_Item.ModType}");
 
                 if (Constants.Mods.Stalls.Contains(AP_Item.Name))
                 {
@@ -444,27 +554,52 @@ namespace ArchipelagoMod.Src.Controller
 
             if (Constants.Stall.All.Contains(AP_Item.Name))
             {
-                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Stall");
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] is Stall");
                 return this.GetAllShopsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
             }
 
             if (Constants.Attraction.All.Contains(AP_Item.Name))
             {
-                Helper.Debug($"[ParkitectController::PlayerUnlockItem] is Attraction");
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] is Attraction");
                 return this.GetAllAttractionsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
+            }
+
+            if (Constants.UtilityBuilding.All.Contains(AP_Item.Name))
+            {
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] is Utility Building");
+                return this.GetAllUtilityBuildingsFromAssetManager(AP_Item.PrefabName).First().isAvailableInParks;
+            }
+
+            if (Constants.Decorations.All.Contains(AP_Item.Name))
+            {
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] is Decoration");
+                ThemeContainer tc = this.FindThemeContainer(AP_Item.Name);
+                return this.GetAllDecorationsFromAssetManager(tc).First().isAvailableInParks;
+            }
+
+            if (Constants.Statistics.All.Contains(AP_Item.Name))
+            {
+                Helper.Debug($"[ParkitectController::PlayerHasUnlockedItem] is Statistic");
+                string referenceName = Constants.Statistics.map.FirstOrDefault(x => x.Value == AP_Item.Name).Key;
+                return this.CanUnlockedResearchRule(referenceName);
             }
 
             return false;
         }
 
-        // Remove all Rides from List
         public void PlayerRemoveAllRides()
         {
-            List<Attraction> attractions = this.GetAllAttractionsFromAssetManager();
+            List<List<Attraction>> chunkList = Helper.Chunk(this.GetAllAttractionsFromAssetManager());
 
-            foreach (Attraction attraction in attractions)
+            foreach (List<Attraction> chunks in chunkList)
             {
-                attraction.isAvailableInParks = false;
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    foreach (Attraction attraction in chunks)
+                    {
+                        attraction.isAvailableInParks = false;
+                    }
+                });
             }
         }
         public void PlayerAddAllRides()
@@ -477,7 +612,6 @@ namespace ArchipelagoMod.Src.Controller
             }
         }
 
-        // Add a new Ride to List
         public void PlayerAddAttraction(Prefabs prefab)
         {
             Attraction attraction = this.GetAllAttractionsFromAssetManager(prefab).First();
@@ -506,14 +640,19 @@ namespace ArchipelagoMod.Src.Controller
         // Stall options
         // -----------------------------
 
-        // Remove all Rides
         public void PlayerRemoveAllStalls()
         {
-            List<Shop> shops = this.GetAllShopsFromAssetManager();
+            List<List<Shop>> chunkList = Helper.Chunk(this.GetAllShopsFromAssetManager());
 
-            foreach (Shop shop in shops)
+            foreach (List<Shop> chunks in chunkList)
             {
-                shop.isAvailableInParks = false;
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    foreach (Shop shop in chunks)
+                    {
+                        shop.isAvailableInParks = false;
+                    }
+                });
             }
         }
 
@@ -553,10 +692,111 @@ namespace ArchipelagoMod.Src.Controller
         }
 
         // -----------------------------
+        // UtilityBuilding options
+        // -----------------------------
+        public void PlayerAddAllUtilityBuildings()
+        {
+            List<UtilityBuilding> utilityBuildings = this.GetAllUtilityBuildingsFromAssetManager();
+
+            foreach (UtilityBuilding utilityBuilding in utilityBuildings)
+            {
+                this.PlayerAddUtilityBuilding(utilityBuilding);
+            }
+        }
+        public void PlayerAddUtilityBuilding(UtilityBuilding utilityBuilding)
+        {
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                utilityBuilding.isAvailableInParks = true;
+            });
+        }
+        public void PlayerAddUtilityBuilding(Prefabs prefabs)
+        {
+            UtilityBuilding utilityBuilding = this.GetAllUtilityBuildingsFromAssetManager(prefabs).FirstOrDefault();
+            this.PlayerAddUtilityBuilding(utilityBuilding);
+        }
+        public void PlayerAddUtilityBuilding(string prefabName)
+        {
+            UtilityBuilding utilityBuilding = this.GetAllUtilityBuildingsFromAssetManager(prefabName).FirstOrDefault();
+            this.PlayerAddUtilityBuilding(utilityBuilding);
+        }
+        public void PlayerRemoveAllUtilityBuildings()
+        {
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                foreach (UtilityBuilding utilityBuilding in this.GetAllUtilityBuildingsFromAssetManager())
+                {
+                    utilityBuilding.isAvailableInParks = false;
+                }
+            });
+        }
+
+        // -----------------------------
+        // Decorations options
+        // -----------------------------
+
+        public void PlayerAddDecorations(ThemeContainer themeContainer)
+        {
+            List<List<BuildableObject>> chunkList = Helper.Chunk(this.GetAllDecorationsFromAssetManager(themeContainer));
+
+            foreach (List<BuildableObject> chunks in chunkList)
+            {
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    foreach (BuildableObject item in chunks)
+                    {
+                        item.isAvailableInParks = true;
+                    }
+                });
+            }
+        }
+        public void PlayerAddDecorations(string themeTag)
+        {
+            ThemeContainer themeContainer = this.FindThemeContainer(themeTag);
+            this.PlayerAddDecorations(themeContainer);
+        }
+        public void PlayerRemoveAllDecorations()
+        {
+            List<List<BuildableObject>> chunks = Helper.Chunk(this.GetAllDecorationsFromAssetManager());
+     
+            foreach (List<BuildableObject> chunk in chunks)
+            {
+                MainThreadDispatcher.Enqueue(() =>
+                {
+                    foreach (BuildableObject deco in chunk)
+                    {
+                        deco.isAvailableInParks = false;
+                    }
+                });
+            }
+        }
+
+        // -----------------------------
+        // Statistics options
+        // -----------------------------
+
+        public void PlayerAddStatistics(string statistics)
+        {
+            if (!Constants.Research.Rules.Statistics.Contains(statistics))
+            {
+                return;
+            }
+            this.ResearchRuleUpdateIsUnlocked(statistics, true);
+            this.ResearchRuleUpdateCanUnlock(statistics, true);
+        }
+
+        public void PlayerRemoveStatistics()
+        {
+            foreach (string statistics in Constants.Research.Rules.Statistics)
+            {
+                this.ResearchRuleUpdateIsUnlocked(statistics, false);
+                this.ResearchRuleUpdateCanUnlock(statistics, false);
+            }
+        }
+        // -----------------------------
         // Shops options
         // -----------------------------
 
-        // Re-deliver Ingredients for a shop
         public void PlayerSetReDeliveryForProductShops (List<ProductShop> productShops)
         {
             MainThreadDispatcher.Enqueue(() =>
@@ -568,8 +808,6 @@ namespace ArchipelagoMod.Src.Controller
                         foreach (Ingredient ingredient in product.ingredients)
                         {
                             productShop.stock.modify(ingredient.resource, productShop.stock.getAmount(ingredient.resource) * -1);
-                            //productShop.stock.resourceNameContentAssoc =
-                            //GameController.Instance.park.orderResources(productShop, ingredient.resource, 1);
                         }
                     }
 
@@ -578,17 +816,18 @@ namespace ArchipelagoMod.Src.Controller
             });
         }
 
-        // Clean up product shops
         public void PlayerSetCleanShopJob(List<ProductShop> productShops)
         {
+            if (productShops.Count <= 0)
+            {
+                return;
+            }
+
             MainThreadDispatcher.Enqueue(() =>
             {
-                if (productShops.Count > 0)
+                foreach (ProductShop productShop in productShops)
                 {
-                    foreach (ProductShop productShop in productShops)
-                    {
-                        productShop.triggerClean();
-                    }
+                    productShop.triggerClean();
                 }
             });
         }
@@ -598,7 +837,7 @@ namespace ArchipelagoMod.Src.Controller
         // -----------------------------
 
         // Add Park goal
-        public void PlayerAddScenarioGoal (IScenarioGoal goal, List<IScenarioGoalReward> rewards = null, bool optional = false) // Note: Change the value before calling this method!
+        public void PlayerAddScenarioGoal (IScenarioGoal goal, List<IScenarioGoalReward> rewards = null, bool optional = false)
         {
             if (rewards != null && rewards.Count > 0)
             {
@@ -623,7 +862,32 @@ namespace ArchipelagoMod.Src.Controller
             return goals.Contains(goal);
         }
 
-        public void PlayerRedeemTrap (AP_Item AP_Item)
+        // -----------------------------
+        // Research options
+        // -----------------------------
+
+        public void PlayerAddToResearch(Attraction attraction)
+        {
+            this.ResearchRuleUpdateIsUnlocked(attraction.getResearchReferenceName());
+            this.ResearchRuleUpdateCanUnlock(attraction.getResearchReferenceName());
+        }
+        public void PlayerAddToResearch(Shop shop)
+        {
+            this.ResearchRuleUpdateIsUnlocked(shop.getResearchReferenceName());
+            this.ResearchRuleUpdateCanUnlock(shop.getResearchReferenceName());
+        }
+        public void PlayerAddToResearch(string thing)
+        {
+            if (!Constants.Research.Rules.Decorations.Contains(thing))
+            {
+                Helper.Debug($"[ParkitectController::PlayerAddToResearch] research Rule not found! {thing}");
+                return;
+            }
+            this.ResearchRuleUpdateIsUnlocked(thing);
+            this.ResearchRuleUpdateCanUnlock(thing);
+        }
+
+        public void PlayerRedeemTrap(AP_Item AP_Item)
         {
             if (AP_Item.Name == "Attraction Breakdown Trap")
             {
@@ -642,20 +906,14 @@ namespace ArchipelagoMod.Src.Controller
 
                 if (attraction == null)
                 {
-                    this.SendMessage($"{AP_Item.Name} not redeemed. No Attraction found");
+                    this.SendMessage($"{AP_Item.Name} not redeemed. No Attraction found", canBeSuppressed: true);
                     return;
                 }
 
-                foreach (Guest guest in guests)
-                {
-                    MainThreadDispatcher.Enqueue(() =>
-                    {
-                        guest.addToInventory(this.PlayerCreateAttractionVoucher(attraction));
-                    });
-                }
+                this.PlayerAddGuestInventory(guests, this.PlayerCreateAttractionVoucher(attraction));
 
                 string[] messages = Constants.Trap.GetAttractionVoucherText(attraction.getName(), number);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
 
@@ -665,7 +923,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetReDeliveryForProductShops(productShops);
 
                 string[] messages = Constants.Trap.GetShopIngredientsText(productShops.Select(shop => shop.getName()).ToArray());
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Shop Cleaning Trap")
@@ -674,7 +932,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetCleanShopJob(productShops);
 
                 string[] messages = Constants.Trap.GetShopCleaningText(productShops.Select(shop => shop.getName()).ToArray());
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Shop Voucher Trap")
@@ -685,20 +943,14 @@ namespace ArchipelagoMod.Src.Controller
 
                 if (shop == null)
                 {
-                    this.SendMessage($"{AP_Item.Name} not redeemed. No Shop found");
+                    this.SendMessage($"{AP_Item.Name} not redeemed. No Shop found", canBeSuppressed: true);
                     return;
                 }
 
-                foreach (Guest guest in guests)
-                {
-                    MainThreadDispatcher.Enqueue(() =>
-                    {
-                        guest.addToInventory(this.PlayerCreateShopVoucher(shop));
-                    });
-                }
+                this.PlayerAddGuestInventory(guests, this.PlayerCreateShopVoucher(shop));
 
                 string[] messages = Constants.Trap.GetShopVoucherText(shop.getName(), number);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
 
@@ -709,7 +961,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerHireEmployees(employee, amount);
 
                 string[] messages = Constants.Trap.GetEmployeeHiringText(employee.ToString(), amount);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Employee Training Trap")
@@ -719,7 +971,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetEmployeesTraining(this.GetParkEmployees().Take(number).ToList());
 
                 string[] messages = Constants.Trap.GetEmployeeTrainingText(number.ToString());
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Employee Tiredness Trap")
@@ -729,7 +981,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetEmployeesTired(this.GetParkEmployees().Take((int)number).ToList(), number);
 
                 string[] messages = Constants.Trap.GetEmployeeTirednessText(number.ToString());
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
 
@@ -739,7 +991,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerAddMoney(money);
 
                 string[] messages = Constants.Trap.GetPlayerMoneyText(money);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
 
@@ -748,7 +1000,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerChangeWeather(Constants.Weather.Options.RAINY);
 
                 string[] messages = Constants.Trap.GetWeatherText("Rainy");
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Weather Stormy Trap")
@@ -756,7 +1008,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerChangeWeather(Constants.Weather.Options.STORMY);
 
                 string[] messages = Constants.Trap.GetWeatherText("Stormy");
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Weather Cloudy Trap")
@@ -764,7 +1016,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerChangeWeather(Constants.Weather.Options.CLOUDY);
 
                 string[] messages = Constants.Trap.GetWeatherText("Cloudy");
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Weather Sunny Trap")
@@ -772,7 +1024,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerChangeWeather(Constants.Weather.Options.SUNNY);
 
                 string[] messages = Constants.Trap.GetWeatherText("Sunny");
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
 
@@ -782,7 +1034,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerAddGuests(amount);
 
                 string[] messages = Constants.Trap.GetGuestSpawnText(amount);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Kill Trap")
@@ -791,7 +1043,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerKillGuests(amount);
 
                 string[] messages = Constants.Trap.GetGuestKillText(amount);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Money Trap")
@@ -802,7 +1054,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerChangeGuestsMoney(money, guests, sign);
 
                 string[] messages = Constants.Trap.GetGuestMoneyText(money, guests, sign);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Kill Trap")
@@ -811,7 +1063,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerKillGuests(amount);
 
                 string[] messages = Constants.Trap.GetGuestKillText(amount);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Hunger Trap")
@@ -821,7 +1073,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsHungry(guests, hunger);
 
                 string[] messages = Constants.Trap.GetGuestHungerText(guests, hunger);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Thirst Trap")
@@ -831,7 +1083,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsThirsty(guests, thirsty);
 
                 string[] messages = Constants.Trap.GetGuestThirstText(guests, thirsty);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Bathroom Trap")
@@ -841,7 +1093,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsToBathroom(guests, bathroom);
 
                 string[] messages = Constants.Trap.GetGuestBathroomText(guests, bathroom);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Vomiting Trap")
@@ -851,7 +1103,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsToVomit(guests, vomit);
 
                 string[] messages = Constants.Trap.GetGuestVomitingText(guests, vomit);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Happiness Trap")
@@ -861,7 +1113,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsHappy(guests, happiness);
 
                 string[] messages = Constants.Trap.GetGuestHappinessText(guests, happiness);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Tiredness Trap")
@@ -871,7 +1123,7 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsTired(guests, tiredness);
 
                 string[] messages = Constants.Trap.GetGuestTirednessText(guests, tiredness);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
                 return;
             }
             if (AP_Item.Name == "Guest Vandal Trap")
@@ -880,36 +1132,318 @@ namespace ArchipelagoMod.Src.Controller
                 this.PlayerSetGuestsAsVandals(amount);
 
                 string[] messages = Constants.Trap.GetGuestVandalsTexts(amount);
-                this.SendMessage(messages);
+                this.SendMessage(messages, canBeSuppressed: true);
+                return;
+            }
+
+            if (AP_Item.Name == "Research Trap")
+            {
+                List<string> messages = new List<string>();
+                List<string> types = new List<string>();
+          
+                List<Attraction> attractions = Randomizer.GetRandomAttractionFromParkForResearch(this);
+                List<Shop> shops = Randomizer.GetRandomShopsFromParkForResearch(this);
+                string themeTag = Randomizer.GetRandomDecorationThemeTagFromParkForResearch(this);
+
+                if (attractions.Count > 0)
+                {
+                    types.Add(Constants.Research.Types[0]);
+                }
+                if (shops.Count > 0)
+                {
+                    types.Add(Constants.Research.Types[1]);
+                }
+                if (themeTag != null)
+                {
+                    types.Add(Constants.Research.Types[2]);
+                }
+
+                if (types.Count == 0)
+                {
+                    this.SendMessage("Research Trap activated, but it was harmless. You're lucky!", canBeSuppressed: true);
+                    Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> No Items found!");
+                    return;
+                }
+
+                string trapType = Randomizer.GetRandomOption(types.ToArray());
+
+                Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> {trapType}");
+
+                // Attractions
+                if (trapType == Constants.Research.Types[0])
+                {
+                    foreach (Attraction attraction in attractions)
+                    {
+                        Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> {attraction.getName()}");
+                        this.PlayerAddToResearch(attraction);
+                        string name = this.AttractionHasPrefabType(attraction) ? attraction.getPrefabType().ToString() : attraction.getName();
+                        string type = Constants.Attraction.DetermineType(name);
+                        messages.Add($"- {attraction.getName()} ({type})");
+                    }
+                }
+
+                // Shops
+                else if (trapType == Constants.Research.Types[1])
+                {
+                    foreach (Shop shop in shops)
+                    {
+                        Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> {shop.getName()}");
+                        this.PlayerAddToResearch(shop);
+                        messages.Add($"- {shop.getName()} (Shops)");
+                    }
+                }
+
+                // Decorations
+                else if (trapType == Constants.Research.Types[2])
+                {
+                    List<string> DecorationProps = Randomizer.GetRandomDecorationPropsFromParkForResearch(themeTag);
+
+                    foreach (string decorationProp in DecorationProps)
+                    {
+                        Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> {themeTag}:{decorationProp}");
+                        this.PlayerAddToResearch(decorationProp);
+                        messages.Add($"- {decorationProp} (Decorations: {themeTag})");
+                    }
+                }
+
+                Helper.Debug($"[ParkitectController::PlayerRedeemTrap] Research Trap -> preparing!");
+                string message = Constants.Trap.GetResearchText();
+                this.SendMessage(message, string.Join("\n", messages), canBeSuppressed: true);
+                return;
+            }
+
+            // Below are only TrapLinks from other APWorld!
+            // There may be some equal or close Traps we are currently providing, but i want a list here :)
+
+            if (Constants.TrapLinks.Contains(AP_Item.Name))
+            {
+                Helper.Debug($"[ParkitectController::PlayerRedeemTrap] TrapLink -> {AP_Item.Name}");
+            }
+
+            // OpenRCT2
+            if (AP_Item.Name == "Bathroom Trap")
+            {
+                this.TrapLinkBathroom(AP_Item.Name);
+                return;
+            }
+            if (AP_Item.Name == "Furry Convention Trap")
+            {
+                Prefabs employee = Constants.Employee.Options[3];
+                int amount = Randomizer.GetRandomInt(Constants.Employee.SpawnRanges[this.AP_Rules.difficulty]);
+                this.PlayerHireEmployees(employee, amount);
+
+                this.TrapLinkActivated(AP_Item.Name);
+                return;
+            }
+            if (AP_Item.Name == "Food poisoning Trap")
+            {
+                this.TrapLinkPoison(AP_Item.Name);
+                return;
+            }
+
+            // Pokemon
+            if (AP_Item.Name == "Burn Trap" || AP_Item.Name == "Fire Trap")
+            {
+                this.TrapLinkThirstGuests(AP_Item.Name);
+                return;
+            }
+            if (AP_Item.Name == "Poison Trap")
+            {
+                this.TrapLinkPoison(AP_Item.Name);
+                return;
+            }
+            if (AP_Item.Name == "Sleep Trap")
+            {
+                this.TrapLinkSleepGuests(AP_Item.Name);
+                return;
+            }
+            if (AP_Item.Name == "Ice Trap")
+            {
+                this.TrapLinkIce(AP_Item.Name, Prefabs.IceCreamStall);
+                return;
+            }
+            if (AP_Item.Name == "Freeze Trap")
+            {
+                this.TrapLinkIce(AP_Item.Name, Prefabs.SnowconesStall);
+                return;
+            }
+
+            // Brave Fencer Musashi
+            if (AP_Item.Name == "Toxin Trap")
+            {
+                this.TrapLinkPoison(AP_Item.Name);
+                return;
+            }
+            if (AP_Item.Name == "Stinky Trap")
+            {
+                this.TrapLinkRestock(AP_Item.Name);
+                return;
+            }
+
+            // Freedom Planet 2
+            if (AP_Item.Name == "Expensive Stocks")
+            {
+                this.TrapLinkRestock(AP_Item.Name, 30);
+                return;
+            }
+            if (AP_Item.Name == "No Stocks")
+            {
+                this.TrapLinkRestock(AP_Item.Name, 100);
+                return;
+            }
+
+            // Hammerwatch
+            if (AP_Item.Name == "Frost Trap")
+            {
+                this.TrapLinkIce(AP_Item.Name, Prefabs.SnowconesStall);
+                return;
+            }
+
+            // Noita
+            if (AP_Item.Name == "Pea Soup Trap")
+            {
+                this.TrapLinkGreenPeas(AP_Item.Name);
+                return;
+            }
+
+            // Noita
+            if (AP_Item.Name == "Frozen Trap")
+            {
+                this.TrapLinkIce(AP_Item.Name, Prefabs.SnowconesStall);
                 return;
             }
 
             Helper.Debug($"[ParkitectController::PlayerRedeemTrap] No Trap Handler found!");
         }
 
-        public void SendMessage(string message, string secondaryMessage = "", bool silent = false, Notification.Type type = Notification.Type.DEFAULT)
+        private void TrapLinkBathroom(string trap)
+        {
+            float guests = Randomizer.GetRandomOption(Constants.Guest.BathroomOptions);
+            float bathroom = Randomizer.GetRandomOption(Constants.Guest.BathroomPercentage);
+            this.PlayerSetGuestsToBathroom(guests, bathroom);
+            this.TrapLinkActivated(trap);
+        }
+
+        private void TrapLinkThirstGuests(string trap)
+        {
+            float guests = Randomizer.GetRandomOption(Constants.Guest.ThirstyOptions);
+            float thirsty = Randomizer.GetRandomOption(Constants.Guest.ThirstyPercentage);
+            this.PlayerSetGuestsThirsty(guests, thirsty);
+
+            this.PlayerChangeWeather(Constants.Weather.Options.SUNNY);
+
+            this.TrapLinkActivated(trap);
+        }
+
+        private void TrapLinkPoison(string trap)
+        {
+            // Guest Vomits
+            float guests = Randomizer.GetRandomOption(Constants.Guest.VomitOptions);
+            float vomit = Randomizer.GetRandomOption(Constants.Guest.VomitPercentage);
+            this.PlayerSetGuestsToVomit(guests, vomit);
+
+            // Shops Ingredients
+            List<ProductShop> productShops = Randomizer.GetRandomProductShopsFromPark(Randomizer.GetRandomFloat());
+            this.PlayerSetReDeliveryForProductShops(productShops);
+
+            this.TrapLinkActivated(trap);
+        }
+
+        private void TrapLinkSleepGuests(string trap)
+        {
+            float guests = Randomizer.GetRandomOption(Constants.Guest.TirednessOptions);
+            float tiredness = Randomizer.GetRandomOption(Constants.Guest.TirednessPercentage);
+            this.PlayerSetGuestsTired(guests, tiredness);
+
+            this.TrapLinkActivated(trap);
+        }
+
+        // rare cases only!
+        private void TrapLinkIce(string trap, Prefabs prefabs)
+        {
+            Shop shop = Randomizer.GetRandomProductShopFromPark(prefabs);
+            this.PlayerChangeWeather(Constants.Weather.Options.SUNNY);
+
+            if (shop != null)
+            {
+                ShopVoucher voucher = this.PlayerCreateShopVoucher(shop as ProductShop);
+                List<Guest> guests = Randomizer.GetRandomGuests(100f);
+                this.PlayerAddGuestInventory(guests, voucher);
+                string item = prefabs == Prefabs.IceCreamStall ? "Ice Cream" : "Snowcone";
+                this.TrapLinkActivated(trap, $"Lucky Day for your Guests! Free {item} for everyone!");
+                return;
+            }
+
+            this.TrapLinkActivated(trap, "but it is harmless");
+        }
+   
+        private void TrapLinkGreenPeas(string trap)
+        {
+            ProductShop shop = Randomizer.GetRandomProductShopFromPark(Prefabs.HotDrinksStall) as ProductShop;
+
+            if (shop != null)
+            {
+                Item tea = shop.products.ToList().Find(p => p.getPrefabType() == Prefabs.Tea);
+                shop.servesPoisonedFood = true; // theoretically removed when shop has cleanup or restocks
+
+                ShopVoucher voucher = this.PlayerCreateShopVoucher(shop);
+                List<Guest> guests = Randomizer.GetRandomGuests(100f);
+                this.PlayerAddGuestInventory(guests, voucher);
+
+                this.TrapLinkActivated(trap, "Awesome, Your Tee is now made of Green Peas");
+                return;
+            }
+
+            this.TrapLinkActivated(trap, "but it is harmless");
+        }
+
+        private void TrapLinkRestock(string trap, int percentage = 10)
+        {
+            List<ProductShop> productShops = Randomizer.GetRandomProductShopsFromPark(percentage);
+            this.PlayerSetCleanShopJob(productShops);
+
+            this.TrapLinkActivated(trap);
+        }
+
+        private void TrapLinkActivated(string trap, string message = "")
+        {
+            this.SendMessage($"TRAPLINK ACTIVATED!!! {trap}", message);
+        }
+
+        public void SendMessage(string message, string secondaryMessage = "", bool silent = false, bool canBeSuppressed = false)
         {
             if (string.IsNullOrEmpty(message))
             {
                 return;
             }
 
+            if (canBeSuppressed && this.SuppressMessagesUntilTime > Time.time)
+            {
+                Helper.Debug($"[ParkitectController::SendMessage] Suppressed - {message}");
+                return;
+            }
+
             MainThreadDispatcher.Enqueue(() =>
             {
-                Notification notification = new Notification(message, secondaryMessage, Notification.Type.DEFAULT, null);
+                Notification notification = new Notification(message, secondaryMessage, Notification.Type.DEFAULT);
                 NotificationBar.Instance.addOngoingNotification(notification, silent);
             });
         }
 
-        public void SendMessage(string[] messages, bool silent = false, Notification.Type type = Notification.Type.DEFAULT)
+        public void UpdateSuppressMessages()
+        {
+            this.SuppressMessagesUntilTime = Time.time + 2.1f;
+        }
+
+        public void SendMessage(string[] messages, bool silent = false, bool canBeSuppressed = false)
         {
             if (messages.Length == 2)
             {
-                this.SendMessage(messages[0], messages[1], silent, type);
+                this.SendMessage(messages[0], messages[1], silent, canBeSuppressed);
                 return;
             }
 
-            this.SendMessage(messages[0], "", silent, type);
+            this.SendMessage(messages[0], "", silent, canBeSuppressed);
         }
 
         // -----------------------------
@@ -930,7 +1464,73 @@ namespace ArchipelagoMod.Src.Controller
             return GameController.Instance.park.getEmployees().ToList();
         }
 
-        // Gets all Attractions
+        public List<Employee> GetAllCountableEmployeesFromPark(Prefabs prefabs)
+        {
+            int expLevel = this.GetEmployeeExperienceLevel(prefabs);
+            if (prefabs == Constants.Employee.Options[0])
+            {
+                return this.GetAllCountableMechanicEmployeesFromPark(expLevel).Cast<Employee>().ToList();
+            }
+
+            if (prefabs == Constants.Employee.Options[1])
+            {
+                return this.GetAllCountableJanitorEmployeesFromPark(expLevel).Cast<Employee>().ToList();
+            }
+
+            if (prefabs == Constants.Employee.Options[2])
+            {
+                return this.GetAllCountableSecurityEmployeesFromPark(expLevel).Cast<Employee>().ToList();
+            }
+
+            if (prefabs == Constants.Employee.Options[3])
+            {
+                return this.GetAllCountableEntertainerEmployeesFromPark(expLevel).Cast<Employee>().ToList();
+            }
+
+            return this.GetAllCountableHandymanEmployeesFromPark(expLevel).Cast<Employee>().ToList();
+        }
+
+        public List<Mechanic> GetAllCountableMechanicEmployeesFromPark(int expLevel)
+        {
+            return this.GetParkEmployees()
+                .Where(e => e.getPrefabType() == Constants.Employee.Options[0] && e.experienceLevel + 1 >= expLevel)  // UI says level 1 but its actually 0
+                .Cast<Mechanic>()
+                .ToList();
+        }
+
+        public List<Janitor> GetAllCountableJanitorEmployeesFromPark(int expLevel)
+        {
+            return this.GetParkEmployees()
+                .Where(e => e.getPrefabType() == Constants.Employee.Options[1] && e.experienceLevel + 1 >= expLevel)  // UI says level 1 but its actually 0
+                .Cast<Janitor>()
+                .ToList();
+        }
+
+        public List<Security> GetAllCountableSecurityEmployeesFromPark(int expLevel)
+        {
+            return this.GetParkEmployees()
+                .Where(e => e.getPrefabType() == Constants.Employee.Options[2] && e.experienceLevel + 1 >= expLevel)  // UI says level 1 but its actually 0
+                .Cast<Security>()
+                .ToList();
+        }
+
+        public List<Entertainer> GetAllCountableEntertainerEmployeesFromPark(int expLevel)
+        {
+            return this.GetParkEmployees()
+                .Where(e => e.getPrefabType() == Constants.Employee.Options[3] && e.experienceLevel + 1 >= expLevel)  // UI says level 1 but its actually 0
+                .Cast<Entertainer>()
+                .ToList();
+        }
+
+        public List<Handyman> GetAllCountableHandymanEmployeesFromPark(int expLevel)
+        {
+            return this.GetParkEmployees()
+                .Where(e => e.getPrefabType() == Constants.Employee.Options[4] && e.experienceLevel + 1 >= expLevel)  // UI says level 1 but its actually 0
+                .Cast<Handyman>()
+                .ToList();
+        }
+
+        // Attractions
         public List<Attraction> GetAllAttractionsFromAssetManager ()
         {
             return ScriptableSingleton<AssetManager>.Instance.getAttractionObjects().ToList();
@@ -984,7 +1584,7 @@ namespace ArchipelagoMod.Src.Controller
                 })
                 .ToList();
         }
-        public List<Attraction> GetAllCountableAttractionsTypeFromPark(string type)
+        public List<Attraction> GetAllCountableAttractionsTypeFromPark(string type, DecoRating decoRating = null)
         {
             string[] attractions = Constants.Attraction.WaterRides.Concat(Constants.Mods.WaterRides).ToArray();
 
@@ -1018,6 +1618,11 @@ namespace ArchipelagoMod.Src.Controller
                         isAttraction = attractions.Contains(a.getName());
                     }
 
+                    if (decoRating != null && !decoRating.Check(a.getDecoResultScore()))
+                    {
+                        return false;
+                    }
+
                     return isAttraction
                         && a.state == Attraction.State.OPENED
                         && a.customersCount > 0
@@ -1025,8 +1630,15 @@ namespace ArchipelagoMod.Src.Controller
                 })
                 .ToList();
         }
+        public List<Attraction> GetAllAvailableAttractions()
+        {
+            return this.GetAllAttractionsFromAssetManager().Where(a => {
+                string referenceName = a.getResearchReferenceName();
+                return a.isAvailableInParks && this.HasUnlockedResearchRule(referenceName) && !this.CanUnlockedResearchRule(referenceName);
+            }).ToList();
+        }
 
-        // Gets all Stalls
+        // Stalls/Shops
         public List<Shop> GetAllShopsFromAssetManager()
         {
             return ScriptableSingleton<AssetManager>.Instance.getShopObjects().ToList();
@@ -1122,6 +1734,14 @@ namespace ArchipelagoMod.Src.Controller
                 })
                 .ToList();
         }
+        public List<Shop> GetAllAvailableShops()
+        {
+            return this.GetAllShopsFromAssetManager().Where(s =>
+            {
+                string referenceName = s.getResearchReferenceName();
+                return s.isAvailableInParks && this.HasUnlockedResearchRule(referenceName) && !this.CanUnlockedResearchRule(referenceName);
+            }).ToList();
+        }
 
         public string GetSerializedFromPrefabs (string prefabs)
         {
@@ -1158,6 +1778,169 @@ namespace ArchipelagoMod.Src.Controller
             {
                 return false;
             }
+        }
+
+        // Utility Buildings
+        public List<UtilityBuilding> GetAllUtilityBuildingsFromAssetManager()
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getUtilityBuildingObjects()
+                .Where(u => Constants.UtilityBuilding.All.Contains(u.getPrefabType().ToString()))
+                .ToList();
+        }
+    
+        public List<UtilityBuilding> GetAllUtilityBuildingsFromAssetManager(string prefabName)
+        {
+            return this.GetAllUtilityBuildingsFromAssetManager().Where(s =>
+            {
+                try
+                {
+                    return s.getPrefabType().ToString() == prefabName;
+                }
+                catch
+                {
+                    return false;
+                }
+            }).ToList();
+        }
+        public List<UtilityBuilding> GetAllUtilityBuildingsFromAssetManager(Prefabs prefab)
+        {
+            return this.GetAllUtilityBuildingsFromAssetManager().Where(s =>
+            {
+                try
+                {
+                    return s.getPrefabType() == prefab;
+                }
+                catch
+                {
+                    return false;
+                }
+            }).ToList();
+        }
+
+        public List<UtilityBuilding> GetAllUtilityBuildingsFromPark()
+        {
+            return this.GetAllUtilityBuildingsFromAssetManager().Where(z => z.isAvailableInParks).ToList();
+        }
+
+        // Decorations
+        public List<Deco> GetAllDecosFromAssetManager()
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getDecoObjects().Where(d => !Constants.Decorations.Excludes.Contains(d.getName())).ToList();
+        }
+
+        public List<Deco> GetAllAvailableDecosFromPark()
+        {
+            return this.GetAllDecosFromAssetManager().Where(d => d.isAvailableInParks).ToList();
+        }
+
+        public List<PathAttachment> GetAllPathAttachmentsFromAssetManager()
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getPathAttachmentObjects().ToList();
+        }
+
+        public List<BuildableObject> GetAllDecorationsFromAssetManager()
+        {
+            return this.GetAllDecosFromAssetManager()
+                .Cast<BuildableObject>()
+                .Concat(this.GetAllPathAttachmentsFromAssetManager())
+                .ToList();
+        }
+        public List<BuildableObject> GetAllDecorationsFromAssetManager(ThemeContainer themeContainer)
+        {
+            return this.GetAllDecorationsFromAssetManager()
+                .Where(d => d.themeTag == themeContainer.themeTag)
+                .ToList();
+        }
+
+        // Research
+        public void ResearchRuleUpdateIsUnlocked(string referenceName, bool isUnlocked = false)
+        {
+            if (this.HasUnlockedResearchRule(referenceName) == isUnlocked)
+            {
+                Helper.Debug($"[ParkitectController::UpdateResearchRule] isUnlocked already {isUnlocked} = {referenceName}");
+                return;
+            }
+
+            ResearchRule rule = GameController.Instance.park.scenario.research.getRule(referenceName);
+
+            if (rule == null)
+            {
+                Helper.Debug($"[ParkitectController::UpdateResearchRule] No Rule found for {referenceName}");
+                return;
+            }
+
+            GameController.Instance.park.scenario.research.removeRule(rule);
+            rule.isUnlocked = isUnlocked;
+            GameController.Instance.park.scenario.research.addRule(rule);
+            GameController.Instance.park.scenario.research.unlockNewContentInNewParks = true;
+
+            this.UpdateResearchTeams();
+        }
+
+        public void ResearchRuleUpdateCanUnlock(string referenceName, bool canUnlock = true)
+        {
+            ResearchRule rule = GameController.Instance.park.scenario.research.getRule(referenceName);
+
+            if (rule == null)
+            {
+                Helper.Debug($"[ParkitectController::UpdateResearchRule] No Rule found for {referenceName}");
+                return;
+            }
+
+            GameController.Instance.park.scenario.research.removeRule(rule);
+            rule.canUnlock = canUnlock;
+            GameController.Instance.park.scenario.research.addRule(rule);
+            GameController.Instance.park.scenario.research.unlockNewContentInNewParks = true;
+
+            this.UpdateResearchTeams();
+        }
+
+        private void UpdateResearchTeams()
+        {
+            foreach (ResearchTeam researchTeam in GameController.Instance.park.scenario.research.getTeams())
+            {
+                researchTeam.updateResearchableState();
+            }
+        }
+
+        public bool HasUnlockedResearchRule(string referenceName)
+        {
+            if (Constants.Decorations.Excludes.Contains(referenceName))
+            {
+                return false;
+            }
+            return GameController.Instance.park.scenario.research.getRule(referenceName).isUnlocked;
+        }
+
+        public bool CanUnlockedResearchRule(string referenceName)
+        {
+            if (Constants.Decorations.Excludes.Contains(referenceName))
+            {
+                return false;
+            }
+            return GameController.Instance.park.scenario.research.getRule(referenceName).canUnlock;
+        }
+
+        public ThemeContainer FindThemeContainer(string themeTag)
+        {
+            return ScriptableSingleton<AssetManager>.Instance.getTheme(themeTag);
+        }
+
+        // Helper
+
+        public int GetParkGuestCount()
+        {
+            return GameController.Instance.park.getGuestCount();
+        }
+
+        public int GetEmployeeExperienceLevel(Prefabs prefabs)
+        {
+            return Constants.Employee.ExperienceLevels[prefabs][this.AP_Rules.difficulty];
+        }
+
+        public double GetPlayerMoney()
+        {
+            return GameController.Instance.park.parkInfo.money;
         }
     }
 }

@@ -33,7 +33,6 @@ namespace ArchipelagoMod.Src.Dispatcher
                 }
             }
         }
-
         void Update()
         {
             // Execute queued actions on main thread

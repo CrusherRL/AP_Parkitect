@@ -94,6 +94,11 @@ namespace ArchipelagoMod.Src.Window
             this.IsActive = !this.IsActive;
             this.SetActiveState();
         }
+        public void Close()
+        {
+            this.IsActive = false;
+            this.SetActiveState();
+        }
 
         public void SetActiveState()
         {

@@ -8,7 +8,7 @@ using Random = System.Random;
 
 namespace ArchipelagoMod.Src
 {
-    class Randomizer
+    class Randomizer : MonoBehaviour
     {
         public static Random rnd = new Random();
 
@@ -28,7 +28,7 @@ namespace ArchipelagoMod.Src
         public static List<Guest> GetRandomGuests(float percentage = 20f, int amount = 0)
         {
             percentage = percentage <= 1f ? percentage : percentage / 100f;
-            IList<Guest> guests = GameController.Instance.park.getGuests();
+            List<Guest> guests = GameController.Instance.park.getGuests().ToList();
 
             if (percentage == 1f)
             {
@@ -53,8 +53,8 @@ namespace ArchipelagoMod.Src
         {
             percentage = percentage <= 1f ? percentage : percentage / 100f;
 
-            ReadOnlyCollection<Shop> employees = GameController.Instance.park.getShops();
-            IList<ProductShop> productShops = employees.OfType<ProductShop>().ToList();
+            ReadOnlyCollection<Shop> shops = GameController.Instance.park.getShops();
+            List<ProductShop> productShops = shops.OfType<ProductShop>().ToList();
 
             if (percentage == 1f)
             {
@@ -72,6 +72,33 @@ namespace ArchipelagoMod.Src
                 .Where(s => s.opened)
                 .OrderBy(s => Randomizer.rnd.Next())
                 .Take(productShopCount)
+                .ToList();
+        }
+        public static Shop GetRandomProductShopFromPark(Prefabs shopType)
+        {
+            List<Shop> productShops = GameController.Instance.park.getShops().ToList();
+
+            return productShops
+                .Where(s => s.getPrefabType() == shopType)
+                .OrderBy(s => Randomizer.rnd.Next())
+                .FirstOrDefault();
+        }
+
+        public static List<Shop> GetRandomShopsFromParkForResearch(ParkitectController controller)
+        {
+            int min = 1;
+            int max = Constants.Research.MaxShops;
+
+            List<Shop> shops = controller.GetAllAvailableShops();
+
+            if (shops.Count <= 0)
+            {
+                return new List<Shop>();
+            }
+
+            return shops
+                .OrderBy(s => Randomizer.rnd.Next())
+                .Take(Randomizer.GetRandomInt(min, max))
                 .ToList();
         }
 
@@ -100,17 +127,41 @@ namespace ArchipelagoMod.Src
                 .ToList();
         }
 
-        public static string GetRandomAttraction(ParkitectController controller)
+        public static List<Attraction> GetRandomAttractionFromParkForResearch(ParkitectController controller)
         {
-            int length = Constants.Attraction.All.Length;
-            string attraction = Constants.Attraction.All[Randomizer.GetRandomInt(1, length)];
+            int min = 1;
+            int max = Constants.Research.MaxAttractions;
 
-            if (attraction != null)
+            List<Attraction> attractions = controller.GetAllAvailableAttractions();
+
+            if (attractions.Count <= 0)
             {
-                return attraction;
+                return new List<Attraction>();
             }
 
-            return null;
+            return attractions
+                .OrderBy(a => Randomizer.rnd.Next())
+                .Take(Randomizer.GetRandomInt(min, max))
+                .ToList();
+        }
+        public static List<string> GetRandomDecorationPropsFromParkForResearch(string themeTag)
+        {
+            if (themeTag == null)
+            {
+                return new List<string>();
+            }
+
+            return Constants.Decorations.ThemeTagMapToProps[themeTag];
+        }
+
+        public static string GetRandomDecorationThemeTagFromParkForResearch(ParkitectController controller)
+        {
+            int max = 1;
+
+            return controller.SaveData.GetDecorationThemes()
+                .OrderBy(d => Randomizer.rnd.Next())
+                .Take(max)
+                .FirstOrDefault();
         }
 
         public static Prefabs GetRandomEmployee()
@@ -128,6 +179,11 @@ namespace ArchipelagoMod.Src
         public static int GetRandomOption(int[] options)
         {
             int index = Randomizer.GetRandomInt(options);
+            return options[index];
+        }
+        public static string GetRandomOption(string[] options)
+        {
+            int index = Randomizer.GetRandomInt(0, options.Length - 1);
             return options[index];
         }
 
@@ -152,11 +208,16 @@ namespace ArchipelagoMod.Src
         // Random Float between min and max
         public static float GetRandomFloat(int min = 0, int max = 100)
         {
-            return Randomizer.GetRandomInt(min, max) / 1f; // checks if ok
+            return Randomizer.GetRandomInt(min, max) / 1f;
         }
         public static float GetRandomFloat((int Start, int End) range)
         {
             return Randomizer.GetRandomInt(range) / 1f; // checks if ok
+        }
+
+        public static string GetRandomResearchType()
+        {
+            return Randomizer.GetRandomOption(Constants.Research.Types);
         }
     }
 }

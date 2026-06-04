@@ -18,6 +18,8 @@ namespace ArchipelagoMod
         public override string getVersionNumber() => VERSION_NUMBER;
         public override bool isMultiplayerModeCompatible() => false;
         public override bool isRequiredByAllPlayersInMultiplayerMode() => true;
+        
+        public string ModName = "Archipelago_Mod";
 
         public GameObject GameObject;
 
@@ -38,7 +40,14 @@ namespace ArchipelagoMod
 
             ScriptableSingleton<ArchipelagoSettings>.Instance.Load();
 
-            this.GameObject = new GameObject();
+            // Sicherheitsnetz: Falls aus irgendeinem Grund noch ein altes Objekt mit diesem Namen existiert, löschen wir es vorab
+            GameObject oldInstance = GameObject.Find(this.ModName);
+            if (oldInstance != null)
+            {
+                UnityEngine.Object.DestroyImmediate(oldInstance);
+            }
+
+            this.GameObject = new GameObject(this.ModName);
 
             this.SaveData = this.GameObject.AddComponent<SaveData>();
             this.ParkitectController = this.GameObject.AddComponent<ParkitectController>();

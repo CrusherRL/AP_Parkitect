@@ -1,5 +1,4 @@
 ﻿using ArchipelagoMod.Src.Controller;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,34 +9,26 @@ namespace ArchipelagoMod.Src.Challenges
     {
         private ParkitectController ParkitectController = null;
 
-        [JsonProperty]
         public string SerializedPanelId = null;
 
-        [JsonProperty]
         protected RevenueRating RevenueRating = null;
-        [JsonProperty]
         protected NauseaRating NauseaRating = null;
-        [JsonProperty]
         protected ExcitementRating ExcitementRating = null;
-        [JsonProperty]
         protected IntensityRating IntensityRating = null;
-        [JsonProperty]
         protected SatisfactionRating SatisfactionRating = null;
-        [JsonProperty]
         protected GuestsRating GuestsRating = null;
+        protected DecoRating DecoRating = null;
 
-        [JsonProperty]
+        protected ParkGuest ParkGuest = null;
+        protected ParkEmployee ParkEmployee = null;
+        protected ParkMoney ParkMoney = null;
+
         protected string Attraction = null;
-        [JsonProperty]
         protected string Shop = null;
-        [JsonProperty]
         protected string Type = null;
-        [JsonProperty]
         protected int Count = 1;
 
-        [JsonProperty]
         public int LocationId;
-        [JsonProperty]
         public string PanelId = null;
         public int Index;
 
@@ -74,6 +65,21 @@ namespace ArchipelagoMod.Src.Challenges
 
         public string Text()
         {
+            if (this.ParkGuest != null)
+            {
+                return this.ParkGuest.Text();
+            }
+
+            if (this.ParkEmployee != null)
+            {
+                return this.ParkEmployee.Text();
+            }
+
+            if (this.ParkMoney != null)
+            {
+                return this.ParkMoney.Text();
+            }
+
             return $"Have {this.Count}x \"{this.GetShopOrAttractionName()}\"";
         }
 
@@ -83,32 +89,43 @@ namespace ArchipelagoMod.Src.Challenges
 
             if (this.NauseaRating != null)
             {
-                ratings.Add(this.NauseaRating.Text());
+                ratings.Add(this.NauseaRating.SubText());
             }
 
             if (this.ExcitementRating != null)
             {
-                ratings.Add(this.ExcitementRating.Text());
+                ratings.Add(this.ExcitementRating.SubText());
             }
 
             if (this.IntensityRating != null)
             {
-                ratings.Add(this.IntensityRating.Text());
+                ratings.Add(this.IntensityRating.SubText());
             }
 
             if (this.SatisfactionRating != null)
             {
-                ratings.Add(this.SatisfactionRating.Text());
+                ratings.Add(this.SatisfactionRating.SubText());
             }
 
             if (this.GuestsRating != null)
             {
-                ratings.Add(this.GuestsRating.Text());
+                ratings.Add(this.GuestsRating.SubText());
             }
 
             if (this.RevenueRating != null)
             {
-                ratings.Add(this.RevenueRating.Text());
+                ratings.Add(this.RevenueRating.SubText());
+            }
+
+            if (this.DecoRating != null)
+            {
+                ratings.Add(this.DecoRating.SubText());
+            }
+
+            if (this.ParkEmployee != null)
+            {
+                int level = this.ParkitectController.GetEmployeeExperienceLevel(this.ParkEmployee.GetEmployeePrefabs());
+                return this.ColoredText("#A1A1A1", $"with Experience level: {level}");
             }
 
             return string.Join(" ", ratings);
@@ -142,7 +159,7 @@ namespace ArchipelagoMod.Src.Challenges
                 thing = this.Type.ToString();
                 if (Constants.Attraction.Types.Contains(this.Type))
                 {
-                    lowestCount = this.ParkitectController.GetAllCountableAttractionsTypeFromPark(this.Type).Count();
+                    lowestCount = this.ParkitectController.GetAllCountableAttractionsTypeFromPark(this.Type, this.DecoRating).Count();
                 }
                 else if (Constants.Stall.Types.Contains(this.Type))
                 {
@@ -151,13 +168,13 @@ namespace ArchipelagoMod.Src.Challenges
 
                 if (lowestCount < this.Count)
                 {
-                    unsolvedList.Add($"Missing {this.Count - lowestCount}x '{ this.GetShopOrAttractionName() }'");
+                    unsolvedList.Add($"Missing {this.Count - lowestCount}x '{this.GetShopOrAttractionName()}'");
                 }
             }
             else if (this.Attraction != null)
             {
                 thing = this.Attraction.ToString();
-                List <Attraction> attractions = this.ParkitectController.GetAllCountableAttractionsFromPark(this.Attraction);
+                List<Attraction> attractions = this.ParkitectController.GetAllCountableAttractionsFromPark(this.Attraction);
                 lowestCount = attractions == null ? 0 : attractions.Count;
 
                 if (this.NauseaRating != null)
@@ -166,37 +183,37 @@ namespace ArchipelagoMod.Src.Challenges
                     if (lowestCount == 0 || nauseaCount < this.Count)
                     {
                         lowestCount = lowestCount > nauseaCount ? nauseaCount : lowestCount;
-                        unsolvedList.Add(this.NauseaRating.Text());
+                        unsolvedList.Add(this.NauseaRating.SubText());
                     }
                 }
-                    
+
                 if (this.ExcitementRating != null)
                 {
                     int excitementCount = attractions.Where(a => this.ExcitementRating.Check(a.getExcitementRating())).Count();
                     if (lowestCount == 0 || excitementCount < this.Count)
                     {
                         lowestCount = lowestCount > excitementCount ? excitementCount : lowestCount;
-                        unsolvedList.Add(this.ExcitementRating.Text());
+                        unsolvedList.Add(this.ExcitementRating.SubText());
                     }
                 }
-                
+
                 if (this.IntensityRating != null)
                 {
                     int intensityCount = attractions.Where(a => this.IntensityRating.Check(a.getIntensityRating())).Count();
                     if (lowestCount == 0 || intensityCount < this.Count)
                     {
                         lowestCount = lowestCount > intensityCount ? intensityCount : lowestCount;
-                        unsolvedList.Add(this.IntensityRating.Text());
+                        unsolvedList.Add(this.IntensityRating.SubText());
                     }
                 }
-                
+
                 if (this.SatisfactionRating != null)
                 {
                     int satisfactionCount = attractions.Where(a => this.SatisfactionRating.Check(a.getSatisfactionRate())).Count();
                     if (lowestCount == 0 || satisfactionCount < this.Count)
                     {
                         lowestCount = lowestCount > satisfactionCount ? satisfactionCount : lowestCount;
-                        unsolvedList.Add(this.SatisfactionRating.Text());
+                        unsolvedList.Add(this.SatisfactionRating.SubText());
                     }
                 }
 
@@ -206,17 +223,27 @@ namespace ArchipelagoMod.Src.Challenges
                     if (lowestCount == 0 || guestCount < this.Count)
                     {
                         lowestCount = lowestCount > guestCount ? guestCount : lowestCount;
-                        unsolvedList.Add(this.GuestsRating.Text());
+                        unsolvedList.Add(this.GuestsRating.SubText());
                     }
                 }
-                
+
                 if (this.RevenueRating != null)
                 {
-                    int revenue = attractions.Where(s => this.RevenueRating.Check(s.getTotalRevenue())).Count();
-                    if (lowestCount == 0 || revenue < this.Count)
+                    int revenueCount = attractions.Where(a => this.RevenueRating.Check(a.getTotalRevenue())).Count();
+                    if (lowestCount == 0 || revenueCount < this.Count)
                     {
-                        lowestCount = lowestCount > revenue ? revenue : lowestCount;
-                        unsolvedList.Add(this.RevenueRating.Text());
+                        lowestCount = lowestCount > revenueCount ? revenueCount : lowestCount;
+                        unsolvedList.Add(this.RevenueRating.SubText());
+                    }
+                }
+
+                if (this.DecoRating != null)
+                {
+                    int decoCount = attractions.Where(a => this.DecoRating.Check(a.getDecoResultScore())).Count();
+                    if (lowestCount == 0 || decoCount < this.Count)
+                    {
+                        lowestCount = lowestCount > decoCount ? decoCount : lowestCount;
+                        unsolvedList.Add(this.DecoRating.SubText());
                     }
                 }
 
@@ -237,7 +264,7 @@ namespace ArchipelagoMod.Src.Challenges
                     if (lowestCount == 0 || guestCount < this.Count)
                     {
                         lowestCount = lowestCount > guestCount ? guestCount : lowestCount;
-                        unsolvedList.Add(this.GuestsRating.Text());
+                        unsolvedList.Add(this.GuestsRating.SubText());
                     }
                 }
 
@@ -247,13 +274,41 @@ namespace ArchipelagoMod.Src.Challenges
                     if (lowestCount == 0 || revenue < this.Count)
                     {
                         lowestCount = lowestCount > revenue ? revenue : lowestCount;
-                        unsolvedList.Add(this.RevenueRating.Text());
+                        unsolvedList.Add(this.RevenueRating.SubText());
                     }
                 }
 
                 if (shops == null || lowestCount < this.Count)
                 {
                     unsolvedList.Insert(0, $"- {this.Count - lowestCount}x {this.ParkitectController.GetSerializedFromPrefabs(this.Shop)}");
+                }
+            }
+            else if (this.ParkGuest != null)
+            {
+                int guests = this.ParkitectController.GetParkGuestCount();
+                if (!this.ParkGuest.Check(guests))
+                {
+                    unsolvedList.Add(this.ParkGuest.SubText(guests));
+                }
+            }
+            else if (this.ParkEmployee != null)
+            {
+                int employeeCount = this.ParkitectController.GetAllCountableEmployeesFromPark(this.ParkEmployee.GetEmployeePrefabs()).Count();
+                if (!this.ParkEmployee.Check(employeeCount))
+                {
+                    unsolvedList.Add(this.ParkEmployee.SubText(employeeCount));
+                }
+            }
+            else if (this.ParkMoney != null)
+            {
+                double playerMoney = this.ParkitectController.GetPlayerMoney();
+                if (!this.ParkMoney.Check(playerMoney))
+                {
+                    unsolvedList.Add(this.ParkMoney.SubText(this.ParkMoney.Amount));
+                } else
+                {
+                    // Can pay, so do so :D
+                    this.ParkitectController.PlayerRemoveMoney(this.ParkMoney.Amount);
                 }
             }
 
@@ -364,7 +419,7 @@ namespace ArchipelagoMod.Src.Challenges
 
             this.GuestsRating = new GuestsRating(amount);
         }
-     
+
         public void AddRevenueRating(int amount)
         {
             if (amount <= 0)
@@ -375,22 +430,47 @@ namespace ArchipelagoMod.Src.Challenges
             this.RevenueRating = new RevenueRating(amount);
         }
 
-        // Typed DTO for export
-        public class ChallengeExport
+        public void AddDecoRating(string value)
         {
-            public string SerializedPanelId { get; set; }
-            public float? RevenueRating { get; set; }
-            public float? NauseaRating { get; set; }
-            public float? ExcitementRating { get; set; }
-            public float? IntensityRating { get; set; }
-            public float? SatisfactionRating { get; set; }
-            public float? GuestsRating { get; set; }
-            public string Attraction { get; set; }
-            public string Shop { get; set; }
-            public string Type { get; set; }
-            public int? Count { get; set; }
-            public int LocationId { get; set; }
-            public string PanelId { get; set; }
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
+            this.DecoRating = new DecoRating(value);
+        }
+    
+        public void AddEmployee(int amount, string prefabName)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            this.ParkEmployee = new ParkEmployee(amount, prefabName);
+        }
+        public void AddParkGuests(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            this.ParkGuest = new ParkGuest(amount);
+        }
+        public void AddParkMoney(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            this.ParkMoney = new ParkMoney(amount);
+        }
+
+        public string ColoredText(string color, string text)
+        {
+            return $"<color={color}> {text}</color>";
         }
     }
 }

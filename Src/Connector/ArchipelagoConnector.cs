@@ -4,14 +4,16 @@ using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoMod.Src.Config;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ArchipelagoMod.Src.Connector
 {
-    class ArchipelagoConnector
+    class ArchipelagoConnector : ScriptableSingleton<ArchipelagoConnector>
     {
         private string Game;
         private ParkitectAPConfig ParkitectAPConfig;
@@ -20,8 +22,11 @@ namespace ArchipelagoMod.Src.Connector
         private readonly SemaphoreSlim _sessionLock = new SemaphoreSlim(1, 1);
         private volatile bool _stopRetries;
 
+        // CancellationTokenSource for cleanly cancelling active connection attempts
+        private CancellationTokenSource _cts;
+
         public int Retry = 10 * 1000;
-        private int maxRetries = 12;
+        public int maxRetries { get; private set; } = 12;
 
         public ArchipelagoSession Session { get; private set; }
 
@@ -38,12 +43,33 @@ namespace ArchipelagoMod.Src.Connector
         public event Action<string> OnReceivedPacket;
         public event Action<string, string, long> OnItemReceived;
         public event Action OnDisconnected;
-        public event Action OnReconnected;
+        public event Action OnReconnect;
+        public event Action OnStopped;
         public event Action<LoginSuccessful> OnConnected;
         public event Action OnConnectionFailed;
         public event Action<string> OnLoginFailed;
+        public event Action<string, string> OnTrapReceived;
 
-        public ArchipelagoConnector(ParkitectAPConfig parkitectAPConfig, string game)
+        protected Task CurrentTask = null;
+
+        enum Links
+        {
+            TrapLink,
+            DeathLink,
+            EnergyLink,
+        }
+        public bool JoinedTrapLink = false;
+        public bool JoinedDeathLink = false;
+        public bool JoinedEnergyLink = false;
+
+        enum TrapLinkKeys
+        {
+            time,
+            source,
+            trap_link,
+        }
+
+        public void Init(ParkitectAPConfig parkitectAPConfig, string game)
         {
             this.ParkitectAPConfig = parkitectAPConfig;
             this.Game = game;
@@ -51,100 +77,38 @@ namespace ArchipelagoMod.Src.Connector
 
         public void ConnectAsync()
         {
+            // Cancel the previous connection task via the token if it exists
+            if (this._cts != null)
+            {
+                this._cts.Cancel();
+                this._cts.Dispose();
+            }
+
+            // Create a new TokenSource for this specific call
+            this._cts = new CancellationTokenSource();
+            CancellationToken token = this._cts.Token;
+
             this._stopRetries = false;
-            _ = this.TryConnectWithRetries();
+            this.CurrentTask = this.TryConnectWithRetries(token);
         }
 
-        private async Task TryConnectWithRetries()
+        public void JoinTrapLink()
         {
-            int attempt = 0;
-
-            Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries]");
-
-            while (!this._stopRetries)
-            {
-                attempt++;
-
-                foreach (string protocol in this._protocols)
-                {
-                    if (this._stopRetries)
-                    {
-                        break;
-                    }
-                    
-                    string fullHost = string.IsNullOrEmpty(this.ParkitectAPConfig.Address)
-                        ? this.ParkitectAPConfig.Address
-                        : protocol + this.ParkitectAPConfig.Address;
-
-                    Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] fullHost {fullHost}");
-
-                    try
-                    {
-                        await this._sessionLock.WaitAsync();
-
-                        if (this._stopRetries)
-                        {
-                            break;
-                        }
-
-                        ArchipelagoSession newSession = ArchipelagoSessionFactory.CreateSession(fullHost, this.ParkitectAPConfig.Port);
-                        this.HookSessionEvents(newSession);
-
-                        await newSession.ConnectAsync();
-                        var result = await newSession.LoginAsync(this.Game, this.ParkitectAPConfig.Playername, ItemsHandlingFlags.AllItems, password: this.ParkitectAPConfig.Password);
-                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] LoginResult - {result.Successful}");
-
-                        if (!result.Successful)
-                        {
-                            this.OnLoginFailed?.Invoke("Login unsuccessful");
-                            continue;
-                        }
-
-                        if (result is LoginSuccessful success)
-                        {
-                            Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] LoginSuccessful");
-                            this.Session = newSession;
-                            this._stopRetries = true;
-                            this.OnConnected?.Invoke(success);
-                            return;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] OnConnectionFailed - (attempt {attempt}): {e.Message}");
-                        Helper.Debug(e.StackTrace);
-                        try
-                        {
-                            this.OnConnectionFailed?.Invoke();
-                        }
-                        catch (Exception eventEx)
-                        {
-                            Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] OnConnectionFailed - {eventEx.Source}");
-                        }
-                    }
-                    finally
-                    {
-                        this._sessionLock.Release();
-                    }
-                }
-
-                if (attempt >= this.maxRetries)
-                {
-                    this._stopRetries = true;
-                }
-
-                if (!this._stopRetries)
-                {
-                    await Task.Delay(this.Retry);
-                    this.OnReconnected?.Invoke();
-                    Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] -> OnReconnected");
-                }
-            }
+            this.JoinedTrapLink = true;
+            List<string> tags = this.GetCurrentTags();
+            tags.Add(Links.TrapLink.ToString());
+            this.Session.ConnectionInfo.UpdateConnectionOptions(tags.ToArray());
         }
 
         public async Task DisconnectAsync()
         {
             this._stopRetries = true;
+
+            // Stop any active connection attempt
+            if (this._cts != null)
+            {
+                this._cts.Cancel();
+            }
 
             await this._sessionLock.WaitAsync();
             try
@@ -162,6 +126,189 @@ namespace ArchipelagoMod.Src.Connector
             }
         }
 
+        public void ForwardSayPacket(string message)
+        {
+            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket]");
+            if (!this.IsConnected)
+            {
+                return;
+            }
+
+            SayPacket packet = new SayPacket();
+            packet.Text = message;
+
+            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket] SendPacket");
+            this.Session.Socket.SendPacket(packet);
+        }
+
+        public bool ForwardTrapLink(string trap)
+        {
+            if (!this.HasTrapLinkEnabled())
+            {
+                return false;
+            }
+
+            try
+            {
+                BouncePacket bouncePacket = new BouncePacket()
+                {
+                    Tags = new List<string>()
+                    {
+                        Links.TrapLink.ToString()
+                    },
+                    Data = new Dictionary<string, JToken>()
+                    {
+                        { TrapLinkKeys.time.ToString(), new JValue(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) },
+                        { TrapLinkKeys.source.ToString(), new JValue(this.ParkitectAPConfig.Playername) },
+                        { TrapLinkKeys.trap_link.ToString(), new JValue(trap) }
+                    }
+                };
+
+                this.Session.Socket.SendPacket(bouncePacket);
+            }
+            catch
+            {
+                Helper.Debug($"[ArchipelagoConnector::ForwardTrapLink] TrapLink {trap} was not send to Server. Check Logs");
+            }
+            
+            return true;
+        }
+
+        public bool HasTrapLinkEnabled()
+        {
+            return this.Session.ConnectionInfo.Tags.Contains(Links.TrapLink.ToString());
+        }
+
+        public void GoalComplete()
+        {
+            StatusUpdatePacket statusUpdate = new StatusUpdatePacket();
+            statusUpdate.Status = ArchipelagoClientState.ClientGoal;
+            this.Session.Socket.SendPacket(statusUpdate);
+        }
+
+        private async Task TryConnectWithRetries(CancellationToken token)
+        {
+            int attempt = 0;
+
+            Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries]");
+
+            while (!this._stopRetries)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                attempt++;
+
+                foreach (string protocol in this._protocols)
+                {
+                    if (this._stopRetries || token.IsCancellationRequested)
+                    {
+                        continue;
+                    }
+
+                    string fullHost = string.IsNullOrEmpty(this.ParkitectAPConfig.Address)
+                        ? string.Empty
+                        : protocol + this.ParkitectAPConfig.Address;
+
+                    Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] fullHost {fullHost}");
+
+                    try
+                    {
+                        // The token cancels waiting for the semaphore if a restart occurs
+                        await this._sessionLock.WaitAsync(token);
+
+                        if (this._stopRetries || token.IsCancellationRequested)
+                        {
+                            continue;
+                        }
+
+                        ArchipelagoSession newSession = ArchipelagoSessionFactory.CreateSession(fullHost, this.ParkitectAPConfig.Port);
+                        this.HookSessionEvents(newSession);
+
+                        await newSession.ConnectAsync();
+                        var result = await newSession.LoginAsync(this.Game, this.ParkitectAPConfig.Playername, ItemsHandlingFlags.AllItems, password: this.ParkitectAPConfig.Password);
+
+                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] LoginResult - {result.Successful}");
+
+                        if (token.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        if (!result.Successful)
+                        {
+                            this.OnLoginFailed?.Invoke("Login unsuccessful");
+                            continue;
+                        }
+
+                        if (result is LoginSuccessful success)
+                        {
+                            Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] LoginSuccessful");
+                            this.Session = newSession;
+                            this._stopRetries = true;
+                            this.OnConnected?.Invoke(success);
+                            return;
+                        }
+                    }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested)
+                    {
+                        // ONLY exit the method if OUR token requested the cancellation!
+                        Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] Current connection attempt cancelled by user or script.");
+                        this.UnhookSessionEvents();
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        // Internal connection errors (like Connection Refused) are caught here now
+                        Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] OnConnectionFailed - (attempt {attempt}): {e.Message}");
+                        Helper.Debug(e.StackTrace);
+                        try
+                        {
+                            this.OnConnectionFailed?.Invoke();
+                        }
+                        catch (Exception eventEx)
+                        {
+                            Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] OnConnectionFailed - {eventEx.Source}");
+                        }
+                    }
+                    finally
+                    {
+                        // Only release the semaphore if we actually entered it
+                        try
+                        {
+                            this._sessionLock.Release();
+                        }
+                        catch (SemaphoreFullException)
+                        {
+                        }
+                    }
+                }
+
+                if (attempt >= this.maxRetries)
+                {
+                    this._stopRetries = true;
+                    this.OnStopped?.Invoke();
+                }
+
+                if (!this._stopRetries)
+                {
+                    try
+                    {
+                        // IMPORTANT: The token immediately aborts the wait time (Retry-Delay)!
+                        this.OnReconnect?.Invoke();
+                        await Task.Delay(this.Retry, token);
+                        Helper.Debug("[ArchipelagoConnector::TryConnectWithRetries] -> OnReconnected");
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+                }
+            }
+        }
+
         private void HookSessionEvents(ArchipelagoSession session)
         {
             session.Socket.SocketClosed += this.OnSocketClosed;
@@ -169,6 +316,7 @@ namespace ArchipelagoMod.Src.Connector
             session.Socket.PacketReceived += this.OnPacketReceived;
             session.Items.ItemReceived += this.OnReceivingItem;
         }
+
         private void UnhookSessionEvents()
         {
             this.Session.Socket.SocketClosed -= this.OnSocketClosed;
@@ -185,7 +333,7 @@ namespace ArchipelagoMod.Src.Connector
             if (!this._stopRetries)
             {
                 Helper.Debug("[ArchipelagoConnector::OnSocketClosed]");
-                //_ = TryConnectWithRetries(); // optional auto-retry
+                //_ = this.TryConnectWithRetries(); // optional auto-retry
             }
 
             _ = this._sessionLock.WaitAsync();
@@ -213,13 +361,12 @@ namespace ArchipelagoMod.Src.Connector
                 this.UnhookSessionEvents();
                 _ = this.DisconnectAsync();
                 this.OnDisconnected?.Invoke();
-                _ = this.TryConnectWithRetries();
+                this.ConnectAsync();
             }
         }
 
         private void OnReceivingItem(IReceivedItemsHelper helper)
         {
-            Helper.Debug("[ArchipelagoConnector::OnReceivingItem]");
             int index = helper.Index - 1;
             ItemInfo item = helper.DequeueItem();
             string itemName = helper.GetItemName(item.ItemId, this.Game);
@@ -236,35 +383,65 @@ namespace ArchipelagoMod.Src.Connector
             if (packet is ChatPrintJsonPacket chatPrint)
             {
                 Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is ChatPrintJsonPacket");
-                OnReceivedPacket?.Invoke(string.Join("", chatPrint.Data.Select(p => p.Text)));
+                this.OnReceivedPacket?.Invoke(string.Join("", chatPrint.Data.Select(p => p.Text)));
             }
             else if (packet is PrintJsonPacket print)
             {
                 Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is PrintJsonPacket");
-                OnReceivedPacket?.Invoke(string.Join("", print.Data.Select(p => p.Text)));
+                this.OnReceivedPacket?.Invoke(string.Join("", print.Data.Select(p => p.Text)));
             }
-        }
-
-        public void ForwardSayPacket(string message)
-        {
-            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket]");
-            if (!this.IsConnected)
+            else if (packet is BouncedPacket bouncedPacket)
             {
-                return;
+                if (this.IsTrapLink(bouncedPacket))
+                {
+                    Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is TrapLink");
+                    string player = this.GetSource(bouncedPacket);
+                    this.OnTrapReceived?.Invoke(this.GetTrapLinkValue(bouncedPacket), player);
+                }
             }
-
-            SayPacket packet = new SayPacket();
-            packet.Text = message;
-
-            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket] SendPacket");
-            this.Session.Socket.SendPacket(packet);
         }
 
-        public void GoalComplete()
+        private bool IsTrapLink(BouncedPacket bouncedPacket)
         {
-            StatusUpdatePacket statusUpdate = new StatusUpdatePacket();
-            statusUpdate.Status = ArchipelagoClientState.ClientGoal;
-            this.Session.Socket.SendPacket(statusUpdate);
+            if (this.IsOwnSource(bouncedPacket))
+            {
+                return false;
+            }
+
+            List<string> keys = bouncedPacket.Data.Keys.ToList();
+            return keys.Contains(TrapLinkKeys.trap_link.ToString(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private string GetTrapLinkKey(BouncedPacket bouncedPacket)
+        {
+            List<string> keys = bouncedPacket.Data.Keys.ToList();
+            return keys.FirstOrDefault(key => string.Equals(key, TrapLinkKeys.trap_link.ToString(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string GetTrapLinkValue(BouncedPacket bouncedPacket)
+        {
+            return bouncedPacket.Data[this.GetTrapLinkKey(bouncedPacket)].ToString();
+        }
+
+        private string GetSource(BouncedPacket bouncedPacket)
+        {
+            KeyValuePair<string, JToken> entry = bouncedPacket.Data.FirstOrDefault(x =>
+                string.Equals(
+                    x.Key,
+                    TrapLinkKeys.source.ToString(),
+                    StringComparison.OrdinalIgnoreCase));
+
+            return entry.Value?.ToString();
+        }
+
+        private bool IsOwnSource(BouncedPacket bouncedPacket)
+        {
+            return this.GetSource(bouncedPacket) == this.ParkitectAPConfig.Playername;
+        }
+
+        private List<string> GetCurrentTags()
+        {
+            return this.Session.ConnectionInfo.Tags.ToList();
         }
     }
 }
