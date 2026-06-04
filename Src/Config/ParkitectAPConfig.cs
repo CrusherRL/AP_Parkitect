@@ -3,7 +3,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace ArchipelagoMod.Src.Config
@@ -25,12 +24,13 @@ namespace ArchipelagoMod.Src.Config
             }
 
             string path = System.IO.Path.Combine(folder, Constants.ParkitectAPFilename);
-            ParkitectAPConfig self = new ParkitectAPConfig();
-
-            self.Address = "archipelago.gg";
-            self.Port = 0;
-            self.Playername = "";
-            self.Password = "";
+            ParkitectAPConfig self = new ParkitectAPConfig
+            {
+                Address = "archipelago.gg",
+                Port = 0,
+                Playername = "",
+                Password = ""
+            };
 
             string json = JsonConvert.SerializeObject(self, Formatting.Indented);
             File.WriteAllText(path, json);

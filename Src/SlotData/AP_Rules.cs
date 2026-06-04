@@ -20,6 +20,14 @@ namespace ArchipelagoMod.Src.SlotData
         // extreme = 3
         public int difficulty { get; set; } = 0;
 
+        public bool utility_buildings { get; set; } = false;
+
+        public bool decorations { get; set; } = false;
+
+        public bool statistics { get; set; } = false;
+
+        public bool trap_link { get; set; } = false;
+
         public static AP_Rules Init(object rulesObject)
         {
             // rulesObject is an array with one element

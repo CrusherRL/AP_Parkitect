@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace ArchipelagoMod.Src
 
         public static void Debug(string content, string filename = "debug.log.txt", bool append = true)
         {
-            if (!Constants.Debug)
+            if (!Helper.LogsEnabled())
             {
                 return;
             }
@@ -47,10 +48,10 @@ namespace ArchipelagoMod.Src
 
         public static void LogSlotData(string content, string path)
         {
-            //if (!Constants.Debug)
-            //{
-            //    return;
-            //}
+            if (!Helper.LogsEnabled())
+            {
+                return;
+            }
 
             lock (fileLock2)
             {
@@ -98,6 +99,23 @@ namespace ArchipelagoMod.Src
             }
 
             return JsonConvert.SerializeObject(data, Formatting.Indented);
+        }
+
+        public static bool LogsEnabled()
+        {
+            return Constants.Debug && Constants.ModPath != null && Constants.ModPath.Contains("Archipelago");
+        }
+
+        public static List<List<T>> Chunk<T>(List<T> source, int size = 50)
+        {
+            var result = new List<List<T>>();
+
+            for (int i = 0; i < source.Count; i += size)
+            {
+                result.Add(source.GetRange(i, Math.Min(size, source.Count - i)));
+            }
+
+            return result;
         }
     }
 }

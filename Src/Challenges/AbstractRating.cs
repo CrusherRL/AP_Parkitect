@@ -14,7 +14,7 @@
             this.Currency = currency;
         }
 
-        public string Text ()
+        public string SubText()
         {
             return $"<color={ this.Color }> >= {this.Rating}{this.Currency} {this.Label}</color>";
         }

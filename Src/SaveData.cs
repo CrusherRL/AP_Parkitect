@@ -12,6 +12,12 @@ namespace ArchipelagoMod.Src
     {
         public bool finished = false;
 
+        public bool enabled_decorations = false;
+
+        public bool enabled_utility_buildings = false;
+
+        public bool enabled_statistics = false;
+
         public int available_skips = 5;
 
         public int max_speedup = -1; // -1 is no progressive speedup. 3 or more meant to be max speedup with progressive speedup
@@ -29,9 +35,6 @@ namespace ArchipelagoMod.Src
 
     class SaveData : MonoBehaviour
     {
-        public GameObject gameObject;
-        public MonoBehaviour component;
-
         private SaveDataExport SaveDataExport = null;
         private ParkitectController ParkitectController = null;
 
@@ -51,9 +54,6 @@ namespace ArchipelagoMod.Src
 
             Helper.Debug($"[SaveData::Init]");
 
-            this.ParkitectController.PlayerRemoveAllRides();
-            this.ParkitectController.PlayerRemoveAllStalls();
-
             this.CreateSavegameFolder(seed);
             this.SaveDataExport = SaveData.Load(seed);
 
@@ -65,31 +65,69 @@ namespace ArchipelagoMod.Src
                 return;
             }
 
-            foreach (string thing in this.SaveDataExport.unlocked_items)
-            {
-                if (Constants.Mods.All.Contains(thing))
-                {
-                    if (Constants.Mods.Stalls.Contains(thing))
-                    {
-                        this.ParkitectController.PlayerAddStall(thing);
-                    }
-                    else
-                    {
-                        this.ParkitectController.PlayerAddAttraction(thing);
-                    }
-                }
+            this.Loaded = true;
+        }
 
-                else if (Constants.Attraction.All.Contains(thing))
-                {
-                    this.ParkitectController.PlayerAddAttraction(thing);
-                }
-                else if (Constants.Stall.All.Contains(thing))
-                {
-                    this.ParkitectController.PlayerAddStall(thing);
-                }
+        public void LoadItems()
+        {
+            Helper.Debug($"[SaveData::LoadItems] Load");
+            this.ParkitectController.PlayerRemoveAllRides();
+            this.ParkitectController.PlayerRemoveAllStalls();
+
+            if (this.GetEnabledDecorations())
+            {
+                this.ParkitectController.PlayerRemoveAllDecorations();
             }
 
-            this.Loaded = true;
+            if (this.GetEnabledUtilityBuildings())
+            {
+                this.ParkitectController.PlayerRemoveAllUtilityBuildings();
+            }
+
+            if (this.GetEnabledStatistics())
+            {
+                this.ParkitectController.PlayerRemoveStatistics();
+            }
+
+            List<List<string>> chunks = Helper.Chunk(this.SaveDataExport.unlocked_items);
+
+            foreach (List<string> chunk in chunks)
+            {
+                foreach (string item in chunk)
+                {
+                    if (Constants.Mods.All.Contains(item))
+                    {
+                        if (Constants.Mods.Stalls.Contains(item))
+                        {
+                            this.ParkitectController.PlayerAddStall(item);
+                        }
+                        else
+                        {
+                            this.ParkitectController.PlayerAddAttraction(item);
+                        }
+                    }
+                    else if (Constants.Attraction.All.Contains(item))
+                    {
+                        this.ParkitectController.PlayerAddAttraction(item);
+                    }
+                    else if (Constants.Stall.All.Contains(item))
+                    {
+                        this.ParkitectController.PlayerAddStall(item);
+                    }
+                    else if (Constants.UtilityBuilding.All.Contains(item))
+                    {
+                        this.ParkitectController.PlayerAddUtilityBuilding(item);
+                    }
+                    else if (Constants.Decorations.All.Contains(item))
+                    {
+                        this.ParkitectController.PlayerAddDecorations(item);
+                    }
+                    else if (Constants.Research.Rules.Statistics.Contains(item) && !this.ParkitectController.HasUnlockedResearchRule(item))
+                    {
+                        this.ParkitectController.PlayerAddStatistics(item);
+                    }
+                }
+            }
         }
 
         public SaveDataExport GetExport()
@@ -161,10 +199,63 @@ namespace ArchipelagoMod.Src
         public void AddUnlockedItem(string name)
         {
             this._help();
+            if (this.HasUnlockedItem(name))
+            {
+                return;
+            }
+
             this.SaveDataExport.unlocked_items.Add(name);
             this.Save();
         }
-        
+
+        public bool GetEnabledUtilityBuildings()
+        {
+            return this.SaveDataExport.enabled_utility_buildings;
+        }
+
+        public void SetEnabledUtilityBuildings(bool enabled)
+        {
+            this._help();
+            this.SaveDataExport.enabled_utility_buildings = enabled;
+            this.Save();
+        }
+
+        public bool GetEnabledDecorations()
+        {
+            return this.SaveDataExport.enabled_decorations;
+        }
+
+        public void SetEnabledDecorations(bool enabled)
+        {
+            this._help();
+            this.SaveDataExport.enabled_decorations = enabled;
+            this.Save();
+        }
+
+        public bool GetEnabledStatistics()
+        {
+            return this.SaveDataExport.enabled_statistics;
+        }
+
+        public void SetEnabledStatistics(bool enabled)
+        {
+            this._help();
+            this.SaveDataExport.enabled_statistics = enabled;
+            this.Save();
+        }
+
+        public List<string> GetDecorationThemes()
+        {
+            List<string> result = new List<string>();
+            foreach (string tc in Constants.Decorations.ThemeTags)
+            {
+                if (this.HasUnlockedItem(tc)) {
+                    result.Add(tc);
+                }
+            }
+            return result;
+        }
+
         public bool HasUnlockedAPLocation(long id)
         {
             this._help();
@@ -173,12 +264,24 @@ namespace ArchipelagoMod.Src
 
         public void SetUnlockedAPLocation(long id)
         {
+            this._help();
+            if (this.HasUnlockedAPLocation(id))
+            {
+                return;
+            }
+
             this.SaveDataExport.unlocked_locations.Add(id);
             this.Save();
         }
 
         public void AddPendingLocation(long id)
         {
+            this._help();
+            if (this.HasUnlockedAPLocation(id))
+            {
+                return;
+            }
+
             this.SaveDataExport.pending_locations.Add(id);
             this.Save();
         }
@@ -246,7 +349,7 @@ namespace ArchipelagoMod.Src
 
             this.SaveDataExport.max_speedup = 3;
         }
-
+   
         private void _help()
         {
             if (this.SaveDataExport == null)

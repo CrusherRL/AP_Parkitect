@@ -38,6 +38,7 @@ namespace ArchipelagoMod.Src.Window
 
         public void OnDestroy ()
         {
+            this.Close();
             this.SaveData.Backup();
         }
 
@@ -167,11 +168,7 @@ namespace ArchipelagoMod.Src.Window
                 this.SaveData.SetChallenges(this.CurrentChallenges);
                 this.RemoveSkipButton(challenge);
 
-                bool AllChallengesDone = this.CurrentChallenges.All(c =>
-                {
-                    Helper.Debug(c.LocationId.ToString());
-                    return c.LocationId < 0;
-                });
+                bool AllChallengesDone = this.CurrentChallenges.All(c => c.LocationId < 0);
                 Helper.Debug($"[ArchipelagoWindow::NextChallenge] AllChallengesDone -> {AllChallengesDone}");
 
                 if (AllChallengesDone)
@@ -180,7 +177,7 @@ namespace ArchipelagoMod.Src.Window
                 }
                 return;
             }
-            Helper.Debug(nextChallenge.PanelId);
+            Helper.Debug($"[ArchipelagoWindow::NextChallenge] next PanelId -> {nextChallenge.PanelId}");
 
             this.SetChallenge(nextChallenge);
         }
@@ -302,7 +299,7 @@ namespace ArchipelagoMod.Src.Window
             Helper.Debug("[ArchipelagoWindow::OnChallengeClicked] Check: " + check.ToString());
             if (check)
             {
-                this.nextCheckTime = Time.time + .5f;
+                this.nextCheckTime = Time.time + Constants.NextCheckTimeDelay + .05f;
                 this.FinishChallenge(challenge);
                 return;
             }

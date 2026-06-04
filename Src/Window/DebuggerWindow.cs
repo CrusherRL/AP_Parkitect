@@ -11,7 +11,7 @@ namespace ArchipelagoMod.Src.Window
         protected int id = 1;
         protected ParkitectController Controller = null;
         protected string windowName = "Archipelago Debugger";
-        public Rect WindowRect = new Rect(20, 20, 200, 200);
+        public Rect WindowRect = new Rect(40, 40, 200, 200);
         public Rect TitleBarRect = new Rect(0, 0, 200000000, 20);
         public bool isOpen = false;
         private KeyCode KeyCode = KeyCode.F12;
@@ -20,7 +20,7 @@ namespace ArchipelagoMod.Src.Window
         {
             Helper.Debug($"[DebuggerWindow::Awake]");
             this.Controller = GetComponent<ParkitectController>();
-            WindowRect = new Rect(20, 20, 700, 200);
+            this.WindowRect = new Rect(40, 40, 700, 200);
             Helper.Debug($"[DebuggerWindow::Awake] Booted");
         }
 
@@ -42,7 +42,8 @@ namespace ArchipelagoMod.Src.Window
 
         void OnGUI()
         {
-            if (this.isOpen) {
+            if (this.isOpen)
+            {
                 this.DrawWindow();
             }
         }
@@ -56,7 +57,7 @@ namespace ArchipelagoMod.Src.Window
         {
             this.isOpen = !this.isOpen;
         }
-      
+
         public void CloseWindow()
         {
             this.isOpen = false;
@@ -71,31 +72,30 @@ namespace ArchipelagoMod.Src.Window
                 CloseWindow();
             }
 
-            GUI.BeginGroup(new Rect(0, /*27*/0, WindowRect.width, WindowRect.height/* - 33*/));
-            DrawContent();
+            this.DrawContent();
 
-            GUI.EndGroup();
             GUI.DragWindow(TitleBarRect);
         }
-     
-        public void DrawContent ()
+
+        public void DrawContent(bool debug = false)
         {
-            this.DrawPlayerSpeedUpsOptions();
-            this.DrawPlayerMoneyOptions();
-            this.DrawGuestsOptions();
-            this.DrawEmployeeOptions();
-            this.DrawWeatherOptions();
-            this.DrawAttractionOptions();
-            this.DrawStallOptions();
-            this.DrawTraps();
-            this.DrawChallengeOptions();
+            this.DrawPlayerSpeedUpsOptions(debug);
+            this.DrawPlayerMoneyOptions(debug);
+            this.DrawGuestsOptions(debug);
+            this.DrawEmployeeOptions(debug);
+            this.DrawWeatherOptions(debug);
+            this.DrawAttractionOptions(debug);
+            this.DrawStallOptions(debug);
+            this.DrawUtilityBuildingOptions(debug);
+            this.DrawTraps(debug);
+            this.DrawChallengeOptions(debug);
             this.DrawTestingOptions();
         }
 
         // -----------------------------
         // Player options
         // -----------------------------
-        public void DrawPlayerSpeedUpsOptions ()
+        public void DrawPlayerSpeedUpsOptions(bool debug = false)
         {
             this.SetLabel("Set Speed:");
             GUILayout.BeginHorizontal();
@@ -111,7 +111,7 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
         }
 
-        public void DrawPlayerMoneyOptions ()
+        public void DrawPlayerMoneyOptions(bool debug = false)
         {
             this.SetLabel("Add Money:");
             GUILayout.BeginHorizontal();
@@ -131,7 +131,7 @@ namespace ArchipelagoMod.Src.Window
         // Guests options
         // -----------------------------
 
-        public void DrawGuestsOptions ()
+        public void DrawGuestsOptions(bool debug = false)
         {
             this.SetLabel("Guests:");
             GUILayout.BeginHorizontal();
@@ -156,28 +156,33 @@ namespace ArchipelagoMod.Src.Window
             }
 
             GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
 
-            foreach (int money in Constants.Guest.MoneyOptions)
+            if (debug)
             {
-                if (GUILayout.Button("+ $" + money))
+                GUILayout.BeginHorizontal();
+
+                foreach (int money in Constants.Guest.MoneyOptions)
                 {
-                    Controller.PlayerChangeGuestsMoney(money, 25f);
+                    if (GUILayout.Button("+ $" + money))
+                    {
+                        Controller.PlayerChangeGuestsMoney(money, 25f);
+                    }
                 }
+
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+
+                foreach (int money in Constants.Guest.MoneyOptions)
+                {
+                    if (GUILayout.Button("- $" + money))
+                    {
+                        Controller.PlayerChangeGuestsMoney(money, 25f, "-");
+                    }
+                }
+
+                GUILayout.EndHorizontal();
             }
 
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-
-            foreach (int money in Constants.Guest.MoneyOptions)
-            {
-                if (GUILayout.Button("- $" + money))
-                {
-                    Controller.PlayerChangeGuestsMoney(money, 25f, "-");
-                }
-            }
-
-            GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
 
             if (GUILayout.Button("Hungry"))
@@ -222,7 +227,7 @@ namespace ArchipelagoMod.Src.Window
         // Employee options
         // -----------------------------
 
-        public void DrawEmployeeOptions ()
+        public void DrawEmployeeOptions(bool debug = false)
         {
             this.SetLabel("Staff:");
             GUILayout.BeginHorizontal();
@@ -255,7 +260,7 @@ namespace ArchipelagoMod.Src.Window
         // Minsc
         // -----------------------------
 
-        public void DrawWeatherOptions ()
+        public void DrawWeatherOptions(bool debug = false)
         {
             this.SetLabel("Set Weather:");
             GUILayout.BeginHorizontal();
@@ -283,7 +288,7 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
         }
 
-        public void DrawAttractionOptions ()
+        public void DrawAttractionOptions(bool debug = false)
         {
             this.SetLabel("Attractions:");
             GUILayout.BeginHorizontal();
@@ -293,17 +298,7 @@ namespace ArchipelagoMod.Src.Window
                 List<Attraction> attractions = Randomizer.GetRandomAttractionFromPark(20f);
 
                 Controller.PlayerBreakAttractions(attractions);
-            }
-
-            if (GUILayout.Button("Remove all Rides"))
-            {
-                Controller.PlayerRemoveAllRides();
-            }
-
-            if (GUILayout.Button("Add all Rides"))
-            {
-                Controller.PlayerAddAllRides();
-            }
+            }            
 
             if (GUILayout.Button("Add Free-Ride Voucher"))
             {
@@ -316,10 +311,20 @@ namespace ArchipelagoMod.Src.Window
                 }
             }
 
+            if (GUILayout.Button("Remove all"))
+            {
+                Controller.PlayerRemoveAllRides();
+            }
+
+            if (GUILayout.Button("Add all"))
+            {
+                Controller.PlayerAddAllRides();
+            }
+
             GUILayout.EndHorizontal();
         }
 
-        public void DrawStallOptions ()
+        public void DrawStallOptions(bool debug = false)
         {
             this.SetLabel("Shops:");
             GUILayout.BeginHorizontal();
@@ -338,16 +343,6 @@ namespace ArchipelagoMod.Src.Window
                 Controller.PlayerSetCleanShopJob(productShops);
             }
 
-            if (GUILayout.Button("Remove all Shops"))
-            {
-                Controller.PlayerRemoveAllStalls();
-            }
-
-            if (GUILayout.Button("Add all Shops"))
-            {
-                Controller.PlayerAddAllStalls();
-            }
-
             if (GUILayout.Button("Add Product Voucher"))
             {
                 ProductShop shop = Randomizer.GetRandomProductShopsFromPark(0f, 1).First();
@@ -359,11 +354,44 @@ namespace ArchipelagoMod.Src.Window
                 }
             }
 
+            if (GUILayout.Button("Remove all"))
+            {
+                Controller.PlayerRemoveAllStalls();
+            }
+
+            if (GUILayout.Button("Add all"))
+            {
+                Controller.PlayerAddAllStalls();
+            }
+
+            GUILayout.EndHorizontal();
+        }
+    
+        public void DrawUtilityBuildingOptions(bool debug = false)
+        {
+            this.SetLabel("Utility Building:");
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Remove all"))
+            {
+                Controller.PlayerRemoveAllUtilityBuildings();
+            }
+
+            if (GUILayout.Button("Add all"))
+            {
+                Controller.PlayerAddAllUtilityBuildings();
+            }
+
             GUILayout.EndHorizontal();
         }
 
-        public void DrawTraps()
+        public void DrawTraps(bool debug = false)
         {
+            if (!debug)
+            {
+                return;
+            }
+
             this.SetLabel("Attraction and Shop Traps:");
             GUILayout.BeginHorizontal();
 
@@ -425,9 +453,30 @@ namespace ArchipelagoMod.Src.Window
             }
 
             GUILayout.EndHorizontal();
+            this.SetLabel("Research Traps:");
+            GUILayout.BeginHorizontal();
+            int j = 0;
+
+            foreach (string trap in Constants.Trap.Research)
+            {
+                if (j % 5 == 0)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+
+                if (GUILayout.Button(trap))
+                {
+                    this.FakeRedeemTrap(trap);
+                }
+
+                j += 1;
+            }
+
+            GUILayout.EndHorizontal();
         }
 
-        public void DrawChallengeOptions()
+        public void DrawChallengeOptions(bool debug = false)
         {
             this.SetLabel("Challenges:");
             GUILayout.BeginHorizontal();
@@ -452,54 +501,192 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.EndHorizontal();
         }
 
-        public void DrawTestingOptions()
+        public void DrawTestingOptions(bool debug = false)
         {
+            if (!debug)
+            {
+                return;
+            }
+
             this.SetLabel("Testing:");
             GUILayout.BeginHorizontal();
             ParkitectController parkitectController = GetComponent<ParkitectController>();
 
-            if (GUILayout.Button("Log All Attractions"))
-            {
-                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Attractions");
-                List<Attraction> attractions = parkitectController.GetAllAttractionsFromAssetManager();
-                foreach (Attraction attraction in attractions)
-                {
-                    try
-                    {
-                        Helper.Debug(attraction.getName());
-                    }
-                    catch
-                    {
-                        Helper.Debug($"--- Failed ---");
-                    }
-                }
-            }
+            //if (GUILayout.Button("Log All Decorations"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Log All Decorations");
+            //    List<Deco> things = ScriptableSingleton<AssetManager>.Instance.getDecoObjects().ToList();
+            //    foreach (Deco thing in things)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug($"{thing.themeTag} - {thing.getResearchReferenceName()} = {thing.getName()}");
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
 
-            if (GUILayout.Button("Log All Shops"))
-            {
-                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Shops");
-                List<Shop> shops = parkitectController.GetAllShopsFromAssetManager();
-                foreach (Shop shop in shops)
-                {
-                    try
-                    {
-                        Helper.Debug(shop.getName());
-                    }
-                    catch
-                    {
-                        Helper.Debug($"--- Failed ---");
-                    }
-                }
-            }
+            //if (GUILayout.Button("Log All research rules"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Log All research rules");
+            //    List<ResearchRule> things = GameController.Instance.park.scenario.research.getRules().ToList();
+            //    foreach (ResearchRule thing in things)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug($"{thing.getReferenceName()} = {thing.name}");
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
 
+            //int l = 0;
+            //foreach (string trap in Constants.TrapLinks)
+            //{
+            //    if (l % 5 == 0)
+            //    {
+            //        GUILayout.EndHorizontal();
+            //        GUILayout.BeginHorizontal();
+            //    }
+
+            //    if (GUILayout.Button(trap))
+            //    {
+            //        Helper.Debug($"[DebuggerWindow::DrawTestingOptions] {trap}");
+            //        this.FakeRedeemTrap(trap);
+            //    }
+
+            //    l += 1;
+            //}
+
+            //if (GUILayout.Button("Log All Park Employees"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Log All Park Employees");
+            //    List<Employee> employees = parkitectController.GetParkEmployees();
+            //    foreach (Employee employee in employees)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug($"name: {employee.getNameForUI()}");
+            //            Helper.Debug($"experienceLevel: {employee.experienceLevel}");
+            //            Helper.Debug($"getPrefabType: {employee.getPrefabType().ToString()}");
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
+
+            //if (GUILayout.Button("Log All Research Rules"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Log All Research Rules");
+            //    List<ResearchRule> attractions = GameController.Instance.park.scenario.research.getRules().ToList();
+            //    foreach (ResearchRule attraction in attractions)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug(attraction.name);
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
+
+            //if (GUILayout.Button("Log All Attractions"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Attractions");
+            //    List<Attraction> attractions = parkitectController.GetAllAttractionsFromAssetManager();
+            //    foreach (Attraction attraction in attractions)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug(attraction.getName());
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
+
+            //if (GUILayout.Button("Log All Shops"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Shops");
+            //    List<Shop> shops = parkitectController.GetAllShopsFromAssetManager();
+            //    foreach (Shop shop in shops)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug(shop.getName());
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
+
+            //if (GUILayout.Button("Log All UtilityBuildings"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] UtilityBuilding");
+            //    List<UtilityBuilding> utilityBuildings = parkitectController.GetAllUtilityBuildingsFromAssetManager();
+            //    foreach (UtilityBuilding utilityBuilding in utilityBuildings)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug(utilityBuilding.getPrefabType().ToString());
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
+
+            //GUILayout.EndHorizontal();
+            //this.SetLabel("Theme Tags:");
+            //GUILayout.BeginHorizontal();
+
+            //int l = 0;
+            //foreach (string themeTag in Constants.Decorations.ThemeTags)
+            //{
+            //    if (l % 5 == 0)
+            //    {
+            //        GUILayout.EndHorizontal();
+            //        GUILayout.BeginHorizontal();
+            //    }
+
+            //    if (GUILayout.Button(themeTag))
+            //    {
+            //        parkitectController.PlayerRemoveAllDecorations();
+            //        ThemeContainer themeContainer = parkitectController.FindThemeContainer(themeTag);
+            //        parkitectController.PlayerAddDecorations(themeContainer);
+            //    }
+
+            //    l += 1;
+            //}
             GUILayout.EndHorizontal();
         }
 
         private void FakeRedeemTrap(string trap)
         {
             Helper.Debug($"executing {trap}");
-            AP_Item AP_Item = AP_Item.Init(trap, Constants.Playername, -1);
-            this.Controller.PlayerRedeemTrap(AP_Item);
+            //ArchipelagoController controller = GetComponent<ArchipelagoController>();
+            //controller.OnTrapReceived(trap, "me!");
+            Controller.PlayerRedeemTrap(this.CreateFakeAPItem(trap));
+        }
+
+        private AP_Item CreateFakeAPItem(string thing)
+        {
+            return AP_Item.Init(thing, Constants.Playername, -1);
         }
 
         protected void SetLabel(string label, bool newLineAfter = true)

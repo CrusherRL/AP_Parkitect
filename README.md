@@ -63,7 +63,7 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 
 ### 🎢 Player
 - Adjust **Game Speed** (adds new options: `4x`, `5x`, `6x`, `7x`, `8x`, `9x`)
-- Add **Money**
+- Add/Remove **Money**
 
 ### 🧍 Guests
 - Spawn guests
@@ -89,6 +89,9 @@ If something doesn’t work as expected, press F12 to open the Debugger Window f
 - Re-deliver ingredients
 - Set **cleaning tasks**
 - Apply **vouchers**
+
+### 🗺️ Research
+- Put **Attraction**, **Shop** and **Decoration** into the research pool.
 
 ### 🗺️ Scenario
 - Add any **goal** with any **reward**
@@ -163,6 +166,18 @@ To complete:
 - Must be **open**
 - Must have had **at least one customer**
 
+### 🍟 Pay Money Challenge/Check (Optional)
+To complete:
+- Must **have** X amount of Money
+
+### 🍟 Park Guests Challenge/Check (Optional)
+To complete:
+- Must **have** X Guests
+
+### 🍟 Employees Challenge/Check (Optional)
+To complete:
+- Must **have** X Employees
+
 ---
 
 ## 🧪 Testing & Compatibility
@@ -171,7 +186,7 @@ To complete:
 |-----------|---------|-------|
 | **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** and **Linux** ||
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
-| **Game Version** | ✅ Steam release (1.12e) | Earlier versions before Steam release (1.12b2) won’t work |
+| **Game Version** | ✅ Steam release (1.12e3) | Earlier versions before Steam release (1.12b2) won’t work |
 | **Other Mods** | ⚙️ Attraction/Shop Mods are Supported ([Steam Collection](https://steamcommunity.com/sharedfiles/filedetails/?id=3647109901)) ||
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |
@@ -203,6 +218,7 @@ If you encounter issues or have suggestions:
 - Don’t **rename** or move internal mod files.
 - Don’t **edit save data manually** — it may break synchronization.
 - Don’t **overwrite slotdata files** from other worlds.
+- Don’t **rename** Your Park.
 
 ---
 
@@ -211,9 +227,9 @@ If you encounter issues or have suggestions:
 > 💡 You can **request maps** if you’d like to contribute!
 
 To be accepted, a scenario **must**:
-- Include **all attractions and shops** except **Mod Items**
-  - Decorations are optional, they will not be randomized
-- Have **1 mandatory goal** (usually 95% Happiness)
+- Include **all attractions, shops, decorations and statistics**
+  - except **Mod Items**
+- Have **1 mandatory goal** (something like "Have 95% Happiness")
 - Allow **guests to enter** the park without path issues
 - Be **fun and engaging** (no empty maps 😅)
 - Be **possible** but not overly difficult
