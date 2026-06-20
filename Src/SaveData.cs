@@ -18,6 +18,9 @@ namespace ArchipelagoMod.Src
 
         public bool enabled_statistics = false;
 
+        public bool enabled_trap_link = false;
+        public bool server_has_set_trap_link = false;
+
         public int available_skips = 5;
 
         public int max_speedup = -1; // -1 is no progressive speedup. 3 or more meant to be max speedup with progressive speedup
@@ -70,7 +73,7 @@ namespace ArchipelagoMod.Src
 
         public void LoadItems()
         {
-            Helper.Debug($"[SaveData::LoadItems] Load");
+            Helper.Debug($"[SaveData::LoadItems] LoadItems");
             this.ParkitectController.PlayerRemoveAllRides();
             this.ParkitectController.PlayerRemoveAllStalls();
 
@@ -241,6 +244,27 @@ namespace ArchipelagoMod.Src
         {
             this._help();
             this.SaveDataExport.enabled_statistics = enabled;
+            this.Save();
+        }
+
+        public bool GetServerHasSetTrapLink()
+        {
+            return this.SaveDataExport.server_has_set_trap_link;
+        }
+        public void SetServerHasSetTrapLink()
+        {
+            this.SaveDataExport.server_has_set_trap_link = true;
+        }
+
+        public bool GetEnabledTrapLink()
+        {
+            return this.SaveDataExport.enabled_trap_link;
+        }
+
+        public void SetEnabledTrapLink(bool enabled)
+        {
+            this._help();
+            this.SaveDataExport.enabled_trap_link = enabled;
             this.Save();
         }
 

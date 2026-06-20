@@ -421,6 +421,11 @@ namespace ArchipelagoMod.Src.Controller
             this.HandleChallenges();
             this.SaveData.LoadItems();
 
+            if (this.SaveData.GetEnabledTrapLink())
+            {
+                this.ArchipelagoConnector.JoinTrapLink();
+            }
+
             List<long> locations = this.SaveData.GetPendingLocations();
             if (locations.Count > 0)
             {
@@ -598,9 +603,15 @@ namespace ArchipelagoMod.Src.Controller
                 this.SaveData.SetEnabledStatistics(true);
             }
 
-            if (this.ParkitectController.AP_Rules.trap_link)
+            // We only set TrapLink thing once
+            if (!this.SaveData.GetServerHasSetTrapLink())
             {
-                this.ArchipelagoConnector.JoinTrapLink();
+                this.SaveData.SetServerHasSetTrapLink();
+
+                if (this.ParkitectController.AP_Rules.trap_link)
+                {
+                    this.SaveData.SetEnabledTrapLink(true);
+                }
             }
         }
 
@@ -727,7 +738,41 @@ namespace ArchipelagoMod.Src.Controller
 
         public void Speak(string message)
         {
-            this.ArchipelagoConnector.ForwardSayPacket(message);
+            string msg = message.Replace(" ", "").ToLower();
+
+            if (!Constants.Commands.All.Contains(msg))
+            {
+                this.ArchipelagoConnector.ForwardSayPacket(message);
+            }
+
+            // We have a special command
+            if (Constants.Commands.TrapLink.All.Contains(msg))
+            {
+                if (msg == Constants.Commands.TrapLink.Toggle)
+                {
+                    bool value = this.ArchipelagoConnector.ToggleTrapLink();
+                    this.SaveData.SetEnabledTrapLink(value);
+                }
+
+                if (msg == Constants.Commands.TrapLink.Join)
+                {
+                    this.ArchipelagoConnector.JoinTrapLink();
+                    this.SaveData.SetEnabledTrapLink(true);
+                }
+
+                if (msg == Constants.Commands.TrapLink.Leave)
+                {
+                    this.ArchipelagoConnector.LeaveTrapLink();
+                    this.SaveData.SetEnabledTrapLink(false);
+                }
+
+                this.ParkitectController.SendMessage(this.GetChangedTrapLinkMessage());
+            }
+        }
+
+        private string GetChangedTrapLinkMessage()
+        {
+            return this.SaveData.GetEnabledTrapLink() ? "TrapLink enabled" : "TrapLink disabled";
         }
 
         public void GoalAchieved()

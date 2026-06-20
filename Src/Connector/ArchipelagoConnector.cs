@@ -100,6 +100,28 @@ namespace ArchipelagoMod.Src.Connector
             this.Session.ConnectionInfo.UpdateConnectionOptions(tags.ToArray());
         }
 
+        public void LeaveTrapLink()
+        {
+            this.JoinedTrapLink = false;
+            List<string> tags = this.GetCurrentTags();
+            tags.Remove(Links.TrapLink.ToString());
+            this.Session.ConnectionInfo.UpdateConnectionOptions(tags.ToArray());
+        }
+
+        public bool ToggleTrapLink()
+        {
+            if (!this.JoinedTrapLink)
+            {
+                this.JoinTrapLink();
+            }
+            else
+            {
+                this.LeaveTrapLink();
+            }
+
+            return this.JoinedTrapLink;
+        }
+
         public async Task DisconnectAsync()
         {
             this._stopRetries = true;
