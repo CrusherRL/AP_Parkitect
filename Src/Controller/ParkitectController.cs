@@ -1857,7 +1857,7 @@ namespace ArchipelagoMod.Src.Controller
         {
             if (this.HasUnlockedResearchRule(referenceName) == isUnlocked)
             {
-                Helper.Debug($"[ParkitectController::UpdateResearchRule] isUnlocked already {isUnlocked} = {referenceName}");
+                Helper.Debug($"[ParkitectController::ResearchRuleUpdateIsUnlocked] isUnlocked already {isUnlocked} = {referenceName}");
                 return;
             }
 
@@ -1865,7 +1865,7 @@ namespace ArchipelagoMod.Src.Controller
 
             if (rule == null)
             {
-                Helper.Debug($"[ParkitectController::UpdateResearchRule] No Rule found for {referenceName}");
+                Helper.Debug($"[ParkitectController::ResearchRuleUpdateIsUnlocked] No Rule found for {referenceName}");
                 return;
             }
 
@@ -1883,7 +1883,7 @@ namespace ArchipelagoMod.Src.Controller
 
             if (rule == null)
             {
-                Helper.Debug($"[ParkitectController::UpdateResearchRule] No Rule found for {referenceName}");
+                Helper.Debug($"[ParkitectController::ResearchRuleUpdateCanUnlock] No Rule found for {referenceName}");
                 return;
             }
 
@@ -1909,7 +1909,10 @@ namespace ArchipelagoMod.Src.Controller
             {
                 return false;
             }
-            return GameController.Instance.park.scenario.research.getRule(referenceName).isUnlocked;
+
+            ResearchRule rule = GameController.Instance.park.scenario.research.getRule(referenceName);
+
+            return rule != null ? rule.isUnlocked : false;
         }
 
         public bool CanUnlockedResearchRule(string referenceName)

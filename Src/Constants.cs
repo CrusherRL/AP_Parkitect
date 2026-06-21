@@ -6,7 +6,7 @@ namespace ArchipelagoMod.Src
 {
     class Constants
     {
-        public const string VERSION = "1.4.1";
+        public const string VERSION = "1.5.0";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
@@ -1113,10 +1113,52 @@ namespace ArchipelagoMod.Src
         {
             public static Dictionary<int, string> Maps = new Dictionary<int, string>
             {
+                // Custom Campaign
                 { 0, "Archipelago - Lakeside Gardens" },
                 { 1, "Archipelago - Dusty Ridge Ranch" },
                 { 2, "Archipelago - The Broken Atoll" },
                 { 3, "Archipelago - Magma Falls" },
+
+                // Main Campaign
+                { 100, "Maple Meadows" },
+                { 101, "Chanute Airfield" },
+                { 102, "Victoria Lake" },
+                { 103, "Western Roundup" },
+                { 104, "Coral Caldera" },
+                { 105, "Mystic Oasis" },
+                { 106, "Nova Labs" },
+                { 107, "Archipelago Adventures" },
+                { 108, "Adventure Island" },
+                { 109, "Batavia Cay" },
+                { 110, "Ice-Shelf Islands" },
+                { 111, "HappyCo Harbor" },
+                { 112, "Biscayne Beach" },
+                { 113, "Highway Hijinks" },
+                { 114, "Honey Hills" },
+                { 115, "Orchard Acres" },
+                { 116, "Coaster Canyon" },
+                { 117, "Hickory Hill" },
+                { 118, "Pagoda Valley" },
+                { 119, "Kaiserberg" },
+                { 120, "Sakura Gardens" },
+                { 121, "Silica Slopes" },
+                { 122, "Disaster Peaks" },
+                { 123, "Robopark" },
+                { 124, "Sheer Cliffs" },
+                { 125, "Zalgonia" },
+                { 126, "HappyCo. Bakery" },
+
+                // Taste of Adventure Campaign
+                { 200, "Yucatán Ridge" },
+                { 201, "Brimstone Peak" },
+                { 202, "Candyland" },
+                { 203, "Timber Creek" },
+                { 204, "Jungle Adventure" },
+                { 205, "Technopolis" },
+                { 206, "Dragon Valley" },
+                { 207, "Victoria Island" },
+                { 208, "Celeste Mountain" },
+                { 209, "The Moon" },
             };
         }
 
