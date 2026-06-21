@@ -80,7 +80,6 @@ namespace ArchipelagoMod.Src.Controller
         void OnDestroy()
         {
             this.Destroy();
-
             this.DoReconnect = true;
         }
 
@@ -389,6 +388,8 @@ namespace ArchipelagoMod.Src.Controller
             if (!Version.IsCompatible())
             {
                 this.ParkitectController.SendMessage(Version.Messages());
+                this.OnDisconnect();
+                this.Destroy();
                 return;
             }
 
