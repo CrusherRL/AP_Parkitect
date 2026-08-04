@@ -3,8 +3,8 @@
     class SatisfactionRating : AbstractRating
     {
         public override string Label { get; set; } = "Satisfaction";
-        public override string Color { get; set; } = "#AC62C3"; // Purple
+        public override string Color { get; set; } = Colors.Purple;
 
-        public SatisfactionRating(float rating, string currency = "") : base(rating, currency) {}
+        public SatisfactionRating(float rating, string type = null, string currency = "") : base(rating, type, currency) {}
     }
 }

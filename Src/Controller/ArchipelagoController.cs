@@ -1,18 +1,23 @@
 ﻿using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Packets;
+using Archipelago.Src.EnergyLink;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
+using ArchipelagoMod.Src.Dispatcher;
 using ArchipelagoMod.Src.SlotData;
 using ArchipelagoMod.Src.UI;
 using ArchipelagoMod.Src.Window;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using UnityEngine;
 
 namespace ArchipelagoMod.Src.Controller
 {
-    class ArchipelagoController : MonoBehaviour
+    class ArchipelagoController : MainThreadDispatcher
     {
         ParkitectController ParkitectController = null;
         ArchipelagoConnector ArchipelagoConnector = null;
@@ -68,6 +73,7 @@ namespace ArchipelagoMod.Src.Controller
                 && GameController.Instance.loadingHasBeenCompleted
                 && this.ParkitectAPConfig != null
                 && this.ParkitectAPConfig.IsValid()
+                && !Constants.DontConnect
                 )
             {
                 this.DoReconnect = false;
@@ -83,9 +89,14 @@ namespace ArchipelagoMod.Src.Controller
             this.DoReconnect = true;
         }
 
-        void Destroy()
+        void Destroy(bool connectorOnly = false)
         {
             ScriptableSingleton<ArchipelagoSettings>.Instance.UpdatedParkitectAPConfig -= this.UpdatedParkitectAPConfig;
+
+            if (!connectorOnly)
+            {
+                EventManager.Instance.OnScenarioWon -= this.GoalAchieved;
+            }
 
             if (this.ArchipelagoConnector == null)
             {
@@ -136,6 +147,12 @@ namespace ArchipelagoMod.Src.Controller
 
         protected void Listen()
         {
+            // Won the Scenario :)
+            if (!this.IsReady)
+            {
+                EventManager.Instance.OnScenarioWon += this.GoalAchieved;
+            }
+
             Helper.Debug("[ArchipelagoController::Listen]");
             this.ArchipelagoConnector.OnConnected += this.OnConnected;
             this.ArchipelagoConnector.OnConnectionFailed += this.OnConnectionFailed;
@@ -145,9 +162,6 @@ namespace ArchipelagoMod.Src.Controller
             this.ArchipelagoConnector.OnItemReceived += this.OnReceivedItem;
             this.ArchipelagoConnector.OnStopped += this.OnStopped;
             this.ArchipelagoConnector.OnTrapReceived += this.OnTrapReceived;
-
-            // Won the Scenario :)
-            EventManager.Instance.OnScenarioWon += this.GoalAchieved;
         }
 
         private void OnConnected(LoginSuccessful success)
@@ -155,6 +169,14 @@ namespace ArchipelagoMod.Src.Controller
             Helper.Debug("[ArchipelagoController::Listen] -> OnConnected");
             this.OnConnected();
             this.SlotData = success.SlotData;
+
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                string key = this.ArchipelagoConnector.GetEnergyLinkKey();
+                this.ArchipelagoConnector.Session.DataStorage[Scope.Global, key].Initialize(0);
+                this.RefreshBankAccount();
+            });
+
             this.Handle();
         }
 
@@ -183,6 +205,8 @@ namespace ArchipelagoMod.Src.Controller
         {
             this.OnDisconnect();
             this.ParkitectController.SendMessage("Lost Connection to Archipelago");
+            this.Destroy(true);
+            this.DoReconnect = true;
         }
 
         private void OnStopped()
@@ -382,6 +406,7 @@ namespace ArchipelagoMod.Src.Controller
 
         private void Handle()
         {
+            Helper.Debug($"[ArchipelagoController::Handle] ready={this.IsReady}");
             this.SlotData.TryGetValue("version", out object ap_world_version);
             Version Version = new Version(ap_world_version.ToString());
 
@@ -420,7 +445,11 @@ namespace ArchipelagoMod.Src.Controller
 
             this.HandleRules();
             this.HandleChallenges();
-            this.SaveData.LoadItems();
+
+            if (!this.IsReady)
+            {
+                this.SaveData.LoadItems();
+            }
 
             if (this.SaveData.GetEnabledTrapLink())
             {
@@ -436,6 +465,13 @@ namespace ArchipelagoMod.Src.Controller
                 }
             }
 
+            this.ArchipelagoWindow.SetFee(this.ParkitectController.GetFee());
+
+            foreach (EnergyLinkItem item in this.ArchipelagoWindow.EnergyLinkHistory.History)
+            {
+                this.ArchipelagoWindow.AddEnergyLinkMessage(item, false);
+            }
+
             this.IsReady = true;
             this.ProcessPendingLocations();
             this.ProcessPendingItems();
@@ -448,7 +484,7 @@ namespace ArchipelagoMod.Src.Controller
 
             if (!this.ParkitectController.PlayerIsInPark(Scenario.name))
             {
-            Helper.Debug($"[ArchipelagoController::HandleScenario] Entered wrong Park");
+                Helper.Debug($"[ArchipelagoController::HandleScenario] Entered wrong Park");
                 this.ParkitectController.SendMessage($"Park not recognized. Please load '{Scenario.name}'");
                 this.OnDisconnect();
                 this.Destroy();
@@ -457,7 +493,11 @@ namespace ArchipelagoMod.Src.Controller
 
             Constants.ScenarioName = Scenario.name;
             this.SaveData = GetComponent<SaveData>();
-            this.SaveData.Init(this.GetSlotDataSeed());
+
+            if (!this.IsReady)
+            {
+                this.SaveData.Init(this.GetSlotDataSeed());
+            }
 
             // Player had no savegame?
             if (!this.ParkitectController.PlayerHasSavegame())
@@ -472,6 +512,11 @@ namespace ArchipelagoMod.Src.Controller
 
         private void HandleGoals()
         {
+            if (this.IsReady)
+            {
+                return;
+            }
+
             if (!this.SlotData.TryGetValue("goals", out object goalData))
             {
                 return;
@@ -577,6 +622,11 @@ namespace ArchipelagoMod.Src.Controller
    
         private void HandleRules()
         {
+            if (this.IsReady)
+            {
+                return;
+            }
+
             if (!this.SlotData.TryGetValue("rules", out object rulesData))
             {
                 return;
@@ -614,6 +664,17 @@ namespace ArchipelagoMod.Src.Controller
                     this.SaveData.SetEnabledTrapLink(true);
                 }
             }
+
+            // We only set ReleaseModeDisabled thing once
+            if (!this.SaveData.GetServerHasSetReleaseMode())
+            {
+                this.SaveData.SetServerHasSetReleaseMode();
+
+                if (this.ParkitectController.AP_Rules.release_mode_disabled)
+                {
+                    this.SaveData.SetReleaseMode(true);
+                }
+            }
         }
 
         private string GetSlotDataSeed()
@@ -628,6 +689,11 @@ namespace ArchipelagoMod.Src.Controller
 
         private void HandleChallenges()
         {
+            if (this.IsReady)
+            {
+                return;
+            }
+
             if (!this.SlotData.TryGetValue("challenges", out object challengesData))
             {
                 return;
@@ -639,38 +705,58 @@ namespace ArchipelagoMod.Src.Controller
             {
                 Challenge challenge = new Challenge(this.ParkitectController, ap_challenge.LocationId);
                 string type = ap_challenge.item.type;
+                bool isCoaster = type == "Coaster Rides" || type == "coaster";
+                bool hasName = !string.IsNullOrEmpty(ap_challenge.item.name);
 
                 // Challenge is to have just shops
-                if (Constants.Stall.Types.Contains(type) && ap_challenge.item.name == "")
+                if (Constants.Stall.Types.Contains(type) && !hasName)
                 {
                     challenge.SetShopType(type, ap_challenge.item.amount);
+                    challenge.AddGuestsRating(ap_challenge.item.customers);
+                    challenge.AddRevenueRating(ap_challenge.item.revenue);
+                    challenge.AddProfitRating(ap_challenge.item.profit);
+                    challenge.AddVoucher(ap_challenge.item.vouchers);
                 }
 
                 // Challenge is to have a specific shop
-                else if (type == "Shops" || type == "shop")
+                else if (Constants.Stall.Types.Contains(type))
                 {
                     challenge.SetShop(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
                     challenge.AddRevenueRating(ap_challenge.item.revenue);
+                    challenge.AddProfitRating(ap_challenge.item.profit);
+                    challenge.AddVoucher(ap_challenge.item.vouchers);
                 }
 
                 // Challenge is to have a just an attraction
-                else if (Constants.Attraction.Types.Contains(type) && ap_challenge.item.name == "")
+                else if (Constants.Attraction.Types.Contains(type) && !hasName)
                 {
                     challenge.SetAttractionType(type, ap_challenge.item.amount);
+                    challenge.AddGuestsRating(ap_challenge.item.customers);
+                    challenge.AddRevenueRating(ap_challenge.item.revenue);
+                    challenge.AddProfitRating(ap_challenge.item.profit);
+                    challenge.AddDecoRating(ap_challenge.item.deco);
+                    challenge.AddVoucher(ap_challenge.item.vouchers);
+
+                    if (isCoaster)
+                    {
+                        challenge.AddPhoto(Helper.SafeInt(ap_challenge.item.photos));
+                    }
                 }
 
                 // Challenge is to have a specific ride
-                else if (type == "Rides" || type == "ride")
+                else if (Constants.Attraction.Types.Contains(type))
                 {
                     challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
                     challenge.AddRevenueRating(ap_challenge.item.revenue);
+                    challenge.AddProfitRating(ap_challenge.item.profit);
                     challenge.AddDecoRating(ap_challenge.item.deco);
+                    challenge.AddVoucher(ap_challenge.item.vouchers);
                 }
 
                 // Challenge is to have a specific coaster
-                else if (type == "Coaster Rides" || type == "coaster")
+                else if (isCoaster)
                 {
                     challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
                     challenge.AddGuestsRating(ap_challenge.item.customers);
@@ -680,6 +766,7 @@ namespace ArchipelagoMod.Src.Controller
                     challenge.AddNausea(Helper.SafeFloat(ap_challenge.item.nausea));
                     challenge.AddSatisfaction(Helper.SafeFloat(ap_challenge.item.satisfaction));
                     challenge.AddDecoRating(ap_challenge.item.deco);
+                    challenge.AddPhoto(Helper.SafeInt(ap_challenge.item.photos));
                 }
 
                 // Employee
@@ -743,7 +830,7 @@ namespace ArchipelagoMod.Src.Controller
 
             if (!Constants.Commands.All.Contains(msg))
             {
-                this.ArchipelagoConnector.ForwardSayPacket(message);
+                this.ArchipelagoConnector.Session.Say(message);
             }
 
             // We have a special command
@@ -769,6 +856,33 @@ namespace ArchipelagoMod.Src.Controller
 
                 this.ParkitectController.SendMessage(this.GetChangedTrapLinkMessage());
             }
+
+            if (Constants.Commands.ReleaseMode.All.Contains(msg))
+            {
+                if (msg == Constants.Commands.ReleaseMode.Toggle)
+                {
+                    bool value = !this.SaveData.GetReleaseMode();
+                    this.SaveData.SetReleaseMode(value);
+
+                    if (this.SaveData.GetReleaseMode())
+                    {
+                        this.ArchipelagoWindow.Finish();
+                    }
+                }
+
+                if (msg == Constants.Commands.ReleaseMode.Disable)
+                {
+                    this.SaveData.SetReleaseMode(false);
+                }
+
+                if (msg == Constants.Commands.ReleaseMode.Enable)
+                {
+                    this.SaveData.SetReleaseMode(true);
+                    this.ArchipelagoWindow.Finish();
+                }
+
+                this.ParkitectController.SendMessage(this.GetChangedReleaseModeMessage());
+            }
         }
 
         private string GetChangedTrapLinkMessage()
@@ -776,14 +890,88 @@ namespace ArchipelagoMod.Src.Controller
             return this.SaveData.GetEnabledTrapLink() ? "TrapLink enabled" : "TrapLink disabled";
         }
 
+        private string GetChangedReleaseModeMessage()
+        {
+            return this.SaveData.GetReleaseMode() ? "Release Mode is enabled" : "Release Mode is disabled";
+        }
+
         public void GoalAchieved()
         {
             Helper.Debug($"[ArchipelagoController::GoalAchieved]");
-            this.ParkitectController.SendMessage($"Congratulations! You've won this Scenario. I hope you enjoyed the Game :)");
-            this.ArchipelagoWindow.Finish();
-            this.ParkitectController.UpdateSuppressMessages();
+            bool releaseMode = this.SaveData.GetReleaseMode();
+            string finishMsgPart = releaseMode ? "I hope you enjoyed the Game :)" : "But you are not done yet! Finish up the rest of Challenges!";
+            this.ParkitectController.SendMessage($"Congratulations! You've won this Scenario. {finishMsgPart}");
 
+            if (releaseMode)
+            {
+                this.ArchipelagoWindow.Finish();
+            }
+
+            this.ParkitectController.UpdateSuppressMessages();
             this.ArchipelagoConnector.GoalComplete();
+        }
+
+        public float RefreshBankAccount()
+        {
+            float money = this.GetMoneyFromBank();
+            this.ArchipelagoWindow.UpdateBankAccount(money);
+            return money;
+        }
+
+        public float GetMoneyFromBank()
+        {
+            Helper.Debug($"[ArchipelagoController::GetMoneyFromBank]");
+            float money = 0;
+
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                string key = string.Format("EnergyLink{0}", this.ArchipelagoConnector.Session.ConnectionInfo.Team);
+                string _money = this.ArchipelagoConnector.Session.DataStorage[Scope.Global, key].GetAsync<string>().GetAwaiter().GetResult();
+
+                Helper.Debug($"[ArchipelagoController::GetMoneyFromBank] _money={_money}");
+
+                if (!string.IsNullOrEmpty(_money))
+                {
+                    BigInteger _parsed_money = BigInteger.Parse(_money) / Constants.EnergyLink.Divider;
+                    Helper.Debug($"[ArchipelagoController::GetMoneyFromBank] _parsed_money={_parsed_money}");
+                    float.TryParse(_parsed_money.ToString(), out money);
+                }
+            });
+            
+            Helper.Debug($"[ArchipelagoController::GetMoneyFromBank] money={money}");
+            return money;
+        }
+
+        public float WithdrawMoneyFromBank(float amount, bool hitMax = false)
+        {
+            float fee = this.ParkitectController.GetFee();
+            float bankMoney = this.GetMoneyFromBank();
+
+            SetPacket packet = this.ArchipelagoConnector.BuildWithdrawEnergyLink(Helper.GetMoneyForEnergyLink(amount), hitMax);
+            _ = this.ArchipelagoConnector.ForwardPacket(packet, true);
+         
+            EnergyLinkItem item = new EnergyLinkItem(amount, Helper.GetTax(amount, fee));
+
+            if (hitMax)
+            {
+                item = new EnergyLinkItem(bankMoney, Helper.GetTax(bankMoney, fee));
+                this.ArchipelagoWindow.AddEnergyLinkMessage(item);
+                return Helper.GetTaxedMoney(bankMoney, fee, true);
+            }
+
+            this.ArchipelagoWindow.AddEnergyLinkMessage(item);
+            return Helper.GetTaxedMoney(amount, fee, true); ;
+        }
+
+        public void DepositMoneyToBank(float amount)
+        {
+            float fee = this.ParkitectController.GetFee();
+            BigInteger money = Helper.GetTaxedMoneyForEnergyLink(amount, fee, true);
+            SetPacket packet = this.ArchipelagoConnector.BuildDepositEnergyLink(money);
+            _ = this.ArchipelagoConnector.ForwardPacket(packet, true);
+
+            EnergyLinkItem item = new EnergyLinkItem(amount, Helper.GetTax(amount, fee), EnergyLinkItem.EnergyLinkType.Deposit);
+            this.ArchipelagoWindow.AddEnergyLinkMessage(item);
         }
     }
 }

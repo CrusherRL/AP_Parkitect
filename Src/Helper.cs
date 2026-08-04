@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEngine;
+using System.Numerics;
 
 namespace ArchipelagoMod.Src
 {
@@ -59,46 +60,49 @@ namespace ArchipelagoMod.Src
             }
         }
 
-        public static Color ConvertFromHex(string hex)
-        {
-            Color c;
-            ColorUtility.TryParseHtmlString(hex, out c);
-            return c;
-        }
-
         public static float SafeFloat(float? value)
         {
             return value ?? 0f;
         }
 
-        public static string SerializeText (string[] items)
+        public static int SafeInt(int? value)
+        {
+            return value ?? 0;
+        }
+
+        public static string SerializeText(string[] items)
         {
             if (items.Length == 0)
             {
                 return string.Empty;
             }
-            
+
             if (items.Length == 1)
             {
                 return items[0];
             }
-            
+
             if (items.Length == 2)
             {
                 return string.Join(" and ", items);
             }
-         
+
             return string.Join(", ", items, 0, items.Length - 1) + " and " + items[items.Length - 1];
         }
 
-        public static string MakeJsonData(object data, JsonSerializerSettings jsonSettings = null)
+        public static string MakeJsonData(object data, bool ignoreNullAndReference = false, Formatting format = Formatting.Indented)
         {
-            if (jsonSettings != null)
+            JsonSerializerSettings settings = new JsonSerializerSettings
             {
-                return JsonConvert.SerializeObject(data, Formatting.Indented, jsonSettings);
+            };
+
+            if (ignoreNullAndReference)
+            {
+                settings.NullValueHandling = NullValueHandling.Ignore;
+                settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             }
 
-            return JsonConvert.SerializeObject(data, Formatting.Indented);
+            return JsonConvert.SerializeObject(data, format, settings);
         }
 
         public static bool LogsEnabled()
@@ -116,6 +120,75 @@ namespace ArchipelagoMod.Src
             }
 
             return result;
+        }
+
+        public static void PrintObject(object obj, int indent = 0)
+        {
+            Helper.Debug($"[Helper::PrintObject]");
+            string spaces = new string(' ', indent);
+
+            if (obj == null)
+            {
+                Helper.Debug(spaces + "null");
+                return;
+            }
+
+            // Dictionary<string, object>
+            var dict = obj as Dictionary<string, object>;
+            if (dict != null)
+            {
+                foreach (var kvp in dict)
+                {
+                    Helper.Debug($"{spaces}{kvp.Key}:");
+                    Helper.PrintObject(kvp.Value, indent + 2);
+                }
+                return;
+            }
+
+            // Any other IDictionary
+            var idict = obj as IDictionary;
+            if (idict != null)
+            {
+                foreach (DictionaryEntry entry in idict)
+                {
+                    Helper.Debug($"{spaces}{entry.Key}:");
+                    Helper.PrintObject(entry.Value, indent + 2);
+                }
+                return;
+            }
+
+            // Lists/arrays (but not strings)
+            if (obj is IEnumerable && !(obj is string))
+            {
+                foreach (var item in (IEnumerable)obj)
+                {
+                    Helper.PrintObject(item, indent + 2);
+                }
+                return;
+            }
+
+            // Primitive value
+            Helper.Debug(spaces + obj);
+        }
+
+        public static BigInteger GetTaxedMoneyForEnergyLink(float amount, float fee, bool onTop = false)
+        {
+            return (BigInteger)(GetTaxedMoney(amount, fee, onTop) * Constants.EnergyLink.Divider);
+        }
+
+        public static BigInteger GetMoneyForEnergyLink(float amount)
+        {
+            return (BigInteger)(amount * Constants.EnergyLink.Divider);
+        }
+
+        public static float GetTaxedMoney(float amount, float fee, bool onTop = false)
+        {
+            return amount * (onTop ? (1f - fee / 100f) : (1f + fee / 100f));
+        }
+
+        public static int GetTax(float amount, float fee)
+        {
+            return (int)(amount - (amount * (1f - fee / 100f)));
         }
     }
 }

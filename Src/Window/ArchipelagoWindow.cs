@@ -1,7 +1,10 @@
-﻿using ArchipelagoMod.Src.Challenges;
+﻿using Archipelago.Src.EnergyLink;
+using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
+using ArchipelagoMod.Src.Window.Scripts;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -19,6 +22,7 @@ namespace ArchipelagoMod.Src.Window
 
         public float nextCheckTime = Time.time;
         public SaveData SaveData = null;
+        public EnergyLinkHistory EnergyLinkHistory = null;
 
         public override string BundleFilename { get; set; } = "archipelagowindow";
 
@@ -28,9 +32,11 @@ namespace ArchipelagoMod.Src.Window
         {
             Helper.Debug($"[ArchipelagoWindow::OnAwake]");
             this.ParkitectController = GetComponent<ParkitectController>();
+            this.AddScripts();
             this.SetStatus(this.State, true);
             this.SetSpeedupButtons();
             this.SetCLI();
+            this.SetBankListeners();
             this.ToggleActiveState();
 
             Helper.Debug($"[ArchipelagoWindow::OnAwake] Booted");
@@ -38,8 +44,54 @@ namespace ArchipelagoMod.Src.Window
 
         public void OnDestroy ()
         {
+            TabController TabController = this.GetChild("Frame/Menu").gameObject.GetComponent<TabController>();
+            TabController.OnSwitch -= this.OnTabSwitch;
+
             this.Close();
             this.SaveData.Backup();
+        }
+
+        public void AddScripts()
+        {
+            this.AddTabControllerScript();
+            this.AddScrollListScript();
+        }
+
+        public void AddTabControllerScript()
+        {
+            this.GetChild("Frame/Menu").gameObject.AddComponent<TabController>();
+
+            TabController TabController = this.GetChild("Frame/Menu").gameObject.GetComponent<TabController>();
+            
+            // Challenges
+            TabController.AddPage(0, this.GetChild("Frame/Pages/Challenges").gameObject);
+            TabController.AddMenuButton(0, this.GetChild("Frame/Menu/Challenges/Button").GetComponent<Button>());
+            TabController.AddMenuButtonImage(0, this.GetChild("Frame/Menu/Challenges").GetComponent<Image>());
+
+            // EnergyLink
+            TabController.AddPage(1, this.GetChild("Frame/Pages/EnergyLink").gameObject);
+            TabController.AddMenuButton(1, this.GetChild("Frame/Menu/EnergyLink/Button").GetComponent<Button>());
+            TabController.AddMenuButtonImage(1, this.GetChild("Frame/Menu/EnergyLink").GetComponent<Image>());
+
+            TabController.SwitchTab(0);
+
+            TabController.OnSwitch += this.OnTabSwitch;
+        }
+
+        private void OnTabSwitch(int index)
+        {
+            Helper.Debug($"[ArchipelagoWindow::OnTabSwitch] {index}");
+            // Refresh Bank account when switched to EnergyLink Tab
+            if (index == 1)
+            {
+                this._help();
+                this.ArchipelagoController.RefreshBankAccount();
+            }
+        }
+
+        public void AddScrollListScript()
+        {
+            this.GetChild("Frame/Pages/EnergyLink/History/Scroll View").gameObject.AddComponent<ScrollList>();
         }
 
         public void SetStatus(_Status.States state, bool silent = false)
@@ -57,7 +109,9 @@ namespace ArchipelagoMod.Src.Window
 
         public void SetVersion(string version)
         {
-            this.GetChild("Frame/Body/Footer/Version").GetComponent<TextMeshProUGUI>().text = "v" + version;
+            string v = "v" + version;
+            this.GetChild("Frame/Pages/Challenges/Footer/Version").GetComponent<TextMeshProUGUI>().text = v;
+            this.GetChild("Frame/Pages/EnergyLink/Footer/Version").GetComponent<TextMeshProUGUI>().text = v;
         }
 
         public void SetChallenge(Challenge challenge)
@@ -182,7 +236,7 @@ namespace ArchipelagoMod.Src.Window
             this.SetChallenge(nextChallenge);
         }
        
-        public void HandOver (List<Challenge> Challenges)
+        public void HandOver(List<Challenge> Challenges)
         {
             Helper.Debug($"[ArchipelagoWindow::HandOver]");
             this.SaveData = GetComponent<SaveData>();
@@ -202,6 +256,7 @@ namespace ArchipelagoMod.Src.Window
             this.UpdateSpeedups();
             this.all_challenges = Challenges;
 
+            this.EnergyLinkHistory = new EnergyLinkHistory(this.SaveData);
             List<int> locationIds = this.SaveData.GetChallenges();
             
             // No challenges found, so we start from the beginning :)
@@ -266,7 +321,7 @@ namespace ArchipelagoMod.Src.Window
 
         public void UpdateSkipText()
         {
-            this.GetChild("Frame/Body/Footer/Skip List/Count").GetComponent<TextMeshProUGUI>().text = this.SaveData.GetSkipCount().ToString();
+            this.GetChild("Frame/Pages/Challenges/Footer/Skip List/Count").GetComponent<TextMeshProUGUI>().text = this.SaveData.GetSkipCount().ToString();
         }
 
         public void UpdateSpeedups()
@@ -284,7 +339,7 @@ namespace ArchipelagoMod.Src.Window
 
         public void EnableSpeedupButton(int id)
         {
-            string buttonList = "Frame/Body/Footer/Speedup List/Button List";
+            string buttonList = "Frame/Pages/Challenges/Footer/Speedup List/Button List";
             this.GetChild($"{buttonList}/Speed {id}").GetComponent<Button>().interactable = true;
         }
 
@@ -308,10 +363,7 @@ namespace ArchipelagoMod.Src.Window
         public void FinishChallenge(Challenge challenge)
         {
             Helper.Debug("[ArchipelagoWindow::FinishChallenge]");
-            if (this.ArchipelagoController == null)
-            {
-                this.ArchipelagoController = GetComponent<ArchipelagoController>();
-            }
+            this._help();
 
             this.RemoveChallenge(challenge);
             this.NextChallenge(challenge);
@@ -344,12 +396,12 @@ namespace ArchipelagoMod.Src.Window
 
         public Transform GetPanelChild(string serializedPanelId, string hierarchy = null)
         {
-            return this.GetChild($"Frame/Body/List/{serializedPanelId}{hierarchy}");
+            return this.GetChild($"Frame/Pages/Challenges/List/{serializedPanelId}{hierarchy}");
         }
 
         private void SetSpeedupButtons()
         {
-            string buttonList = "Frame/Body/Footer/Speedup List/Button List";
+            string buttonList = "Frame/Pages/Challenges/Footer/Speedup List/Button List";
 
             foreach(int speed in Constants.Player.SpeedupOptions)
             {
@@ -361,7 +413,7 @@ namespace ArchipelagoMod.Src.Window
 
         private void SetCLI()
         {
-            TMP_InputField input = this.GetChild($"Frame/Body/CLI").GetComponent<TMP_InputField>();
+            TMP_InputField input = this.GetChild($"Frame/Pages/Challenges/CLI").GetComponent<TMP_InputField>();
 
             if (input == null)
             {
@@ -371,10 +423,7 @@ namespace ArchipelagoMod.Src.Window
 
             input.onSubmit.AddListener((string text) =>
             {
-                if (this.ArchipelagoController == null)
-                {
-                    this.ArchipelagoController = GetComponent<ArchipelagoController>();
-                }
+                this._help();
 
                 if (text.Length > 0)
                 {
@@ -382,6 +431,107 @@ namespace ArchipelagoMod.Src.Window
                     input.text = string.Empty; // clear input field
                 }
             });
+        }
+
+        public void UpdateBankAccount(float money)
+        {
+            string _money = money.ToString("N0", Constants.GermanCulture);
+            this.GetChild("Frame/Pages/EnergyLink/Available").GetComponent<TextMeshProUGUI>().text = $"Bank Account: ${_money}";
+        }
+
+        public void SetFee(float fee)
+        {
+            this.GetChild("Frame/Pages/EnergyLink/Footer/Fee").GetComponent<TextMeshProUGUI>().text = $"Fee: {fee}%";
+        }
+
+        public void AddEnergyLinkMessage(EnergyLinkItem item, bool add = true)
+        {
+            if (add)
+            {
+                this.EnergyLinkHistory.AddItem(item);
+            }
+
+            this.GetChild("Frame/Pages/EnergyLink/History/Scroll View").gameObject.GetComponent<ScrollList>().AddItem(item.Message());
+        }
+
+        public float GetMoneyFromBankInput()
+        {
+            TMP_InputField input = this.GetChild("Frame/Pages/EnergyLink/Bank/Money").GetComponent<TMP_InputField>();
+            return float.Parse(input.text, CultureInfo.InvariantCulture);
+        }
+
+        public void ClearMoneyFromBankInput()
+        {
+            this.GetChild("Frame/Pages/EnergyLink/Bank/Money").GetComponent<TMP_InputField>().text = string.Empty;
+        }
+
+        private void WithdrawMoneyFromBank(float money, bool hitMax = false)
+        {
+            if (money < 0)
+            {
+                this.ParkitectController.SendMessage($"[EnergyLink] Withdraw at least {Constants.EnergyLink.MinDepositMoney}");
+                return;
+            }
+
+            Helper.Debug($"[ArchipelagoWindow::WithdrawMoneyFromBank] {money} {hitMax}");
+            this._help();
+            float taxedMoney = this.ArchipelagoController.WithdrawMoneyFromBank(money, hitMax);
+            this.ParkitectController.PlayerAddMoney(taxedMoney, true);
+        }
+
+        private void DepositMoneyToBank(float money)
+        {
+            if (money < Constants.EnergyLink.MinDepositMoney)
+            {
+                this.ParkitectController.SendMessage($"[EnergyLink] Deposit at least {Constants.EnergyLink.MinDepositMoney}");
+                return;
+            }
+
+            Helper.Debug($"[ArchipelagoWindow::DepositMoneyToBank] {money}");
+            this._help();
+            this.ArchipelagoController.DepositMoneyToBank(money);
+            this.ParkitectController.PlayerRemoveMoney(money);
+        }
+
+        private void SetBankListeners()
+        {
+            this.GetChild("Frame/Pages/EnergyLink/Bank/Actions/Withdraw").GetComponent<Button>().onClick.AddListener(() =>
+            {
+                this._help();
+                float maxMoney = this.ArchipelagoController.RefreshBankAccount();
+                float money = this.GetMoneyFromBankInput();
+                this.WithdrawMoneyFromBank(money, money >= maxMoney);
+                this.ClearMoneyFromBankInput();
+                this.ArchipelagoController.RefreshBankAccount();
+            });
+
+            this.GetChild("Frame/Pages/EnergyLink/Bank/Actions/Deposit").GetComponent<Button>().onClick.AddListener(() =>
+            {
+                this._help();
+                this.ArchipelagoController.RefreshBankAccount();
+
+                float money = this.GetMoneyFromBankInput();
+                this.DepositMoneyToBank(money);
+                this.ClearMoneyFromBankInput();
+                this.ArchipelagoController.RefreshBankAccount();
+            });
+
+            this.GetChild("Frame/Pages/EnergyLink/Bank/Balance").GetComponent<Button>().onClick.AddListener(() =>
+            {
+                this._help();
+                float money = this.ArchipelagoController.RefreshBankAccount();
+                this.WithdrawMoneyFromBank(money, true);
+                this.ClearMoneyFromBankInput();
+                this.ArchipelagoController.RefreshBankAccount();
+            });
+        }
+
+        private void _help()
+        {
+            if (this.ArchipelagoController == null)
+            {
+                this.ArchipelagoController = GetComponent<ArchipelagoController>();
+            }
         }
     }
 }

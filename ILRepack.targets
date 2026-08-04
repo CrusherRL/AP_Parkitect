@@ -1,0 +1,24 @@
+<Project>
+  <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <InputAssemblies Include="$(TargetPath)" />
+      <InputAssemblies Include="$(TargetDir)Archipelago.MultiClient.Net.dll" />
+      <InputAssemblies Include="$(UserProfile)\.nuget\packages\newtonsoft.json\13.0.2\lib\net45\Newtonsoft.Json.dll" />
+
+      <!-- Folders ILRepack searches to RESOLVE (not merge) references like UnityEngine.CoreModule -->
+      <LibraryPath Include="$(TargetDir)" />
+      <LibraryPath Include="E:\Steam\steamapps\common\Parkitect\Parkitect_Data\Managed" />
+    </ItemGroup>
+
+    <ILRepack
+      TargetPlatformVersion="v4"
+      TargetKind="SameAsPrimaryAssembly"
+      InputAssemblies="@(InputAssemblies)"
+      Wildcards="true"
+      LibraryPath="@(LibraryPath)"
+      Parallel="true"
+      OutputFile="$(TargetPath)"
+      Internalize="True"
+    />
+  </Target>
+</Project>

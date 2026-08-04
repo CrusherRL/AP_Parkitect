@@ -52,10 +52,11 @@ It’s also a **randomizer** in its own right! 🌀
 ## 🖥️ Archipelago UI Overview
 Shortcut to toggle this Window is **Z**
 
-![Archipelago UI Window](Src/Images/ArchipelagoMod.png "UI Window")
+![Archipelago UI Window - Challenges](Src/Images/ArchipelagoMod.challenges.png "UI Window Challenges")
+![Archipelago UI Window - EnergyLink](Src/Images/ArchipelagoMod.energylink.png "UI Window EnergyLink")
 
 ### Debugger Window
-If something doesn’t work as expected, press F12 to open the Debugger Window for detailed logs and troubleshooting.
+Helper Window if something seems off.
 
 ---
 
@@ -106,13 +107,13 @@ You can configure multiple win conditions for your scenario. Each goal can be ad
 
 #### 👥 Guest Goal
 Defines how many guests must be in your park to win.  
-- **Range:** 1 – 2500  
-- **Default:** 1000  
+- **Range:** 200 – 2.500  
+- **Default:** 1.000  
 
 #### 💰 Money Goal
 Requires reaching a certain amount of money.  
-- **Range:** 50,000 – 500,000  
-- **Default:** 100,000  
+- **Range:** 50.000 – 500.000  
+- **Default:** 100.000  
 
 #### 🎢 Roller Coaster Goal
 Number of roller coasters required.  
@@ -133,12 +134,12 @@ Set to **0** to disable this requirement.
 
 #### 📈 Ride Profit Goal
 Total profit required from all rides.  
-- **Range:** 0 – 10,000  
-- **Default:** 1500  
+- **Range:** 0 – 10.000  
+- **Default:** 1.500  
 
 #### 🎟️ Park Tickets Goal
 Number of park tickets that must be sold.  
-- **Range:** 0 – 20,000  
+- **Range:** 0 – 20.000  
 - **Default:** 0  
 
 #### 🏪 Shops Goal
@@ -148,7 +149,7 @@ Number of shops required in the park.
 
 #### 💵 Shop Profit Goal
 Total profit required from shops.  
-- **Range:** 0 – 3,000  
+- **Range:** 0 – 3.000  
 - **Default:** 500  
 
 ---
@@ -160,11 +161,13 @@ To complete:
 - Must be **open**
 - Stats must **not be outdated**
 - Must have had **at least one customer**
+- + different requirements from APWorld
 
 ### 🍟 Shop Challenge/Check
 To complete:
 - Must be **open**
 - Must have had **at least one customer**
+- + different requirements from APWorld
 
 ### 🍟 Pay Money Challenge/Check (Optional)
 To complete:
@@ -177,6 +180,7 @@ To complete:
 ### 🍟 Employees Challenge/Check (Optional)
 To complete:
 - Must **have** X Employees
+- + different requirements from APWorld
 
 ---
 
@@ -186,7 +190,7 @@ To complete:
 |-----------|---------|-------|
 | **Operating Systems** | ✅ Tested on **Windows 10** and **MacOS Sequoia 15.6** and **Linux** ||
 | **Multiplayer** | ⚠️ Not Tested / Likely Unsupported | The mod was designed for single-player mode — multiplayer may cause sync issues |
-| **Game Version** | ✅ Steam release (1.12e3) | Earlier versions before Steam release (1.12b2) won’t work |
+| **Game Version** | ✅ Steam release (1.12f2) | Earlier versions before Steam release (1.12b2) won’t work |
 | **Other Mods** | ⚙️ Attraction/Shop Mods are Supported ([Steam Collection](https://steamcommunity.com/sharedfiles/filedetails/?id=3647109901)) ||
 | **Performance** | ✅ Stable | No major FPS drops or memory issues during extended play |
 | **Archipelago Connection** | ✅ Tested with local and remote servers | No known connection issues |

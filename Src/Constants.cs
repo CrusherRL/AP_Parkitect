@@ -1,14 +1,16 @@
 ﻿using Photon.Realtime;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace ArchipelagoMod.Src
 {
     class Constants
     {
-        public const string VERSION = "1.5.0";
+        public const string IDENTIFIER = "com.parkitectCommunity.Archipelago";
+        public const string VERSION = "1.6.0";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
-        public static float[] BetweenOptions = { 20f, 30f, 40f, 50f, 60f, 70f, 80f, 90f, 100f };
+        public static float[] BetweenOptions = { 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
         public static string Playername = null;
         public static int ArchipelagoBaseId = 3000000;
@@ -19,6 +21,10 @@ namespace ArchipelagoMod.Src
         public static string SaveGamesPath = null;
         public static string ScenarioName = null;
         public static bool Debug = true;
+        public static bool DontConnect = false;
+        public static bool LogStats = false;
+
+        public static readonly CultureInfo GermanCulture = new CultureInfo("de-DE");
 
         public class Commands
         {
@@ -36,46 +42,145 @@ namespace ArchipelagoMod.Src
                 };
             }
 
+            public class ReleaseMode
+            {
+                public static string Toggle = "!!toggleReleaseMode".ToLower();
+                public static string Disable = "!!disableReleaseMode".ToLower();
+                public static string Enable = "!!enableReleaseMode".ToLower();
+
+                public static string[] All =
+                {
+                    Constants.Commands.ReleaseMode.Toggle,
+                    Constants.Commands.ReleaseMode.Disable,
+                    Constants.Commands.ReleaseMode.Enable,
+                };
+            }
+
             public static string[] All = (new[]
             {
                 Constants.Commands.TrapLink.All,
+                Constants.Commands.ReleaseMode.All,
             })
                 .SelectMany(a => a).ToArray();
         }
 
         public static float NextCheckTimeDelay = .45f;
 
-        public static string[] TrapLinks = {
-            // OpenRCT2
-            "Bathroom Trap",
-            "Furry Convention Trap",
-            "Food poisoning Trap",
+        public static class TrapLink
+        {
+            public static class OpenRCT2
+            {
+                public static string BathroomTrap = "Bathroom Trap";
+                public static string FurryConventionTrap = "Furry Convention Trap";
+                public static string FoodPoisoningTrap = "Food poisoning Trap";
 
-            // Pokemon
-            "Burn Trap",
-            "Fire Trap",
-            "Poison Trap",
-            "Sleep Trap",
-            "Ice Trap",
-            "Freeze Trap",
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.OpenRCT2.BathroomTrap,
+                    Constants.TrapLink.OpenRCT2.FurryConventionTrap,
+                    Constants.TrapLink.OpenRCT2.FoodPoisoningTrap,
+                })
+                    .ToArray();
+            }
+            public static class Pokemon
+            {
+                public static string BurnTrap = "Burn Trap";
+                public static string FireTrap = "Fire Trap";
+                public static string PoisonTrap = "Poison Trap";
+                public static string SleepTrap = "Sleep Trap";
+                public static string IceTrap = "Ice Trap";
+                public static string FreezeTrap = "Freeze Trap";
 
-            // Brave Fencer Musashi
-            "Stinky Trap",
-            "Toxin Trap",
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.Pokemon.BurnTrap,
+                    Constants.TrapLink.Pokemon.FireTrap,
+                    Constants.TrapLink.Pokemon.PoisonTrap,
+                    Constants.TrapLink.Pokemon.SleepTrap,
+                    Constants.TrapLink.Pokemon.IceTrap,
+                    Constants.TrapLink.Pokemon.FreezeTrap,
+                })
+                    .ToArray();
+            }
+            public static class BraveFencerMusashi
+            {
+                public static string StinkyTrap = "Stinky Trap";
+                public static string ToxinTrap = "Toxin Trap";
 
-            // Freedom Planet 2
-            "Expensive Stocks",
-            "No Stocks",
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.BraveFencerMusashi.StinkyTrap,
+                    Constants.TrapLink.BraveFencerMusashi.ToxinTrap,
+                })
+                    .ToArray();
+            }
+            public static class FreedomPlanet2
+            {
+                public static string ExpensiveStocks = "Expensive Stocks";
+                public static string NoStocks = "No Stocks";
 
-            // Hammerwatch
-            "Frost Trap",
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.FreedomPlanet2.ExpensiveStocks,
+                    Constants.TrapLink.FreedomPlanet2.NoStocks,
+                })
+                    .ToArray();
+            }
+            public static class Hammerwatch
+            {
+                public static string FrostTrap = "Frost Trap";
 
-            // Noita
-            "Pea Soup Trap",
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.Hammerwatch.FrostTrap,
+                })
+                    .ToArray();
+            }
+            public static class Noita
+            {
+                public static string PeaSoupTrap = "Pea Soup Trap";
 
-            // no clue D:
-            "Frozen Trap",
-        };
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.Noita.PeaSoupTrap,
+                })
+                    .ToArray();
+            }
+            public static class GTA_SA
+            {
+                public static string Fat_CJ_Trap = "Fat CJ Trap";
+
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.GTA_SA.Fat_CJ_Trap,
+                })
+                    .ToArray();
+            }
+            public static class Misc
+            {
+                public static string FrozenTrap = "Frozen Trap";
+
+                public static string[] All = (new[]
+                {
+                    Constants.TrapLink.Misc.FrozenTrap,
+                })
+                    .ToArray();
+            }
+        }
+
+        public static string[] TrapLinks = (new[]
+        {
+            Constants.TrapLink.OpenRCT2.All,
+            Constants.TrapLink.Pokemon.All,
+            Constants.TrapLink.BraveFencerMusashi.All,
+            Constants.TrapLink.FreedomPlanet2.All,
+            Constants.TrapLink.Hammerwatch.All,
+            Constants.TrapLink.Noita.All,
+            Constants.TrapLink.GTA_SA.All,
+            Constants.TrapLink.Misc.All,
+        })
+            .SelectMany(a => a)
+            .ToArray();
 
         // Decorations and Statistics are not listen here, since there is not prefabs for that
         public static Dictionary<Prefabs, string> AllGameItems = new Dictionary<Prefabs, string>
@@ -299,7 +404,9 @@ namespace ArchipelagoMod.Src
 
 		public static class Attraction
         {
-			public static string[] BreakReason =
+            public static string GenericType = "Rides";
+
+            public static string[] BreakReason =
 			{
 				"RESTRAINTS_STUCK_OPEN",
 				"RESTRAINTS_STUCK_CLOSED",
@@ -418,12 +525,13 @@ namespace ArchipelagoMod.Src
 			};
 
 			public static string[] Types =
-			{
-				"Calm Rides",
+            {
+                "Calm Rides",
 				"Thrill Rides",
 				"Coaster Rides",
 				"Transport Rides",
 				"Water Rides",
+                Constants.Attraction.GenericType,
             };
 
             public static string[] All = (new[]
@@ -480,7 +588,11 @@ namespace ArchipelagoMod.Src
 
         public static class Stall
 		{
-			public static string[] Drinks =
+            public static string GenericType = "Shops";
+            public static string FacilityType = "Facilities";
+            public static string FacilityTypeLabel = "Non-Food + Non-Drink Shops";
+
+            public static string[] Drinks =
 			{
 				Prefabs.BubbleTeaStall.ToString(),
 				Prefabs.FruitJuiceStall.ToString(),
@@ -506,7 +618,7 @@ namespace ArchipelagoMod.Src
 				Prefabs.SubSandwiches.ToString(),
 				Prefabs.TurkeyLegStall.ToString(),
 			};
-			public static string[] Shops =
+			public static string[] Facilities =
 			{
 				Prefabs.BalloonShop.ToString(),
 				Prefabs.CashMachine.ToString(),
@@ -522,16 +634,39 @@ namespace ArchipelagoMod.Src
 
             public static string[] Types =
             {
-                "Shops"
+                "Drinks",
+                "Food",
+                Constants.Stall.FacilityType,
+                Constants.Stall.GenericType,
             };
 
             public static string[] All = (new[]
             {
                 Constants.Stall.Drinks,
                 Constants.Stall.Food,
-                Constants.Stall.Shops
+                Constants.Stall.Facilities
             })
                 .SelectMany(a => a).ToArray();
+
+            public static string DetermineType(string name)
+            {
+                if (Constants.Stall.Drinks.Contains(name))
+                {
+                    return Constants.Stall.Types[0];
+                }
+
+                if (Constants.Stall.Food.Contains(name))
+                {
+                    return Constants.Stall.Types[1];
+                }
+
+                if (Constants.Stall.Facilities.Contains(name))
+                {
+                    return Constants.Stall.Types[2];
+                }
+
+                return Constants.Mods.GetType(name);
+            }
         }
 
         public static class UtilityBuilding
@@ -1172,12 +1307,14 @@ namespace ArchipelagoMod.Src
 
         public static class Mods
         {
-            public static string[] Stalls =
+            public static string[] Food =
             {
                 "Dragon Shop",
                 "Taco Shop",
                 "Pancake Shop",
             };
+            public static string[] Drinks = {};
+            public static string[] Facilities = {};
             public static string[] CalmRides =
             {
                 "Hopper",
@@ -1211,14 +1348,28 @@ namespace ArchipelagoMod.Src
             public static string[] WaterRides =
             {};
 
-            public static string[] All = (new[]
+            public static string[] Stalls = (new[]
             {
-                Constants.Mods.Stalls,
+                Constants.Mods.Food,
+                Constants.Mods.Drinks,
+                Constants.Mods.Facilities,
+            })
+                .SelectMany(a => a).ToArray();
+
+            public static string[] Attractions = (new[]
+            {
                 Constants.Mods.CalmRides,
                 Constants.Mods.ThrillRides,
                 Constants.Mods.CoasterRides,
                 Constants.Mods.TransportRides,
                 Constants.Mods.WaterRides
+            })
+                .SelectMany(a => a).ToArray();
+
+            public static string[] All = (new[]
+            {
+                Constants.Mods.Stalls,
+                Constants.Mods.Attractions,
             })
                 .SelectMany(a => a).ToArray();
 
@@ -1249,9 +1400,20 @@ namespace ArchipelagoMod.Src
                     return Constants.Attraction.Types[4];
                 }
 
-                if (Constants.Mods.Stalls.Contains(thing))
+                // Shops
+                if (Constants.Mods.Drinks.Contains(thing))
                 {
                     return Constants.Stall.Types[0];
+                }
+
+                if (Constants.Mods.Food.Contains(thing))
+                {
+                    return Constants.Stall.Types[1];
+                }
+
+                if (Constants.Mods.Facilities.Contains(thing))
+                {
+                    return Constants.Stall.Types[2];
                 }
 
                 return "unknown";
@@ -1321,5 +1483,11 @@ namespace ArchipelagoMod.Src
             Constants.Research.Rules.All,
         })
             .SelectMany(a => a).ToArray();
+
+        public class EnergyLink
+        {
+            public static int Divider = 50000000;
+            public static float MinDepositMoney= 100f;
+        }
     }
 }

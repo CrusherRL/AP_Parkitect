@@ -21,6 +21,9 @@ namespace ArchipelagoMod.Src
         public bool enabled_trap_link = false;
         public bool server_has_set_trap_link = false;
 
+        public bool release_mode = true;
+        public bool server_has_set_release_mode = false;
+
         public int available_skips = 5;
 
         public int max_speedup = -1; // -1 is no progressive speedup. 3 or more meant to be max speedup with progressive speedup
@@ -92,7 +95,7 @@ namespace ArchipelagoMod.Src
                 this.ParkitectController.PlayerRemoveStatistics();
             }
 
-            List<List<string>> chunks = Helper.Chunk(this.SaveDataExport.unlocked_items);
+            List<List<string>> chunks = Helper.Chunk(this.SaveDataExport.unlocked_items, 10);
 
             foreach (List<string> chunk in chunks)
             {
@@ -253,7 +256,31 @@ namespace ArchipelagoMod.Src
         }
         public void SetServerHasSetTrapLink()
         {
+            this._help();
             this.SaveDataExport.server_has_set_trap_link = true;
+            this.Save();
+        }
+
+        public bool GetReleaseMode()
+        {
+            return this.SaveDataExport.release_mode;
+        }
+        public void SetReleaseMode(bool value)
+        {
+            this._help();
+            this.SaveDataExport.release_mode = value;
+            this.Save();
+        }
+
+        public bool GetServerHasSetReleaseMode()
+        {
+            return this.SaveDataExport.server_has_set_release_mode;
+        }
+        public void SetServerHasSetReleaseMode()
+        {
+            this._help();
+            this.SaveDataExport.server_has_set_release_mode = true;
+            this.Save();
         }
 
         public bool GetEnabledTrapLink()
@@ -356,6 +383,7 @@ namespace ArchipelagoMod.Src
 
             this.Save();
         }
+   
         public int GetMaxSpeedup()
         {
             this._help();
@@ -447,8 +475,7 @@ namespace ArchipelagoMod.Src
 
         private string MakeJsonData()
         {
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-            return Helper.MakeJsonData(this.SaveDataExport, jsonSettings);
+            return Helper.MakeJsonData(this.SaveDataExport, true);
         }
     }
 }

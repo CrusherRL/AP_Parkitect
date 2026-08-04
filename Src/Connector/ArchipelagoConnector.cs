@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,11 +23,25 @@ namespace ArchipelagoMod.Src.Connector
         private readonly SemaphoreSlim _sessionLock = new SemaphoreSlim(1, 1);
         private volatile bool _stopRetries;
 
+        public List<string> IgnoredPackets = new List<string>()
+        {
+            "RoomInfoPacket",
+            "TagsChangedPrintJsonPacket",
+            "ItemPrintJsonPacket"
+        };
+
+        public List<string> IgnoredMessages = new List<string>()
+        {
+            "Warning: your client does not support compressed websocket connections",
+        };
+
         // CancellationTokenSource for cleanly cancelling active connection attempts
         private CancellationTokenSource _cts;
 
         public int Retry = 10 * 1000;
         public int maxRetries { get; private set; } = 12;
+
+        public string[] Tags = new string[1] { "AP" };
 
         public ArchipelagoSession Session { get; private set; }
 
@@ -49,6 +64,8 @@ namespace ArchipelagoMod.Src.Connector
         public event Action OnConnectionFailed;
         public event Action<string> OnLoginFailed;
         public event Action<string, string> OnTrapReceived;
+        public event Action<ArchipelagoSession> OnHooksSetup;
+        public event Action<ArchipelagoSession> OnUnhooksSetup;
 
         protected Task CurrentTask = null;
 
@@ -122,45 +139,74 @@ namespace ArchipelagoMod.Src.Connector
             return this.JoinedTrapLink;
         }
 
-        public async Task DisconnectAsync()
+        public SetPacket BuildDepositEnergyLink(BigInteger amount)
         {
-            this._stopRetries = true;
-
-            // Stop any active connection attempt
-            if (this._cts != null)
+            Helper.Debug($"[ArchipelagoConnector::DepositEnergyLink]");
+            SetPacket SetPacket = new SetPacket
             {
-                this._cts.Cancel();
-            }
-
-            await this._sessionLock.WaitAsync();
-            try
-            {
-                var session = this.Session;
-                if (session != null && session.Socket.Connected)
+                Key = this.GetEnergyLinkKey(),
+                Operations = new OperationSpecification[2]
                 {
-                    await session.Socket.DisconnectAsync();
+                    new OperationSpecification() {
+                        OperationType = OperationType.Add,
+                        Value = JToken.Parse(amount.ToString())
+                    },
+                    new OperationSpecification() {
+                        OperationType = OperationType.Max,
+                        Value = JToken.Parse(0.ToString())
+                    }
                 }
-                this.Session = null;
-            }
-            finally
-            {
-                this._sessionLock.Release();
-            }
+            };
+
+            return SetPacket;
         }
 
-        public void ForwardSayPacket(string message)
+        public SetPacket BuildWithdrawEnergyLink(BigInteger amount, bool hitMax)
         {
-            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket]");
+            Helper.Debug($"[ArchipelagoConnector::WithdrawEnergyLink]");
+            SetPacket SetPacket = new SetPacket();
+            SetPacket.Key = this.GetEnergyLinkKey();
+            SetPacket.DefaultValue = JToken.FromObject(0);
+            SetPacket.WantReply = false;
+            SetPacket.Operations = new OperationSpecification[hitMax ? 2 : 1];
+            SetPacket.Operations[0] = new OperationSpecification()
+            {
+                OperationType = OperationType.Add,
+                Value = JToken.FromObject(amount * -1)
+            };
+
+            if (hitMax)
+            {
+                SetPacket.Operations[1] = new OperationSpecification()
+                {
+                    OperationType = OperationType.Max,
+                    Value = 0
+                };
+            }
+
+            return SetPacket;
+        }
+
+        public async Task ForwardPacket(ArchipelagoPacketBase packet, bool async = false)
+        {
+            Helper.Debug($"[ArchipelagoConnector::ForwardPacket]");
             if (!this.IsConnected)
             {
                 return;
             }
 
-            SayPacket packet = new SayPacket();
-            packet.Text = message;
+            Helper.Debug($"[ArchipelagoConnector::ForwardPacket] Sending Packet");
 
-            Helper.Debug($"[ArchipelagoConnector::ForwardSayPacket] SendPacket");
-            this.Session.Socket.SendPacket(packet);
+            if (async)
+            {
+                await this.Session.Socket.SendPacketAsync(packet);
+            }
+            else
+            {
+                this.Session.Socket.SendPacket(packet);
+            }
+
+            Helper.Debug($"[ArchipelagoConnector::ForwardPacket] Send");
         }
 
         public bool ForwardTrapLink(string trap)
@@ -250,7 +296,7 @@ namespace ArchipelagoMod.Src.Connector
                         this.HookSessionEvents(newSession);
 
                         await newSession.ConnectAsync();
-                        var result = await newSession.LoginAsync(this.Game, this.ParkitectAPConfig.Playername, ItemsHandlingFlags.AllItems, password: this.ParkitectAPConfig.Password);
+                        var result = await newSession.LoginAsync(this.Game, this.ParkitectAPConfig.Playername, ItemsHandlingFlags.AllItems, password: this.ParkitectAPConfig.Password, tags: this.Tags);
 
                         Helper.Debug($"[ArchipelagoConnector::TryConnectWithRetries] LoginResult - {result.Successful}");
 
@@ -288,6 +334,7 @@ namespace ArchipelagoMod.Src.Connector
                         Helper.Debug(e.StackTrace);
                         try
                         {
+                            this.UnhookSessionEvents();
                             this.OnConnectionFailed?.Invoke();
                         }
                         catch (Exception eventEx)
@@ -331,12 +378,40 @@ namespace ArchipelagoMod.Src.Connector
             }
         }
 
+        public async Task DisconnectAsync()
+        {
+            this._stopRetries = true;
+
+            // Stop any active connection attempt
+            if (this._cts != null)
+            {
+                this._cts.Cancel();
+            }
+
+            await this._sessionLock.WaitAsync();
+            try
+            {
+                var session = this.Session;
+                if (session != null && session.Socket.Connected)
+                {
+                    await session.Socket.DisconnectAsync();
+                }
+                this.Session = null;
+            }
+            finally
+            {
+                this._sessionLock.Release();
+            }
+        }
+
         private void HookSessionEvents(ArchipelagoSession session)
         {
             session.Socket.SocketClosed += this.OnSocketClosed;
             session.Socket.ErrorReceived += this.OnErrorReceived;
             session.Socket.PacketReceived += this.OnPacketReceived;
             session.Items.ItemReceived += this.OnReceivingItem;
+
+            this.OnHooksSetup?.Invoke(session);
         }
 
         private void UnhookSessionEvents()
@@ -345,6 +420,7 @@ namespace ArchipelagoMod.Src.Connector
             this.Session.Socket.ErrorReceived -= this.OnErrorReceived;
             this.Session.Socket.PacketReceived -= this.OnPacketReceived;
             this.Session.Items.ItemReceived -= this.OnReceivingItem;
+            this.OnUnhooksSetup?.Invoke(this.Session);
             this.Session = null;
         }
 
@@ -371,11 +447,6 @@ namespace ArchipelagoMod.Src.Connector
 
         private void OnErrorReceived(Exception e, string message)
         {
-            if (e.Message.Contains("Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy"))
-            {
-                return;
-            }
-
             Helper.Debug("[ArchipelagoConnector::OnErrorReceived] -> : " + e.ToString());
 
             if (e.Message.Contains("closed the WebSocket connection"))
@@ -402,6 +473,12 @@ namespace ArchipelagoMod.Src.Connector
         private void OnPacketReceived(ArchipelagoPacketBase packet)
         {
             Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] " + packet.GetType().Name);
+            if (this.IgnoredPackets.Contains(packet.GetType().Name))
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] ignored Packet");
+                return;
+            }
+
             if (packet is ChatPrintJsonPacket chatPrint)
             {
                 Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is ChatPrintJsonPacket");
@@ -410,7 +487,15 @@ namespace ArchipelagoMod.Src.Connector
             else if (packet is PrintJsonPacket print)
             {
                 Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is PrintJsonPacket");
-                this.OnReceivedPacket?.Invoke(string.Join("", print.Data.Select(p => p.Text)));
+                string text = string.Join("", print.Data.Select(p => p.Text));
+
+                if (this.IgnoredMessages.Any(msg => text.Contains(msg)))
+                {
+                    Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] ignored Packet");
+                    return;
+                }
+
+                this.OnReceivedPacket?.Invoke(text);
             }
             else if (packet is BouncedPacket bouncedPacket)
             {
@@ -420,6 +505,16 @@ namespace ArchipelagoMod.Src.Connector
                     string player = this.GetSource(bouncedPacket);
                     this.OnTrapReceived?.Invoke(this.GetTrapLinkValue(bouncedPacket), player);
                 }
+            }
+            else if (packet is SetPacket setPacket)
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is SetPacket");
+                Helper.Debug($"Value={setPacket.Operations[0].Value} - Operation={setPacket.Operations[0].OperationType.ToString()}");
+            }
+            else if (packet is DataPackagePacket DataPackagePacket)
+            {
+                Helper.Debug($"[ArchipelagoConnector::OnPacketReceived] is DataPackagePacket");
+                Helper.Debug($"Games={DataPackagePacket.DataPackage.Games}");
             }
         }
 
@@ -464,6 +559,11 @@ namespace ArchipelagoMod.Src.Connector
         private List<string> GetCurrentTags()
         {
             return this.Session.ConnectionInfo.Tags.ToList();
+        }
+
+        public string GetEnergyLinkKey()
+        {
+            return string.Format("EnergyLink{0}", this.Session?.ConnectionInfo?.Team ?? 0);
         }
     }
 }

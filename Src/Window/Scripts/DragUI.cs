@@ -16,11 +16,7 @@ namespace ArchipelagoMod.Src.Window.Scripts
 
         void IDragHandler.OnDrag(PointerEventData eventData)
         {
-            if (this.RectTransform == null)
-            {
-                return;
-            }
-            if (this.Canvas == null)
+            if (this.RectTransform == null || this.Canvas == null)
             {
                 return;
             }

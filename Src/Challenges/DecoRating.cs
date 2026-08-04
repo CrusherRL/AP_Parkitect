@@ -5,7 +5,7 @@ namespace ArchipelagoMod.Src.Challenges
     class DecoRating
     {
         public string Label { get; set; } = "Decoration";
-        public string Color { get; set; } = "#4B78C9"; // Light Blue
+        public string Color { get; set; } = Colors.LightBlue;
 
         public string Value { get; set; } = null;
 
