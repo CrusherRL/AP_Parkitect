@@ -30,7 +30,7 @@ namespace ArchipelagoMod.Src.Window
 
             if (AssetBundle == null)
             {
-                Helper.Debug($"[AbstractWindow::Awake] Assetbundle not found - {OS} -> {this.BundleFilename}");
+                Helper.Debug($"[AbstractWindow::Awake] Assetbundle not found - {OS} -> {this.BundleFilename} at: {bundlePath}");
                 return;
             }
 
@@ -134,6 +134,17 @@ namespace ArchipelagoMod.Src.Window
                     return "Linux";
                 default:
                     return "Unknown";
+            }
+        }
+   
+        protected void LogChildren(Transform parent, string path = "")
+        {
+            foreach (Transform child in parent)
+            {
+                string currentPath = $"{path}/{child.name}";
+                Helper.Debug(currentPath);
+
+                LogChildren(child, currentPath);
             }
         }
     }

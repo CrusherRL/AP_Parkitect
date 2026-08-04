@@ -40,15 +40,18 @@ namespace ArchipelagoMod.Src.SlotData
     {
         public string name { get; set; }
         public int amount { get; set; }
-        public int revenue { get; set; }
+        public float revenue { get; set; }
+        public float profit { get; set; }
         public int customers { get; set; }
         public string deco { get; set; }
         public string type { get; set; }
+        public int vouchers { get; set; }
 
         // Optional fields (some challenges like coasters)
         public float? excitement { get; set; }
         public float? intensity { get; set; }
         public float? nausea { get; set; }
         public float? satisfaction { get; set; }
+        public int? photos { get; set; }
     }
 }

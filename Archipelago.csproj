@@ -1,20 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>NET4.7.2</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.6.1">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.1" />
     <PackageReference Include="Archipelago.MultiClient.Net.Analyzers" Version="1.1.0">
-      <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" ExcludeAssets="all" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <Reference Include="Parkitect">
       <HintPath>E:\Steam\steamapps\common\Parkitect\Parkitect_Data\Managed\Parkitect.dll</HintPath>

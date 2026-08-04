@@ -1,4 +1,5 @@
-﻿using ArchipelagoMod.Src.Controller;
+﻿using ArchipelagoMod.Src.Challenges;
+using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.SlotData;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,11 @@ namespace ArchipelagoMod.Src.Window
             this.Controller = GetComponent<ParkitectController>();
             this.WindowRect = new Rect(40, 40, 700, 200);
             Helper.Debug($"[DebuggerWindow::Awake] Booted");
+
+            if (Constants.LogStats)
+            {
+                this.LogParkitectArchipelagoData();
+            }
         }
 
         void Update()
@@ -492,9 +498,9 @@ namespace ArchipelagoMod.Src.Window
                 }
             }
 
-            if (GUILayout.Button("Complete all Locations"))
+            if (GUILayout.Button("Achieve Goal"))
             {
-                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Completion");
+                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] GoalAchieved");
                 GetComponent<ArchipelagoController>().GoalAchieved();
             }
 
@@ -512,147 +518,141 @@ namespace ArchipelagoMod.Src.Window
             GUILayout.BeginHorizontal();
             ParkitectController parkitectController = GetComponent<ParkitectController>();
 
-            if (GUILayout.Button("Log All unlocked Items for AP"))
+            if (GUILayout.Button("Check Photos"))
             {
-                Helper.Debug($"==========");
-                Helper.Debug($"Park: {GameController.Instance.park.parkName}");
-                Helper.Debug("----------");
-                List<ResearchRule> rules = GameController.Instance.park.scenario.research.getRules().Where(r => r.isUnlocked).OrderBy(r => r.name).ToList();
-
-                foreach (ResearchRule r in rules)
-                {
-                    Helper.Debug(r.name);
-                }
-                Helper.Debug($"==========");
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttraction(Constants.Attraction.CoasterRides[19], 1);
+                challenge.AddPhoto(10);
+                challenge.Check();
             }
 
-            if (GUILayout.Button("Log All unlocked Items for AP - Starters"))
+            if (GUILayout.Button("Check Photos - type"))
             {
-                Helper.Debug($"==========");
-                Helper.Debug($"Park: {GameController.Instance.park.parkName}");
-                Helper.Debug("----------");
-                List<ResearchRule> rules = GameController.Instance.park.scenario.research.getRules().Where(r => r.isUnlocked && (Constants.Attraction.All.Contains(r.name) || Constants.Stall.All.Contains(r.name))).OrderBy(r => r.name).ToList();
-
-                foreach (ResearchRule r in rules)
-                {
-                    Helper.Debug(r.name);
-                }
-                Helper.Debug($"==========");
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttractionType(Constants.Attraction.Types[2], 1);
+                challenge.AddPhoto(10);
+                challenge.Check();
             }
+
+            if (GUILayout.Button("Check Vouchers - a"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttraction(Constants.Attraction.ThrillRides[13], 1);
+                challenge.AddVoucher(10);
+                challenge.Check();
+            }
+
+            if (GUILayout.Button("Check Vouchers - s"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetShop(Constants.Stall.Food[10], 1);
+                challenge.AddVoucher(10);
+                challenge.Check();
+            }
+
+            if (GUILayout.Button("Check Vouchers - a type"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttractionType(Constants.Attraction.Types[2], 1);
+                challenge.AddVoucher(10);
+                challenge.Check();
+            }
+
+            if (GUILayout.Button("Check Vouchers - s type"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetShopType(Constants.Stall.Types[1], 1);
+                challenge.AddVoucher(10);
+                challenge.Check();
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Check Profit all - a"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
+                challenge.AddProfitRating(10000);
+                challenge.Check();
+            }
+            if (GUILayout.Button("Check Profit all - s"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetShopType(Constants.Stall.Types[0], 3);
+                challenge.AddProfitRating(10000);
+                challenge.Check();
+            }
+
+            if (GUILayout.Button("Check Revenue all - a"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
+                challenge.AddRevenueRating(10000);
+                challenge.Check();
+            }
+            if (GUILayout.Button("Check Revenue all - s"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetShopType(Constants.Stall.Types[0], 3);
+                challenge.AddRevenueRating(10000);
+                challenge.Check();
+            }
+
+            if (GUILayout.Button("Check Photo all - a"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
+                challenge.AddPhoto(10000);
+                challenge.Check();
+            }
+
+            if (GUILayout.Button("Check Vouchers all - a"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
+                challenge.AddVoucher(10000);
+                challenge.Check();
+            }
+            if (GUILayout.Button("Check Vouchers all - s"))
+            {
+                Challenge challenge = new Challenge(parkitectController, -1);
+                challenge.SetShopType(Constants.Stall.Types[0], 3);
+                challenge.AddVoucher(10000);
+                challenge.Check();
+            }
+
+            //if (GUILayout.Button("Log All unlocked Items for AP"))
+            //{
+            //    Helper.Debug($"==========");
+            //    Helper.Debug($"Park: {GameController.Instance.park.parkName}");
+            //    Helper.Debug("----------");
+            //    List<ResearchRule> rules = GameController.Instance.park.scenario.research.getRules().Where(r => r.isUnlocked).OrderBy(r => r.name).ToList();
+
+            //    foreach (ResearchRule r in rules)
+            //    {
+            //        Helper.Debug(r.name);
+            //    }
+            //    Helper.Debug($"==========");
+            //}
+
+            //if (GUILayout.Button("Log All unlocked Items for AP - Starters"))
+            //{
+            //    Helper.Debug($"==========");
+            //    Helper.Debug($"Park: {GameController.Instance.park.parkName}");
+            //    Helper.Debug("----------");
+            //    List<ResearchRule> rules = GameController.Instance.park.scenario.research.getRules().Where(r => r.isUnlocked && (Constants.Attraction.All.Contains(r.name) || Constants.Stall.All.Contains(r.name))).OrderBy(r => r.name).ToList();
+
+            //    foreach (ResearchRule r in rules)
+            //    {
+            //        Helper.Debug(r.name);
+            //    }
+            //    Helper.Debug($"==========");
+            //}
 
             if (GUILayout.Button("Log All Items for AP"))
             {
-                Helper.Debug($"==========");
-                Helper.Debug($"Park: {GameController.Instance.park.parkName}");
-                Helper.Debug("----------");
-
-                List<ResearchRule> rules = GameController.Instance.park.scenario.research.getRules().ToList();
-                
-                List<ResearchRule> calms = rules.Where(r => Constants.Attraction.CalmRides.Contains(r.name)).OrderBy(r => r.name).ToList();
-                List<ResearchRule> thrills = rules.Where(r => Constants.Attraction.ThrillRides.Contains(r.name)).OrderBy(r => r.name).ToList();
-                List<ResearchRule> coasters = rules.Where(r => Constants.Attraction.CoasterRides.Contains(r.name)).OrderBy(r => r.name).ToList();
-                List<ResearchRule> transports = rules.Where(r => Constants.Attraction.TransportRides.Contains(r.name)).OrderBy(r => r.name).ToList();
-                List<ResearchRule> waters = rules.Where(r => Constants.Attraction.WaterRides.Contains(r.name)).OrderBy(r => r.name).ToList();
-                List<ResearchRule> stats = rules.Where(r => Constants.Research.Rules.Statistics.Contains(r.name)).OrderBy(r => r.name).ToList();
-                List<ResearchRule> shops = rules.Where(r => Constants.Stall.All.Contains(r.name)).OrderBy(r => r.name).ToList();
-
-                List<ResearchRule> decorations = rules.Where(r => Constants.Research.Rules.Decorations.Contains(r.name)).ToList();
-                List<string> decos = new List<string>();
-                foreach (ResearchRule d in decorations)
-                {
-                    string key = Constants.Decorations.ThemeTagMapToProps
-                        .FirstOrDefault(x => x.Value.Contains(d.name))
-                        .Key;
-                    decos.Add(key);
-                }
-
-                Helper.Debug($"{Constants.Attraction.Types[0]}:");
-                foreach (ResearchRule thing in calms)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.name} - {thing.isUnlocked}");
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug($"{Constants.Attraction.Types[1]}:");
-                foreach (ResearchRule thing in thrills)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.name} - {thing.isUnlocked}");
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug($"{Constants.Attraction.Types[2]}:");
-                foreach (ResearchRule thing in coasters)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.name} - {thing.isUnlocked}");
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug($"{Constants.Attraction.Types[3]}:");
-                foreach (ResearchRule thing in transports)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.name} - {thing.isUnlocked}");
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug($"{Constants.Attraction.Types[4]}:");
-                foreach (ResearchRule thing in waters)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.name} - {thing.isUnlocked}");
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug("Decoration Theme Tags:");
-                foreach (string deco in decos.Distinct().ToList())
-                {
-                    try
-                    {
-                        Helper.Debug(deco);
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug("Statistics:");
-                foreach (ResearchRule stat in stats)
-                {
-                    try
-                    {
-                        Helper.Debug(stat.name);
-                    }
-                    catch { }
-                }
-                Helper.Debug("----------");
-
-                Helper.Debug("Shops:");
-                foreach (ResearchRule thing in shops)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.name} - {thing.isUnlocked}");
-                    }
-                    catch { }
-                }
-                Helper.Debug($"==========");
+                this.LogParkitectArchipelagoData();
             }
 
             //if (GUILayout.Button("Log All Decorations"))
@@ -672,22 +672,22 @@ namespace ArchipelagoMod.Src.Window
             //    }
             //}
 
-            if (GUILayout.Button("Log All research rules"))
-            {
-                Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Log All research rules");
-                List<ResearchRule> things = GameController.Instance.park.scenario.research.getRules().ToList();
-                foreach (ResearchRule thing in things)
-                {
-                    try
-                    {
-                        Helper.Debug($"{thing.getReferenceName()} = {thing.name}");
-                    }
-                    catch
-                    {
-                        Helper.Debug($"--- Failed ---");
-                    }
-                }
-            }
+            //if (GUILayout.Button("Log All research rules"))
+            //{
+            //    Helper.Debug($"[DebuggerWindow::DrawTestingOptions] Log All research rules");
+            //    List<ResearchRule> things = GameController.Instance.park.scenario.research.getRules().ToList();
+            //    foreach (ResearchRule thing in things)
+            //    {
+            //        try
+            //        {
+            //            Helper.Debug($"{thing.getReferenceName()} = {thing.name}");
+            //        }
+            //        catch
+            //        {
+            //            Helper.Debug($"--- Failed ---");
+            //        }
+            //    }
+            //}
 
             //int l = 0;
             //foreach (string trap in Constants.TrapLinks)
@@ -841,6 +841,121 @@ namespace ArchipelagoMod.Src.Window
             {
                 GUILayout.EndHorizontal();
             }
+        }
+
+        protected void LogParkitectArchipelagoData()
+        {
+            Helper.Debug($"==========");
+            Helper.Debug($"Park: {GameController.Instance.park.parkName}");
+            Helper.Debug("----------");
+
+            List<ResearchRule> rules = GameController.Instance.park.scenario.research.getRules().ToList();
+
+            List<ResearchRule> calms = rules.Where(r => Constants.Attraction.CalmRides.Contains(r.name)).OrderBy(r => r.name).ToList();
+            List<ResearchRule> thrills = rules.Where(r => Constants.Attraction.ThrillRides.Contains(r.name)).OrderBy(r => r.name).ToList();
+            List<ResearchRule> coasters = rules.Where(r => Constants.Attraction.CoasterRides.Contains(r.name)).OrderBy(r => r.name).ToList();
+            List<ResearchRule> transports = rules.Where(r => Constants.Attraction.TransportRides.Contains(r.name)).OrderBy(r => r.name).ToList();
+            List<ResearchRule> waters = rules.Where(r => Constants.Attraction.WaterRides.Contains(r.name)).OrderBy(r => r.name).ToList();
+            List<ResearchRule> stats = rules.Where(r => Constants.Research.Rules.Statistics.Contains(r.name)).OrderBy(r => r.name).ToList();
+            List<ResearchRule> shops = rules.Where(r => Constants.Stall.All.Contains(r.name)).OrderBy(r => r.name).ToList();
+
+            List<ResearchRule> decorations = rules.Where(r => Constants.Research.Rules.Decorations.Contains(r.name)).ToList();
+            List<string> decos = new List<string>();
+            foreach (ResearchRule d in decorations)
+            {
+                string key = Constants.Decorations.ThemeTagMapToProps
+                    .FirstOrDefault(x => x.Value.Contains(d.name))
+                    .Key;
+                decos.Add(key);
+            }
+
+            Helper.Debug($"{Constants.Attraction.Types[0]}:");
+            foreach (ResearchRule thing in calms)
+            {
+                try
+                {
+                    Helper.Debug($"{thing.name} - {thing.isUnlocked}");
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug($"{Constants.Attraction.Types[1]}:");
+            foreach (ResearchRule thing in thrills)
+            {
+                try
+                {
+                    Helper.Debug($"{thing.name} - {thing.isUnlocked}");
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug($"{Constants.Attraction.Types[2]}:");
+            foreach (ResearchRule thing in coasters)
+            {
+                try
+                {
+                    Helper.Debug($"{thing.name} - {thing.isUnlocked}");
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug($"{Constants.Attraction.Types[3]}:");
+            foreach (ResearchRule thing in transports)
+            {
+                try
+                {
+                    Helper.Debug($"{thing.name} - {thing.isUnlocked}");
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug($"{Constants.Attraction.Types[4]}:");
+            foreach (ResearchRule thing in waters)
+            {
+                try
+                {
+                    Helper.Debug($"{thing.name} - {thing.isUnlocked}");
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug("Decoration Theme Tags:");
+            foreach (string deco in decos.Distinct().ToList())
+            {
+                try
+                {
+                    Helper.Debug(deco);
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug("Statistics:");
+            foreach (ResearchRule stat in stats)
+            {
+                try
+                {
+                    Helper.Debug(stat.name);
+                }
+                catch { }
+            }
+            Helper.Debug("----------");
+
+            Helper.Debug("Shops:");
+            foreach (ResearchRule thing in shops)
+            {
+                try
+                {
+                    Helper.Debug($"{thing.name} - {thing.isUnlocked}");
+                }
+                catch { }
+            }
+            Helper.Debug($"==========");
         }
     }
 }

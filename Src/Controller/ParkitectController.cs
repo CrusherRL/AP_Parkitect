@@ -1,5 +1,4 @@
-﻿using Archipelago.Src;
-using ArchipelagoMod.Src.Challenges;
+﻿using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Dispatcher;
 using ArchipelagoMod.Src.SlotData;
 using Parkitect.UI;
@@ -43,7 +42,7 @@ namespace ArchipelagoMod.Src.Controller
         }
 
         // Receive a small amount of money
-        public void PlayerAddMoney(float money = 500)
+        public void PlayerAddMoney(float money = 500f)
         {
             MainThreadDispatcher.Enqueue(() =>
             {
@@ -54,7 +53,21 @@ namespace ArchipelagoMod.Src.Controller
                 GameController.Instance.park.parkInfo.moneyTransaction(money, MonthlyTransactions.Transaction.REWARD);
             });
         }
-   
+        public void PlayerAddMoney(float money = 500f, bool force = false)
+        {
+            if (!force)
+            {
+                this.PlayerAddMoney(money);
+                return;
+            }
+
+            MainThreadDispatcher.Enqueue(() =>
+            {
+                Helper.Debug(money.ToString());
+                GameController.Instance.park.parkInfo.moneyTransaction(money, MonthlyTransactions.Transaction.REWARD);
+            });
+        }
+
         public void PlayerRemoveMoney(double money)
         {
             MainThreadDispatcher.Enqueue(() =>
@@ -102,8 +115,7 @@ namespace ArchipelagoMod.Src.Controller
 
         public void PlayerAddMyGuests()
         {
-            ParkitectGuests.CreateMe();
-            ParkitectGuests.CreateFirstChatter();
+            ParkitectGuests.CreateAll();
         }
 
         public void PlayerAddGuestInventory(List<Guest> guests, Item voucher)
@@ -1221,12 +1233,12 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             // OpenRCT2
-            if (AP_Item.Name == "Bathroom Trap")
+            if (AP_Item.Name == Constants.TrapLink.OpenRCT2.BathroomTrap)
             {
                 this.TrapLinkBathroom(AP_Item.Name);
                 return;
             }
-            if (AP_Item.Name == "Furry Convention Trap")
+            if (AP_Item.Name == Constants.TrapLink.OpenRCT2.FurryConventionTrap)
             {
                 Prefabs employee = Constants.Employee.Options[3];
                 int amount = Randomizer.GetRandomInt(Constants.Employee.SpawnRanges[this.AP_Rules.difficulty]);
@@ -1235,79 +1247,86 @@ namespace ArchipelagoMod.Src.Controller
                 this.TrapLinkActivated(AP_Item.Name);
                 return;
             }
-            if (AP_Item.Name == "Food poisoning Trap")
+            if (AP_Item.Name == Constants.TrapLink.OpenRCT2.FoodPoisoningTrap)
             {
                 this.TrapLinkPoison(AP_Item.Name);
                 return;
             }
 
             // Pokemon
-            if (AP_Item.Name == "Burn Trap" || AP_Item.Name == "Fire Trap")
+            if (AP_Item.Name == Constants.TrapLink.Pokemon.BurnTrap || AP_Item.Name == Constants.TrapLink.Pokemon.FireTrap)
             {
                 this.TrapLinkThirstGuests(AP_Item.Name);
                 return;
             }
-            if (AP_Item.Name == "Poison Trap")
+            if (AP_Item.Name == Constants.TrapLink.Pokemon.PoisonTrap)
             {
                 this.TrapLinkPoison(AP_Item.Name);
                 return;
             }
-            if (AP_Item.Name == "Sleep Trap")
+            if (AP_Item.Name == Constants.TrapLink.Pokemon.SleepTrap)
             {
                 this.TrapLinkSleepGuests(AP_Item.Name);
                 return;
             }
-            if (AP_Item.Name == "Ice Trap")
+            if (AP_Item.Name == Constants.TrapLink.Pokemon.IceTrap)
             {
                 this.TrapLinkIce(AP_Item.Name, Prefabs.IceCreamStall);
                 return;
             }
-            if (AP_Item.Name == "Freeze Trap")
+            if (AP_Item.Name == Constants.TrapLink.Pokemon.FreezeTrap)
             {
                 this.TrapLinkIce(AP_Item.Name, Prefabs.SnowconesStall);
                 return;
             }
 
             // Brave Fencer Musashi
-            if (AP_Item.Name == "Toxin Trap")
+            if (AP_Item.Name == Constants.TrapLink.BraveFencerMusashi.ToxinTrap)
             {
                 this.TrapLinkPoison(AP_Item.Name);
                 return;
             }
-            if (AP_Item.Name == "Stinky Trap")
+            if (AP_Item.Name == Constants.TrapLink.BraveFencerMusashi.StinkyTrap)
             {
                 this.TrapLinkRestock(AP_Item.Name);
                 return;
             }
 
             // Freedom Planet 2
-            if (AP_Item.Name == "Expensive Stocks")
+            if (AP_Item.Name == Constants.TrapLink.FreedomPlanet2.ExpensiveStocks)
             {
                 this.TrapLinkRestock(AP_Item.Name, 30);
                 return;
             }
-            if (AP_Item.Name == "No Stocks")
+            if (AP_Item.Name == Constants.TrapLink.FreedomPlanet2.NoStocks)
             {
                 this.TrapLinkRestock(AP_Item.Name, 100);
                 return;
             }
 
             // Hammerwatch
-            if (AP_Item.Name == "Frost Trap")
+            if (AP_Item.Name == Constants.TrapLink.Hammerwatch.FrostTrap)
             {
                 this.TrapLinkIce(AP_Item.Name, Prefabs.SnowconesStall);
                 return;
             }
 
             // Noita
-            if (AP_Item.Name == "Pea Soup Trap")
+            if (AP_Item.Name == Constants.TrapLink.Noita.PeaSoupTrap)
             {
                 this.TrapLinkGreenPeas(AP_Item.Name);
                 return;
             }
 
-            // Noita
-            if (AP_Item.Name == "Frozen Trap")
+            // GTA SA
+            if (AP_Item.Name == Constants.TrapLink.GTA_SA.Fat_CJ_Trap)
+            {
+                this.TrapLinkPoison(AP_Item.Name);
+                return;
+            }
+
+            // idk? -> Misc
+            if (AP_Item.Name == Constants.TrapLink.Misc.FrozenTrap)
             {
                 this.TrapLinkIce(AP_Item.Name, Prefabs.SnowconesStall);
                 return;
@@ -1586,7 +1605,7 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Attraction> GetAllCountableAttractionsTypeFromPark(string type, DecoRating decoRating = null)
         {
-            string[] attractions = Constants.Attraction.WaterRides.Concat(Constants.Mods.WaterRides).ToArray();
+            string[] attractions = Constants.Attraction.All.Concat(Constants.Mods.Attractions).ToArray();
 
             if (type == "Calm Rides")
             {
@@ -1603,6 +1622,10 @@ namespace ArchipelagoMod.Src.Controller
             else if (type == "Transport Rides")
             {
                 attractions = Constants.Attraction.TransportRides.Concat(Constants.Mods.TransportRides).ToArray();
+            }
+            else if (type == "Water Rides")
+            {
+                attractions = Constants.Attraction.WaterRides.Concat(Constants.Mods.WaterRides).ToArray();
             }
 
             return this.GetAllAttractionsFromPark()
@@ -1699,21 +1722,21 @@ namespace ArchipelagoMod.Src.Controller
         }
         public List<Shop> GetAllCountableShopsTypeFromPark(string type)
         {
-            string[] shops = Constants.Stall.All.Concat(Constants.Mods.Stalls).ToArray();
+            string[] shops = Constants.Stall.Food.Concat(Constants.Mods.Food).ToArray();
 
             // For the future !
-            //if (type == "Drinks")
-            //{
-            //    shops = Constants.Stall.Drinks;
-            //}
-            //if (type == "Food")
-            //{
-            //    shops = Constants.Stall.Food;
-            //}
-            //if (type == "Shops")
-            //{
-            //    shops = Constants.Stall.Shops;
-            //}
+            if (type == "Drinks")
+            {
+                shops = Constants.Stall.Drinks.Concat(Constants.Mods.Drinks).ToArray();
+            }
+            if (type == "Facilities")
+            {
+                shops = Constants.Stall.Facilities.Concat(Constants.Mods.Facilities).ToArray();
+            }
+            if (type == Constants.Stall.GenericType)
+            {
+                shops = Constants.Stall.All.Concat(Constants.Mods.Stalls).ToArray();
+            }
 
             return this.GetAllShopsFromPark()
                 .Where(s =>
@@ -1725,7 +1748,7 @@ namespace ArchipelagoMod.Src.Controller
                         isShop = shops.Contains(s.getPrefabType().ToString());
                     } else
                     {
-                        shops.Contains(s.getName());
+                        isShop = shops.Contains(s.getName());
                     }
 
                     return isShop
@@ -1921,7 +1944,7 @@ namespace ArchipelagoMod.Src.Controller
             {
                 return false;
             }
-            return GameController.Instance.park.scenario.research.getRule(referenceName).canUnlock;
+            return GameController.Instance.park.scenario.research.getRule(referenceName)?.canUnlock ?? false;
         }
 
         public ThemeContainer FindThemeContainer(string themeTag)
@@ -1944,6 +1967,24 @@ namespace ArchipelagoMod.Src.Controller
         public double GetPlayerMoney()
         {
             return GameController.Instance.park.parkInfo.money;
+        }
+
+        public float GetFee()
+        {
+            switch (this.AP_Rules.difficulty)
+            {
+                case 1: // medium = 1
+                    return 20f;
+
+                case 2: // hard = 2
+                    return 30f;
+
+                case 3: // extreme = 3
+                    return 40f;
+
+                default:
+                    return 10f;
+            }
         }
     }
 }

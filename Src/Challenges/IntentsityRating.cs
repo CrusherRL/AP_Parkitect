@@ -3,8 +3,8 @@
     class IntensityRating : AbstractRating
     {
         public override string Label { get; set; } = "Intensity";
-        public override string Color { get; set; } = "#B46A08"; // Orange
+        public override string Color { get; set; } = Colors.LightOrange;
 
-        public IntensityRating(float rating, string currency = "") : base(rating, currency) {}
+        public IntensityRating(float rating, string type = null, string currency = "") : base(rating, type, currency) {}
     }
 }

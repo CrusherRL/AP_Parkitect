@@ -28,6 +28,8 @@ namespace ArchipelagoMod.Src.SlotData
 
         public bool trap_link { get; set; } = false;
 
+        public bool release_mode_disabled { get; set; } = false;
+
         public static AP_Rules Init(object rulesObject)
         {
             // rulesObject is an array with one element
