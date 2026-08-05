@@ -1,8 +1,8 @@
 ﻿using ArchipelagoMod.Src;
 using ArchipelagoMod.Src.Controller;
+using ArchipelagoMod.Src.Migration;
 using ArchipelagoMod.Src.UI;
 using ArchipelagoMod.Src.Window;
-using System.IO;
 using UnityEngine;
 
 namespace ArchipelagoMod
@@ -31,14 +31,17 @@ namespace ArchipelagoMod
         private DebuggerWindow DebuggerWindow = null;
         private ArchipelagoWindow ArchipelagoWindow = null;
 
+        public void OnBeforeStart()
+        {
+            Constants.ModPath = System.IO.Path.Combine(GameController.modsPath, Constants.ParkitectAPFolder) + System.IO.Path.DirectorySeparatorChar;
+            new MigrationHelper().RunMigrations();
+        }
+
         public override void onEnabled()
         {
             Helper.Debug("=============================================");
 
-            Constants.ModPath = GameController.modsPath + System.IO.Path.Combine("Archipelago") + System.IO.Path.DirectorySeparatorChar;
-            Constants.SaveGamesPath = Constants.ModPath + System.IO.Path.Combine("Savegames") + System.IO.Path.DirectorySeparatorChar;
-            Directory.CreateDirectory(Constants.SaveGamesPath);
-
+            this.OnBeforeStart();
             ScriptableSingleton<ArchipelagoSettings>.Instance.Load();
 
             // Sicherheitsnetz: Falls aus irgendeinem Grund noch ein altes Objekt mit diesem Namen existiert, löschen wir es vorab
@@ -68,6 +71,7 @@ namespace ArchipelagoMod
         }
         public void onSettingsOpened()
         {
+            this.OnBeforeStart();
             ScriptableSingleton<ArchipelagoSettings>.Instance.Load();
         }
 

@@ -1,5 +1,4 @@
-﻿using ArchipelagoMod.Src.Config;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ArchipelagoMod.Src.UI
 {
@@ -7,7 +6,7 @@ namespace ArchipelagoMod.Src.UI
     {
         public static void Draw()
         {
-            string configPath = ParkitectAPConfig.GetConfigFilePath();
+            string configPath = Helper.FormatStringForOS(Constants.ConfigPath);
             GUILayoutOption width = GUILayout.Width(200f);
             GUIStyle defaultStyle = ArchipelagoSettingsUI.GetTextFieldStyle();
             ArchipelagoSettings instance = ScriptableSingleton<ArchipelagoSettings>.Instance;
@@ -28,14 +27,19 @@ namespace ArchipelagoMod.Src.UI
 
             // Config Info
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Path to Config:");
+            GUILayout.Label("Path to AP Config:");
             if (GUILayout.Button("Copy", GUILayout.Width(80f)))
             {
                 GUIUtility.systemCopyBuffer = configPath;
                 GUI.FocusControl(null);
             }
+            if (GUILayout.Button("Open", GUILayout.Width(80f)))
+            {
+                FileExplorer.OpenFolder(configPath);
+                GUI.FocusControl(null);
+            }
             GUILayout.EndHorizontal();
-            
+
             GUILayout.BeginHorizontal();
             ArchipelagoSettingsUI.DisabledTextArea(configPath);
             GUILayout.EndHorizontal();

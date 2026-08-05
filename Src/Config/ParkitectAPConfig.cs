@@ -37,7 +37,7 @@ namespace ArchipelagoMod.Src.Config
             Helper.Debug("[ParkitectAPConfig::CreateConfig] -> ParkitectAPConfig Created new config");
         }
 
-        public static ParkitectAPConfig Load ()
+        public static ParkitectAPConfig Load()
         {
             string jsonData = File.ReadAllText(ParkitectAPConfig.GetConfigFilePath());
 
@@ -63,7 +63,7 @@ namespace ArchipelagoMod.Src.Config
             }
         }
 
-        public static ParkitectAPConfig LoadLocal ()
+        public static ParkitectAPConfig LoadLocal()
         {
             ParkitectAPConfig self = new ParkitectAPConfig();
 
@@ -75,13 +75,12 @@ namespace ArchipelagoMod.Src.Config
             return self;
         }
 
-        public static string GetConfigFilePath ()
+        public static string GetConfigFilePath()
         {
-            string folder = System.IO.Path.Combine(Application.persistentDataPath, Constants.ParkitectAPFolder);
-            return System.IO.Path.Combine(folder, Constants.ParkitectAPFilename);
+            return System.IO.Path.Combine(Constants.ConfigPath, Constants.ParkitectAPFilename);
         }
 
-        public static bool HasConfigFile ()
+        public static bool HasConfigFile()
         {
             return File.Exists(ParkitectAPConfig.GetConfigFilePath());
         }

@@ -8,16 +8,20 @@ namespace ArchipelagoMod.Src
     class Constants
     {
         public const string IDENTIFIER = "com.parkitectCommunity.Archipelago";
-        public const string VERSION = "1.6.0";
+        public const string VERSION = "1.6.1";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
         public static string Playername = null;
         public static int ArchipelagoBaseId = 3000000;
-		public static string ParkitectAPFilename = "config_parkitect.json";
-		public static string ParkitectAPFolder = "Parkitect_Archipelago";
+
+		public static string ParkitectAPFilename = "ap_config.json";
+		public static string ParkitectAPFolder = "Archipelago";
+        public static string ParkitectSavegamesFolder = "Savegames";
+        public static string ParkitectDebugLogFilename = "debug.log.txt";
 
         public static string ModPath = null;
+        public static string ConfigPath = null;
         public static string SaveGamesPath = null;
         public static string ScenarioName = null;
         public static bool Debug = true;
@@ -26,7 +30,7 @@ namespace ArchipelagoMod.Src
 
         public static readonly CultureInfo GermanCulture = new CultureInfo("de-DE");
 
-        public class Commands
+        public static class Commands
         {
             public class TrapLink
             {
