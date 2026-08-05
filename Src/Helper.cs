@@ -2,9 +2,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using UnityEngine;
 
 namespace ArchipelagoMod.Src
 {
@@ -23,14 +25,19 @@ namespace ArchipelagoMod.Src
             return (Prefabs)System.Enum.Parse(typeof(Prefabs), prefab);
         }
 
-        public static void Debug(string content, string filename = "debug.log.txt", bool append = true)
+        public static void Debug(string content, string filename = null, bool append = true)
         {
             if (!Helper.LogsEnabled())
             {
                 return;
             }
 
-            string filePath = Constants.ModPath + filename;
+            if (string.IsNullOrEmpty(filename))
+            {
+                filename = Constants.ParkitectDebugLogFilename;
+            }
+
+            string filePath = Constants.ConfigPath + filename;
 
             if (append)
             {
@@ -107,7 +114,7 @@ namespace ArchipelagoMod.Src
 
         public static bool LogsEnabled()
         {
-            return Constants.Debug && Constants.ModPath != null && Constants.ModPath.Contains("Archipelago");
+            return Constants.Debug && Constants.ConfigPath != null && Constants.ConfigPath.Contains(Constants.ParkitectAPFolder);
         }
 
         public static List<List<T>> Chunk<T>(List<T> source, int size = 50)
@@ -189,6 +196,19 @@ namespace ArchipelagoMod.Src
         public static int GetTax(float amount, float fee)
         {
             return (int)(amount - (amount * (1f - fee / 100f)));
+        }
+
+        public static string FormatStringForOS(string text)
+        {
+            switch (Application.platform)
+            {
+                case RuntimePlatform.WindowsEditor:
+                case RuntimePlatform.WindowsPlayer:
+                    return text.Replace('/', '\\');
+
+                default:
+                    return text;
+            }
         }
     }
 }
