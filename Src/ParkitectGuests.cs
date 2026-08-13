@@ -7,6 +7,7 @@
             ParkitectGuests.CreateMe();
             ParkitectGuests.CreateFirstChatter();
             ParkitectGuests.CreateFirstBigAsyncer();
+            ParkitectGuests.CreateFirstNewby();
         }
         public static void CreateMe()
         {
@@ -44,7 +45,7 @@
         {
             Guest guest = GameController.Instance.park.spawnGuestUnInitialized();
             guest.Initialize();
-            guest.setName("Chakraa", "(Pls Ping when Replying) [AP], ", "");
+            guest.setName("Chakraa", "(Pls Ping when Replying)", "");
             guest.Patience = .80f;
             guest.InterestedInScenery = .75f;
             guest.Happiness = .80f;
@@ -52,6 +53,22 @@
             guest.setIsFavorite(true);
 
             Thought thought = new Thought("Hello! :ShibaHeart:\r\n\r\nMy Midnight is your ...", Thought.Emotion.HAPPY, Thought.Emotion.HAPPY);
+            guest.think(thought);
+        }
+
+        public static void CreateFirstNewby()
+        {
+            Guest guest = GameController.Instance.park.spawnGuestUnInitialized();
+            guest.Initialize();
+            guest.setName("ManciniTheAmazing", "", "");
+            guest.Patience = .86f;
+            guest.Happiness = .75f;
+            guest.MaxIntensity = .77f;
+            guest.Generosity = .85f;
+            guest.Money += 50;
+            guest.setIsFavorite(true);
+
+            Thought thought = new Thought("I give no guarantee of intelligence", Thought.Emotion.HAPPY, Thought.Emotion.HAPPY);
             guest.think(thought);
         }
     }
