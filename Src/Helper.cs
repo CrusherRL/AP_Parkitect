@@ -37,7 +37,7 @@ namespace ArchipelagoMod.Src
                 filename = Constants.ParkitectDebugLogFilename;
             }
 
-            string filePath = Constants.ConfigPath + filename;
+            string filePath = System.IO.Path.Combine(Constants.ConfigPath, filename);
 
             if (append)
             {

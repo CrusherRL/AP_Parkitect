@@ -8,6 +8,8 @@ It’s also a **randomizer** in its own right! 🌀
 ---
 
 ## 📦 Installation
+It is available on [Steam!](https://steamcommunity.com/sharedfiles/filedetails/?id=3628076737) and [mod.io!](https://mod.io/g/parkitect/m/archipelago-mod#description)
+If you decide to Install via Steam, you can skip the first two points.
 
 1. **Download the Mod Files**
     - You can find the latest release [here](https://github.com/CrusherRL/AP_Parkitect/releases).
@@ -27,9 +29,10 @@ It’s also a **randomizer** in its own right! 🌀
       /home/[username]/.local/share/Steam/steamapps/common/Parkitect/Mods
       ```
 
-3. **Download the Campaign** (preferably manually, mod.io is weird sometimes)
-    - Place the **Archipelago.campaign** file into `\Documents\Parkitect\Saves\Campaigns`
-    - If you insist on mod.io, you can find it [here](https://mod.io/g/parkitect/m/archipelago-parks#description)
+3. **Download the Campaign** (preferably manually, mod.io or steam are weird sometimes)
+    - Manually: Place the **Archipelago.campaign** file into `\Documents\Parkitect\Saves\Campaigns`
+    - [mod.io here](https://mod.io/g/parkitect/m/archipelago-parks#description)
+    - [Steam here](https://steamcommunity.com/sharedfiles/filedetails/?id=3628080525)
 
 4. **Enable the Mod**
     - Launch Parkitect.
@@ -37,15 +40,19 @@ It’s also a **randomizer** in its own right! 🌀
     - Enable **Archipelago**.
 
 5. **Configure your AP Connection**
-   In Mod Menu, open `Settings` and configure your Archipelago connection. Don't forget to save your changes.
-   Once configured, the mod will automatically reconnect if it is currently disconnected.
+    In Mod Menu, open `Settings` and configure your Archipelago connection. Don't forget to save your changes.
+    Once configured, the mod will automatically reconnect if it is currently disconnected.
 
 6. **Start the Game** and enter corresponding Park
-   - On Main Menu click on Campaign
-     - Top left (Campaign Maps) -> Community Campaigns -> "Archipelago Parks"
+    - On Main Menu click on Campaign
+      - If Custom Campaign Scenario: Top left (Campaign Maps) -> Community Campaigns -> "Archipelago Parks"
+      - If Taste of Adventure Scenario: Top left (Campaign Maps) -> Taste of Adventure
 
 7. **Connect to Archipelago**
-   - This mod does not need an extra Client to connect to the Archipelago Server
+    - This mod does not need an extra Client to connect to the Archipelago Server
+
+> **Hint:** You need to finish the Base Game to unlock all Scenarios, except for Custom Campaign Scenario.
+> You can also use the **Mod Menu** to unlock all Scenarios at once. This won’t affect your current Campaign—it will automatically create a backup first.
 
 ---
 
@@ -56,7 +63,7 @@ Shortcut to toggle this Window is **Z**
 ![Archipelago UI Window - EnergyLink](Src/Images/ArchipelagoMod.energylink.png "UI Window EnergyLink")
 
 ### Debugger Window
-Helper Window if something seems off.
+Helper Window if something seems off. Shortcut is **F12**
 
 ---
 
@@ -281,4 +288,4 @@ Every park tells a story — yours just happens to be shared across worlds.
 
 Created by **CrusherRL**
 Special thanks to my friends who helped me with ideas, debugging and adding content!
-Special thanks to the **Archipelago Community** for testing, feedback, and support!
+Special thanks to the **Archipelago Community** for testing, feedback and support!

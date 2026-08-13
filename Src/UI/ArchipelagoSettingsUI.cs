@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using ArchipelagoMod.Src.Controller;
+using System.Reflection;
+using UnityEngine;
 
 namespace ArchipelagoMod.Src.UI
 {
@@ -42,6 +44,17 @@ namespace ArchipelagoMod.Src.UI
 
             GUILayout.BeginHorizontal();
             ArchipelagoSettingsUI.DisabledTextArea(configPath);
+            GUILayout.EndHorizontal();
+
+            ArchipelagoSettingsUI.HorizontalLine();
+
+            // Scenario completion helper
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Unlock missing Scenario's: (Game restart required)");
+            if (GUILayout.Button("Yes, please", GUILayout.Width(80f)))
+            {
+                ParkitectController.UnlockMissingScenarios();
+            }
             GUILayout.EndHorizontal();
 
             ArchipelagoSettingsUI.HorizontalLine();

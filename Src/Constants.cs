@@ -8,7 +8,7 @@ namespace ArchipelagoMod.Src
     class Constants
     {
         public const string IDENTIFIER = "com.parkitectCommunity.Archipelago";
-        public const string VERSION = "1.6.1";
+        public const string VERSION = "1.6.2";
         public static float[] AllOptions = { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f, 60f, 65f, 70f, 75f, 80f, 85f, 90f, 95f, 100f };
         public static float[] BetweenOptions = { 40f, 50f, 60f, 70f, 80f, 90f, 100f };
 
@@ -19,6 +19,8 @@ namespace ArchipelagoMod.Src
 		public static string ParkitectAPFolder = "Archipelago";
         public static string ParkitectSavegamesFolder = "Savegames";
         public static string ParkitectDebugLogFilename = "debug.log.txt";
+
+        public static string ParkitectCampaignBackupFilenameSuffix = "before_archipelago";
 
         public static string ModPath = null;
         public static string ConfigPath = null;
@@ -1298,6 +1300,58 @@ namespace ArchipelagoMod.Src
                 { 207, "Victoria Island" },
                 { 208, "Celeste Mountain" },
                 { 209, "The Moon" },
+            };
+
+            public static ArchipelagoMod.Src.Scenario[] MainCampaignScenarios =
+            {
+                // Main Campaign
+                new ArchipelagoMod.Src.Scenario("Maple Meadows", "5300258a-eb65-4a6a-b1fe-3978bdfcaad5"),
+                new ArchipelagoMod.Src.Scenario("Chanute Airfield", "0584c095-4f88-4d66-a242-a4a8102cf68b"),
+                new ArchipelagoMod.Src.Scenario("Victoria Lake", "0d71680c-3aee-4939-a9fd-07abbea4745e"),
+                new ArchipelagoMod.Src.Scenario("Western Roundup", "5f43f0ca-9a18-4c07-9c9f-beccc592678a"),
+                new ArchipelagoMod.Src.Scenario("Coral Caldera", "d37f6097-24e3-4c5a-973f-78bbbeaa7f7b"),
+                new ArchipelagoMod.Src.Scenario("Mystic Oasis", "2af10b6b-a89e-45fa-bd2d-ab06b3797c68"),
+                new ArchipelagoMod.Src.Scenario("Nova Labs", "e522fd03-6373-4458-aaef-b9c32689e639"),
+                new ArchipelagoMod.Src.Scenario("Archipelago Adventures", "5134d65c-5805-4c49-9a61-856116a0dcfa"),
+                new ArchipelagoMod.Src.Scenario("Adventure Island", "37fe35a8-24f0-4f19-91af-cf4dc169c23a"),
+                new ArchipelagoMod.Src.Scenario("Batavia Cay", "b89d25a5-5d87-4ed5-814e-1ff36d1dbce7"),
+                new ArchipelagoMod.Src.Scenario("Ice-Shelf Islands", "b5fc824b-9d50-49fc-aa47-410b103d7be0"),
+                new ArchipelagoMod.Src.Scenario("HappyCo Harbor", "b4de5b28-1b0f-451c-9b18-df6556252d3c"),
+                new ArchipelagoMod.Src.Scenario("Biscayne Beach", "42c2cb55-5f16-426c-8479-5cc1ccbe886f"),
+                new ArchipelagoMod.Src.Scenario("Highway Hijinks", "f92adf70-5e8b-49d0-99e5-69980ac13597"),
+                new ArchipelagoMod.Src.Scenario("Honey Hills", "b1fd47c0-4f79-4913-8355-9c6d02e288ac"),
+                new ArchipelagoMod.Src.Scenario("Orchard Acres", "9d4f0810-679a-4b37-9924-9ca95afeefc2"),
+                new ArchipelagoMod.Src.Scenario("Coaster Canyon", "1a92021c-b956-4213-a81a-0f6664456f53"),
+                new ArchipelagoMod.Src.Scenario("Hickory Hill", "afb627b5-2c63-49bf-a408-bfcc17b726fb"),
+                new ArchipelagoMod.Src.Scenario("Pagoda Valley", "3e9de9aa-403f-4aed-a81e-1a95b1538ac9"),
+                new ArchipelagoMod.Src.Scenario("Kaiserberg", "aa73bd39-cd49-42f2-8fec-25697cf29839"),
+                new ArchipelagoMod.Src.Scenario("Sakura Gardens", "3fb26b42-9ef7-455c-a330-37ef45a8f4ca"),
+                new ArchipelagoMod.Src.Scenario("Silica Slopes", "b1d26e1b-ec06-49d6-82b8-b04baaa048ba"),
+                new ArchipelagoMod.Src.Scenario("Disaster Peaks", "5de1e2b1-0370-4bbe-a360-e3640e175f9a"),
+                new ArchipelagoMod.Src.Scenario("Robopark", "fb38cc6d-1fce-4ad3-acdd-49743bdc487e"),
+                new ArchipelagoMod.Src.Scenario("Sheer Cliffs", "da6fbfe3-5bc7-4ba4-8309-58037ae4ac12"),
+                new ArchipelagoMod.Src.Scenario("Zalgonia", "1d849f2e-196d-4700-8a27-ea138741260d"),
+            };
+
+            public static ArchipelagoMod.Src.Scenario[] MainBonusCampaignScenarios =
+            {
+                // Main Bonus Campaign
+                new ArchipelagoMod.Src.Scenario("HappyCo. Bakery", "243568cd-0c0d-49e9-9b95-78c598cca161"),
+            };
+
+            public static ArchipelagoMod.Src.Scenario[] DLC1CampaignScenarios =
+            {
+                // Taste of Adventure Campaign
+                new ArchipelagoMod.Src.Scenario("Yucatán Ridge", "1ad9669e-ced9-433e-8345-049bfb8948b7"),
+                new ArchipelagoMod.Src.Scenario("Brimstone Peak", "dcc04848-ee5c-4f7e-95ac-f63291c59f00"),
+                new ArchipelagoMod.Src.Scenario("Candyland", "d17a72ba-f1ea-4b9a-8429-f1ceaa2598cd"),
+                new ArchipelagoMod.Src.Scenario("Timber Creek", "26ea68a8-d6f2-4a09-a7bd-ea2cafcfd27f"),
+                new ArchipelagoMod.Src.Scenario("Jungle Adventure", "58ebf9de-eb16-4126-b242-45b68282bcab"),
+                new ArchipelagoMod.Src.Scenario("Technopolis", "6dd92d76-3682-4b0f-bec7-40618d6b6250"),
+                new ArchipelagoMod.Src.Scenario("Dragon Valley", "6666e9e8-b11e-4976-867a-d018acbd2234"),
+                new ArchipelagoMod.Src.Scenario("Victoria Island", "973ab00e-1b03-47f4-b3e7-b694d993ebfa"),
+                new ArchipelagoMod.Src.Scenario("Celeste Mountain", "55346780-e09a-469a-bea7-de72aef0969b"),
+                new ArchipelagoMod.Src.Scenario("The Moon", "dbff47f8-996c-4bca-a00a-a4e280562e56"),
             };
         }
 
