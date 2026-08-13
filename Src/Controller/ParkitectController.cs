@@ -5,8 +5,10 @@ using Parkitect.UI;
 using Photon.Realtime;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using UnityEngine;
+using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Controller
 {
@@ -1321,7 +1323,7 @@ namespace ArchipelagoMod.Src.Controller
             // GTA SA
             if (AP_Item.Name == Constants.TrapLink.GTA_SA.Fat_CJ_Trap)
             {
-                this.TrapLinkPoison(AP_Item.Name);
+                this.TrapLinkHungerGuests(AP_Item.Name);
                 return;
             }
 
@@ -1350,6 +1352,15 @@ namespace ArchipelagoMod.Src.Controller
             this.PlayerSetGuestsThirsty(guests, thirsty);
 
             this.PlayerChangeWeather(Constants.Weather.Options.SUNNY);
+
+            this.TrapLinkActivated(trap);
+        }
+
+        private void TrapLinkHungerGuests(string trap)
+        {
+            float guests = Constants.Guest.HungryOptions[Constants.Guest.HungryOptions.Length - 1];
+            float hunger = Constants.Guest.HungryPercentage[Constants.Guest.HungryPercentage.Length - 1];
+            this.PlayerSetGuestsHungry(guests, hunger);
 
             this.TrapLinkActivated(trap);
         }
@@ -1984,6 +1995,58 @@ namespace ArchipelagoMod.Src.Controller
 
                 default:
                     return 10f;
+            }
+        }
+
+        public static void UnlockMissingScenarios()
+        {
+            Helper.Debug($"[ParkitectController::UnlockMissingScenarios]");
+            CampaignProgress cp = CampaignProgress.Instance;
+            bool updated = false;
+
+            if (!File.Exists(CampaignProgress.campaignProgressFilePath + "_" + Constants.ParkitectCampaignBackupFilenameSuffix))
+            {
+                cp.createBackupFile(Constants.ParkitectCampaignBackupFilenameSuffix);
+            }
+
+            // main campaign
+            int mainCompletedScenarios = cp.getMainCampaignCompletedScenariosCount();
+            if (mainCompletedScenarios < Constants.Scenario.MainCampaignScenarios.Length)
+            {
+                ArchipelagoMod.Src.Scenario[] missingScenarios = Constants.Scenario.MainCampaignScenarios.Skip(mainCompletedScenarios).ToArray();
+
+                foreach (ArchipelagoMod.Src.Scenario scenario in missingScenarios)
+                {
+                    updated = true;
+                    cp.setScenarioCompleted(scenario.CampaignGUID, scenario.ScenarioGUID);
+                }
+            }
+
+            // main bonus campaign
+            if (!cp.bonus1Revealed)
+            {
+                updated = true;
+                ArchipelagoMod.Src.Scenario bonusScenario = Constants.Scenario.MainBonusCampaignScenarios[0];
+                cp.setScenarioCompleted(bonusScenario.CampaignGUID, bonusScenario.ScenarioGUID);
+                cp.bonus1Revealed = true;
+            }
+
+            // dlc campaign
+            int dlc1CompletedScenarios = cp.getDLC1CampaignCompletedScenariosCount();
+            if (dlc1CompletedScenarios < Constants.Scenario.DLC1CampaignScenarios.Length)
+            {
+                ArchipelagoMod.Src.Scenario[] missingScenarios = Constants.Scenario.DLC1CampaignScenarios.Skip(dlc1CompletedScenarios).ToArray();
+
+                foreach (ArchipelagoMod.Src.Scenario scenario in missingScenarios)
+                {
+                    updated = true;
+                    cp.setScenarioCompleted(scenario.CampaignGUID, scenario.ScenarioGUID);
+                }
+            }
+
+            if (updated && !cp.mapRevealed)
+            {
+                cp.mapRevealed = true;
             }
         }
     }
