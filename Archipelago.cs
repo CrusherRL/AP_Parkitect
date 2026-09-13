@@ -33,7 +33,7 @@ namespace ArchipelagoMod
 
         public void OnBeforeStart()
         {
-            Constants.ModPath = System.IO.Path.Combine(GameController.modsPath, Constants.ParkitectAPFolder) + System.IO.Path.DirectorySeparatorChar;
+            Constants.ModPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + System.IO.Path.DirectorySeparatorChar;
             new MigrationHelper().RunMigrations();
         }
 
