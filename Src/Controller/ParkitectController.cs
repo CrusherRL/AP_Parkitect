@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static ArchipelagoMod.Src.Constants;
 
 namespace ArchipelagoMod.Src.Controller
 {
@@ -1462,7 +1461,7 @@ namespace ArchipelagoMod.Src.Controller
 
         public void UpdateSuppressMessages()
         {
-            this.SuppressMessagesUntilTime = Time.time + 2.1f;
+            this.SuppressMessagesUntilTime = Time.time + Constants.NextCheckTimeDelay;
         }
 
         public void SendMessage(string[] messages, bool silent = false, bool canBeSuppressed = false)
