@@ -218,7 +218,9 @@ namespace ArchipelagoMod.Src.Window
             {
                 string stringId = challenge.SerializedPanelId.Split(' ')[1];
                 Int32.TryParse(stringId, out int id);
-                this.CurrentChallenges.Add(new Challenge(this.ParkitectController, id * -1));
+                Challenge _challenge = new Challenge(this.ParkitectController);
+                _challenge.SetLocationId(id * -1);
+                this.CurrentChallenges.Add(_challenge);
                 this.SaveData.SetChallenges(this.CurrentChallenges);
                 this.RemoveSkipButton(challenge);
 
@@ -274,7 +276,9 @@ namespace ArchipelagoMod.Src.Window
                 // Challenge row is done! keep pseudo challenge
                 if (locationId < 0)
                 {
-                    Challenge finishedChallenge = new Challenge(this.ParkitectController, locationId);
+                    Challenge _challenge = new Challenge(this.ParkitectController);
+                    _challenge.SetLocationId(locationId);
+                    Challenge finishedChallenge = _challenge;
                     this.SetChallenge(finishedChallenge);
                     continue;
                 }

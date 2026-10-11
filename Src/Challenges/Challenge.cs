@@ -35,9 +35,13 @@ namespace ArchipelagoMod.Src.Challenges
         public string PanelId = null;
         public int Index;
 
-        public Challenge (ParkitectController ParkitectController, int locationId)
+        public Challenge(ParkitectController ParkitectController)
         {
             this.ParkitectController = ParkitectController;
+        }
+
+        public void SetLocationId(int locationId)
+        {
             this.LocationId = locationId;
 
             int id = 0;
@@ -54,7 +58,8 @@ namespace ArchipelagoMod.Src.Challenges
             if (locationId < 3)
             {
                 id = locationId + 1;
-            } else
+            }
+            else
             {
                 id = (locationId % 3) + 1;
                 double i = locationId / 3;
@@ -64,6 +69,12 @@ namespace ArchipelagoMod.Src.Challenges
             this.Index = index;
             this.SerializedPanelId = $"Challenge {id}";
             this.PanelId = $"Challenge_{id}_{index}";
+        }
+
+
+        public void SetChallengeIndex(int challengeIndex)
+        {
+            this.Index = challengeIndex;
         }
 
         public string Text()

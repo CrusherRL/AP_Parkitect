@@ -517,10 +517,11 @@ namespace ArchipelagoMod.Src.Window
             this.SetLabel("Testing:");
             GUILayout.BeginHorizontal();
             ParkitectController parkitectController = GetComponent<ParkitectController>();
+            Challenge challenge = new Challenge(parkitectController);
+            challenge.SetLocationId(-1);
 
             if (GUILayout.Button("Check Photos"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttraction(Constants.Attraction.CoasterRides[19], 1);
                 challenge.AddPhoto(10);
                 challenge.Check();
@@ -528,7 +529,6 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Photos - type"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttractionType(Constants.Attraction.Types[2], 1);
                 challenge.AddPhoto(10);
                 challenge.Check();
@@ -536,7 +536,6 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Vouchers - a"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttraction(Constants.Attraction.ThrillRides[13], 1);
                 challenge.AddVoucher(10);
                 challenge.Check();
@@ -544,7 +543,6 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Vouchers - s"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetShop(Constants.Stall.Food[10], 1);
                 challenge.AddVoucher(10);
                 challenge.Check();
@@ -552,7 +550,6 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Vouchers - a type"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttractionType(Constants.Attraction.Types[2], 1);
                 challenge.AddVoucher(10);
                 challenge.Check();
@@ -560,7 +557,6 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Vouchers - s type"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetShopType(Constants.Stall.Types[1], 1);
                 challenge.AddVoucher(10);
                 challenge.Check();
@@ -571,14 +567,12 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Profit all - a"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
                 challenge.AddProfitRating(10000);
                 challenge.Check();
             }
             if (GUILayout.Button("Check Profit all - s"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetShopType(Constants.Stall.Types[0], 3);
                 challenge.AddProfitRating(10000);
                 challenge.Check();
@@ -586,14 +580,12 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Revenue all - a"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
                 challenge.AddRevenueRating(10000);
                 challenge.Check();
             }
             if (GUILayout.Button("Check Revenue all - s"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetShopType(Constants.Stall.Types[0], 3);
                 challenge.AddRevenueRating(10000);
                 challenge.Check();
@@ -601,7 +593,6 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Photo all - a"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
                 challenge.AddPhoto(10000);
                 challenge.Check();
@@ -609,14 +600,12 @@ namespace ArchipelagoMod.Src.Window
 
             if (GUILayout.Button("Check Vouchers all - a"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetAttractionType(Constants.Attraction.Types[2], 3);
                 challenge.AddVoucher(10000);
                 challenge.Check();
             }
             if (GUILayout.Button("Check Vouchers all - s"))
             {
-                Challenge challenge = new Challenge(parkitectController, -1);
                 challenge.SetShopType(Constants.Stall.Types[0], 3);
                 challenge.AddVoucher(10000);
                 challenge.Check();

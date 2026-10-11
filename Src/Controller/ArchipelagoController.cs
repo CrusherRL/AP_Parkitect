@@ -10,6 +10,7 @@ using ArchipelagoMod.Src.SlotData;
 using ArchipelagoMod.Src.UI;
 using ArchipelagoMod.Src.Window;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -33,6 +34,7 @@ namespace ArchipelagoMod.Src.Controller
         protected string Game = "Parkitect";
 
         public List<Challenge> Challenges = new List<Challenge>();
+        public Dictionary<string, List<Challenge>> ChallengesV2 = new Dictionary<string, List<Challenge>>();
         public bool IsProcessingPendingItems = false;
 
         private bool DoReconnect = false;
@@ -418,6 +420,10 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            this.SlotData.TryGetValue("randomizer_v2", out object randomizer_v2);
+            Int32.TryParse(randomizer_v2.ToString(), out int _randomizer_v2);
+            bool IsV2 = _randomizer_v2 == 1;
+
             if (!this.HandleScenario())
             {
                 return;
@@ -444,7 +450,7 @@ namespace ArchipelagoMod.Src.Controller
             }
 
             this.HandleRules();
-            this.HandleChallenges();
+            this.HandleChallenges(IsV2);
 
             if (!this.IsReady)
             {
@@ -687,7 +693,7 @@ namespace ArchipelagoMod.Src.Controller
             return seedData.ToString();
         }
 
-        private void HandleChallenges()
+        private void HandleChallenges(bool IsV2 = false)
         {
             if (this.IsReady)
             {
@@ -699,98 +705,132 @@ namespace ArchipelagoMod.Src.Controller
                 return;
             }
 
+            if (IsV2)
+            {
+                AP_Challenges_V2 AP_Challenges_V2 = AP_Challenges_V2.Init(challengesData);
+
+                foreach (KeyValuePair<string, List<AP_Challenge_V2>> entry in AP_Challenges_V2.challenges)
+                {
+                    string ItemName = entry.Key;
+                    List<AP_Challenge_V2> items = entry.Value;
+                    this.ChallengesV2[ItemName] = new List<Challenge>();
+
+                    foreach (AP_Challenge_V2 ap_challenge_v2 in items)
+                    {
+                        Challenge challenge = this.FillChallengeItem(ap_challenge_v2.item);
+                        challenge.SetLocationId(ap_challenge_v2.LocationId);
+                        challenge.SetChallengeIndex(ap_challenge_v2.ChallengeIndex);
+                        this.ChallengesV2[ItemName].Add(challenge);
+                    }
+
+                    Helper.LogSlotData(
+                        JsonConvert.SerializeObject(this.ChallengesV2, Formatting.Indented),
+                        System.IO.Path.Combine(SaveData.GetSaveGamePath(this.GetSlotDataSeed()), "challenges_v2.json")
+                    );
+                }
+                //this.ArchipelagoWindow.HandOver(this.Challenges);
+                return;
+            }
+
             AP_Challenges AP_Challenges = AP_Challenges.Init(challengesData);
 
             foreach (AP_Challenge ap_challenge in AP_Challenges.challenges)
             {
-                Challenge challenge = new Challenge(this.ParkitectController, ap_challenge.LocationId);
-                string type = ap_challenge.item.type;
-                bool isCoaster = type == "Coaster Rides" || type == "coaster";
-                bool hasName = !string.IsNullOrEmpty(ap_challenge.item.name);
-
-                // Challenge is to have just shops
-                if (Constants.Stall.Types.Contains(type) && !hasName)
-                {
-                    challenge.SetShopType(type, ap_challenge.item.amount);
-                    challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddRevenueRating(ap_challenge.item.revenue);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
-                    challenge.AddVoucher(ap_challenge.item.vouchers);
-                }
-
-                // Challenge is to have a specific shop
-                else if (Constants.Stall.Types.Contains(type))
-                {
-                    challenge.SetShop(ap_challenge.item.name, ap_challenge.item.amount);
-                    challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddRevenueRating(ap_challenge.item.revenue);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
-                    challenge.AddVoucher(ap_challenge.item.vouchers);
-                }
-
-                // Challenge is to have a just an attraction
-                else if (Constants.Attraction.Types.Contains(type) && !hasName)
-                {
-                    challenge.SetAttractionType(type, ap_challenge.item.amount);
-                    challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddRevenueRating(ap_challenge.item.revenue);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
-                    challenge.AddDecoRating(ap_challenge.item.deco);
-                    challenge.AddVoucher(ap_challenge.item.vouchers);
-
-                    if (isCoaster)
-                    {
-                        challenge.AddPhoto(Helper.SafeInt(ap_challenge.item.photos));
-                    }
-                }
-
-                // Challenge is to have a specific ride
-                else if (Constants.Attraction.Types.Contains(type))
-                {
-                    challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
-                    challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddRevenueRating(ap_challenge.item.revenue);
-                    challenge.AddProfitRating(ap_challenge.item.profit);
-                    challenge.AddDecoRating(ap_challenge.item.deco);
-                    challenge.AddVoucher(ap_challenge.item.vouchers);
-                }
-
-                // Challenge is to have a specific coaster
-                else if (isCoaster)
-                {
-                    challenge.SetAttraction(ap_challenge.item.name, ap_challenge.item.amount);
-                    challenge.AddGuestsRating(ap_challenge.item.customers);
-                    challenge.AddRevenueRating(ap_challenge.item.revenue);
-                    challenge.AddExcitement(Helper.SafeFloat(ap_challenge.item.excitement));
-                    challenge.AddIntensity(Helper.SafeFloat(ap_challenge.item.intensity));
-                    challenge.AddNausea(Helper.SafeFloat(ap_challenge.item.nausea));
-                    challenge.AddSatisfaction(Helper.SafeFloat(ap_challenge.item.satisfaction));
-                    challenge.AddDecoRating(ap_challenge.item.deco);
-                    challenge.AddPhoto(Helper.SafeInt(ap_challenge.item.photos));
-                }
-
-                // Employee
-                else if (type == "Employee")
-                {
-                    challenge.AddEmployee(ap_challenge.item.amount, ap_challenge.item.name);
-                }
-
-                // Park Guests
-                else if (type == "Guest")
-                {
-                    challenge.AddParkGuests(ap_challenge.item.amount);
-                }
-
-                // Park Guests
-                else if (type == "Money")
-                {
-                    challenge.AddParkMoney(ap_challenge.item.amount);
-                }
-
+                Challenge challenge = this.FillChallengeItem(ap_challenge.item);
+                challenge.SetLocationId(challenge.LocationId);
                 this.Challenges.Add(challenge);
             }
 
             this.ArchipelagoWindow.HandOver(this.Challenges);
+        }
+
+        private Challenge FillChallengeItem(ChallengeItem challengeItem)
+        {
+            Challenge challenge = new Challenge(this.ParkitectController);
+            string type = challengeItem.type;
+            bool isCoaster = type == "Coaster Rides" || type == "coaster";
+            bool hasName = !string.IsNullOrEmpty(challengeItem.name);
+
+            // Challenge is to have just shops
+            if (Constants.Stall.Types.Contains(type) && !hasName)
+            {
+                challenge.SetShopType(type, challengeItem.amount);
+                challenge.AddGuestsRating(challengeItem.customers);
+                challenge.AddRevenueRating(challengeItem.revenue);
+                challenge.AddProfitRating(challengeItem.profit);
+                challenge.AddVoucher(challengeItem.vouchers);
+            }
+
+            // Challenge is to have a specific shop
+            else if (Constants.Stall.Types.Contains(type))
+            {
+                challenge.SetShop(challengeItem.name, challengeItem.amount);
+                challenge.AddGuestsRating(challengeItem.customers);
+                challenge.AddRevenueRating(challengeItem.revenue);
+                challenge.AddProfitRating(challengeItem.profit);
+                challenge.AddVoucher(challengeItem.vouchers);
+            }
+
+            // Challenge is to have a just an attraction
+            else if (Constants.Attraction.Types.Contains(type) && !hasName)
+            {
+                challenge.SetAttractionType(type, challengeItem.amount);
+                challenge.AddGuestsRating(challengeItem.customers);
+                challenge.AddRevenueRating(challengeItem.revenue);
+                challenge.AddProfitRating(challengeItem.profit);
+                challenge.AddDecoRating(challengeItem.deco);
+                challenge.AddVoucher(challengeItem.vouchers);
+
+                if (isCoaster)
+                {
+                    challenge.AddPhoto(Helper.SafeInt(challengeItem.photos));
+                }
+            }
+
+            // Challenge is to have a specific ride
+            else if (Constants.Attraction.Types.Contains(type))
+            {
+                challenge.SetAttraction(challengeItem.name, challengeItem.amount);
+                challenge.AddGuestsRating(challengeItem.customers);
+                challenge.AddRevenueRating(challengeItem.revenue);
+                challenge.AddProfitRating(challengeItem.profit);
+                challenge.AddDecoRating(challengeItem.deco);
+                challenge.AddVoucher(challengeItem.vouchers);
+            }
+
+            // Challenge is to have a specific coaster
+            else if (isCoaster)
+            {
+                challenge.SetAttraction(challengeItem.name, challengeItem.amount);
+                challenge.AddGuestsRating(challengeItem.customers);
+                challenge.AddRevenueRating(challengeItem.revenue);
+                challenge.AddExcitement(Helper.SafeFloat(challengeItem.excitement));
+                challenge.AddIntensity(Helper.SafeFloat(challengeItem.intensity));
+                challenge.AddNausea(Helper.SafeFloat(challengeItem.nausea));
+                challenge.AddSatisfaction(Helper.SafeFloat(challengeItem.satisfaction));
+                challenge.AddDecoRating(challengeItem.deco);
+                challenge.AddPhoto(Helper.SafeInt(challengeItem.photos));
+            }
+
+            // Employee
+            else if (type == "Employee")
+            {
+                challenge.AddEmployee(challengeItem.amount, challengeItem.name);
+            }
+
+            // Park Guests
+            else if (type == "Guest")
+            {
+                challenge.AddParkGuests(challengeItem.amount);
+            }
+
+            // Park Guests
+            else if (type == "Money")
+            {
+                challenge.AddParkMoney(challengeItem.amount);
+            }
+
+            return challenge;
         }
 
         public bool CompleteLocation(int location_id, SaveData SaveData = null)
