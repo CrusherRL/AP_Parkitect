@@ -23,7 +23,7 @@ namespace ArchipelagoMod.Src.Window
         {
             string OS = this.GetPlatformFolder();
             Helper.Debug($"[AbstractWindow::Awake] Operating System: {OS}");
-            string bundlePath = System.IO.Path.Combine(Constants.ModPath, OS, this.BundleFilename);
+            string bundlePath = System.IO.Path.Combine(Constants.ModAssetSrc, OS, this.BundleFilename);
 
             // Load AssetBundle from file
             this.AssetBundle = AssetBundle.LoadFromFile(bundlePath);

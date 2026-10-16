@@ -18,6 +18,12 @@ namespace ArchipelagoMod.Src
         public static string Gold = "#8C9327";
         public static string Purple = "#AC62C3";
         public static string Pink = "#DD55B2";
+        public static string LightGrey = "#666666";
+        public static string DarkGrey = "#444444";
+
+        // Specials
+        public static string Deactivated = "#555555";
+        public static string Font = "#DDDDDD";
 
         public static UnityEngine.Color ConvertFromHex(string hex)
         {

@@ -30,10 +30,13 @@ namespace ArchipelagoMod
 
         private DebuggerWindow DebuggerWindow = null;
         private ArchipelagoWindow ArchipelagoWindow = null;
+        private ArchipelagoWindowUI ArchiWindow = null;
 
         public void OnBeforeStart()
         {
-            Constants.ModPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + System.IO.Path.DirectorySeparatorChar;
+            string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + System.IO.Path.DirectorySeparatorChar;
+            Constants.ModPath = path;
+            Constants.ModAssetSrc = System.IO.Path.Combine(path, "src");
             new MigrationHelper().RunMigrations();
         }
 
@@ -56,9 +59,11 @@ namespace ArchipelagoMod
             this.ParkitectController = this.GameObject.AddComponent<ParkitectController>();
             this.DebuggerWindow = this.GameObject.AddComponent<DebuggerWindow>();
             this.ArchipelagoWindow = this.GameObject.AddComponent<ArchipelagoWindow>();
+            this.ArchiWindow = this.GameObject.AddComponent<ArchipelagoWindowUI>();
             this.ArchipelagoController = this.GameObject.AddComponent<ArchipelagoController>();
 
             this.ArchipelagoWindow.SetVersion(VERSION_NUMBER);
+            this.ArchiWindow.Spawn();
         }
 
         public override void onDisabled()

@@ -23,12 +23,15 @@ namespace ArchipelagoMod.Src
         public static string ParkitectCampaignBackupFilenameSuffix = "before_archipelago";
 
         public static string ModPath = null;
+        public static string ModAssetSrc = null;
         public static string ConfigPath = null;
         public static string SaveGamesPath = null;
         public static string ScenarioName = null;
         public static bool Debug = true;
-        public static bool DontConnect = false;
+        public static bool DontConnect = true;
         public static bool LogStats = false;
+
+        public static string Font = "Fonts & Materials/LiberationSans SDF";
 
         public static readonly CultureInfo GermanCulture = new CultureInfo("de-DE");
 

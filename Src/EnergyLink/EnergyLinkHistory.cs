@@ -1,9 +1,8 @@
-﻿using ArchipelagoMod.Src;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Archipelago.Src.EnergyLink
+namespace ArchipelagoMod.Src.EnergyLink
 {
     class EnergyLinkHistory
     {

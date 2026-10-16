@@ -1,4 +1,4 @@
-﻿namespace Archipelago.Src.EnergyLink
+﻿namespace ArchipelagoMod.Src.EnergyLink
 {
     class EnergyLinkItem
     {

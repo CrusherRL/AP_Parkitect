@@ -1,7 +1,7 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
-using Archipelago.Src.EnergyLink;
+using ArchipelagoMod.Src.EnergyLink;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Config;
 using ArchipelagoMod.Src.Connector;
@@ -804,10 +804,12 @@ namespace ArchipelagoMod.Src.Controller
                 challenge.SetAttraction(challengeItem.name, challengeItem.amount);
                 challenge.AddGuestsRating(challengeItem.customers);
                 challenge.AddRevenueRating(challengeItem.revenue);
+                challenge.AddProfitRating(challengeItem.profit);
                 challenge.AddExcitement(Helper.SafeFloat(challengeItem.excitement));
                 challenge.AddIntensity(Helper.SafeFloat(challengeItem.intensity));
                 challenge.AddNausea(Helper.SafeFloat(challengeItem.nausea));
                 challenge.AddSatisfaction(Helper.SafeFloat(challengeItem.satisfaction));
+                challenge.AddVoucher(challengeItem.vouchers);
                 challenge.AddDecoRating(challengeItem.deco);
                 challenge.AddPhoto(Helper.SafeInt(challengeItem.photos));
             }
@@ -815,19 +817,19 @@ namespace ArchipelagoMod.Src.Controller
             // Employee
             else if (type == "Employee")
             {
-                challenge.AddEmployee(challengeItem.amount, challengeItem.name);
+                challenge.SetEmployee(challengeItem.amount, challengeItem.name);
             }
 
             // Park Guests
             else if (type == "Guest")
             {
-                challenge.AddParkGuests(challengeItem.amount);
+                challenge.SetParkGuests(challengeItem.amount);
             }
 
             // Park Guests
             else if (type == "Money")
             {
-                challenge.AddParkMoney(challengeItem.amount);
+                challenge.SetParkMoney(challengeItem.amount);
             }
 
             return challenge;
@@ -961,7 +963,12 @@ namespace ArchipelagoMod.Src.Controller
         public float GetMoneyFromBank()
         {
             Helper.Debug($"[ArchipelagoController::GetMoneyFromBank]");
-            float money = 0;
+            float money = 0f;
+
+            if (!this.ArchipelagoConnector.IsConnected)
+            {
+                return money;
+            }
 
             MainThreadDispatcher.Enqueue(() =>
             {

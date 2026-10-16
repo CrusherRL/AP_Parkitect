@@ -171,7 +171,7 @@ namespace ArchipelagoMod.Src.Challenges
                 return this.Type;
             }
 
-            string thing = this.Attraction != null ? this.Attraction : this.Shop;
+            string thing = !string.IsNullOrEmpty(this.Attraction) ? this.Attraction : this.Shop;
             return this.ParkitectController.GetSerializedFromPrefabs(thing);
         }
 
@@ -723,27 +723,29 @@ namespace ArchipelagoMod.Src.Challenges
             this.Voucher = new VoucherRating(amount, this.Type);
         }
 
-        public void AddEmployee(int amount, string prefabName)
+        public void SetEmployee(int amount, string prefabName)
         {
-            if (amount <= 0)
+            if (amount <= 0 || this.Attraction != null || this.Shop != null || this.Type != null)
             {
                 return;
             }
 
             this.ParkEmployee = new ParkEmployee(amount, prefabName);
         }
-        public void AddParkGuests(int amount)
+       
+        public void SetParkGuests(int amount)
         {
-            if (amount <= 0)
+            if (amount <= 0 || this.Attraction != null || this.Shop != null || this.Type != null)
             {
                 return;
             }
 
             this.ParkGuest = new ParkGuest(amount);
         }
-        public void AddParkMoney(int amount)
+    
+        public void SetParkMoney(int amount)
         {
-            if (amount <= 0)
+            if (amount <= 0 || this.Attraction != null || this.Shop != null || this.Type != null)
             {
                 return;
             }

@@ -1,4 +1,4 @@
-﻿using Archipelago.Src.EnergyLink;
+﻿using ArchipelagoMod.Src.EnergyLink;
 using ArchipelagoMod.Src.Challenges;
 using ArchipelagoMod.Src.Controller;
 using ArchipelagoMod.Src.Window.Scripts;
